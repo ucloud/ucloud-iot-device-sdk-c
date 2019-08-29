@@ -87,6 +87,8 @@ void utils_md5(const unsigned char *input, size_t ilen, unsigned char output[16]
 
 int8_t utils_hb2hex(uint8_t hb);
 
+void utils_md5_finish_hb2hex(void *md5, char *output_str);
+
 
 #endif //C_SDK_UTILS_MD5_H_
 

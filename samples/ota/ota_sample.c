@@ -49,49 +49,48 @@
 
 static void event_handler(void *pClient, void *handle_context, MQTTEventMsg *msg)
 {
-	uintptr_t packet_id = (uintptr_t)msg->msg;
-
 	switch(msg->event_type) {
 		case MQTT_EVENT_UNDEF:
-			LOG_INFO("undefined event occur.");
+			LOG_INFO("undefined event occur.\n");
 			break;
 
 		case MQTT_EVENT_DISCONNECT:
-			LOG_INFO("MQTT disconnect.");
+			LOG_INFO("MQTT disconnect.\n");
 			break;
 
 		case MQTT_EVENT_RECONNECT:
-			LOG_INFO("MQTT reconnect.");
+			LOG_INFO("MQTT reconnect.\n");
 			break;
 
 		case MQTT_EVENT_SUBSCRIBE_SUCCESS:
-			LOG_INFO("subscribe success, packet-id=%u", (unsigned int)packet_id);
+			LOG_INFO("subscribe success, packet-id=%u.\n", (unsigned int)msg->msg);
 			break;
 
 		case MQTT_EVENT_SUBSCRIBE_TIMEOUT:
-			LOG_INFO("subscribe wait ack timeout, packet-id=%u", (unsigned int)packet_id);
+			LOG_INFO("subscribe wait ack timeout, packet-id=%u.\n", (unsigned int)msg->msg);
 			break;
 
 		case MQTT_EVENT_SUBSCRIBE_NACK:
-			LOG_INFO("subscribe nack, packet-id=%u", (unsigned int)packet_id);
+			LOG_INFO("subscribe nack, packet-id=%u.\n", (unsigned int)msg->msg);
 			break;
 
 		case MQTT_EVENT_PUBLISH_SUCCESS:
-			LOG_INFO("publish success, packet-id=%u", (unsigned int)packet_id);
+			LOG_INFO("publish success, packet-id=%u.\n", (unsigned int)msg->msg);
 			break;
 
 		case MQTT_EVENT_PUBLISH_TIMEOUT:
-			LOG_INFO("publish timeout, packet-id=%u", (unsigned int)packet_id);
+			LOG_INFO("publish timeout, packet-id=%u.\n", (unsigned int)msg->msg);
 			break;
 
 		case MQTT_EVENT_PUBLISH_NACK:
-			LOG_INFO("publish nack, packet-id=%u", (unsigned int)packet_id);
+			LOG_INFO("publish nack, packet-id=%u.\n", (unsigned int)msg->msg);
 			break;
 		default:
-			LOG_INFO("Should NOT arrive here.");
+			LOG_INFO("Should NOT arrive here.\n");
 			break;
 	}
 }
+
 
 static int _setup_connect_init_params(MQTTInitParams* initParams)
 {

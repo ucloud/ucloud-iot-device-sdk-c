@@ -38,6 +38,7 @@
 #include "uiot_import.h"
 #include "ca.h"
 #include "utils_httpc.h"
+#include "uiot_export_file_upload.h"
 
 class HTTPClientTests : public testing::Test
 {
@@ -51,6 +52,7 @@ protected:
         std::cout << "HTTPClientTests Test End \n";
     }
 };
+    
 
 TEST_F(HTTPClientTests, HTTPDownload) {
     http_client_t *http_client = (http_client_t *)HAL_Malloc(sizeof(http_client_t));
@@ -102,3 +104,30 @@ TEST_F(HTTPClientTests, HTTPDownload) {
 
     ASSERT_TRUE(total == 11358);
 }
+
+TEST_F(HTTPClientTests, HTTPUploadFile) {
+    char *file_path = (char*)"test.zip";    
+    char md5[100];    
+    char *authorization = (char *)malloc(1024);
+    memset(authorization, 0, 1024);
+    char *put_url = (char *)malloc(1024);
+    memset(put_url, 0, 1024);
+    int ret = SUCCESS;
+
+    http_client_file_md5(file_path, md5);
+    HAL_Printf("MD5:%s\n", md5);
+
+    const char *ProductSN = "nvtmx50n2j9nilik";
+    const char *DeviceSN = "yjs2mfkbfuqf07hu";
+    const char *DeviceSecret = "wi9c195t7vo3xt1e";
+    
+    ret = IOT_GET_URL_AND_AUTH(ProductSN, DeviceSN, DeviceSecret, file_path, md5, authorization, put_url);
+    ASSERT_TRUE(SUCCESS == ret);
+
+    ret = IOT_UPLOAD_FILE(file_path, md5, authorization, put_url);
+    ASSERT_TRUE(SUCCESS == ret);  
+    HAL_Free(authorization);
+    HAL_Free(put_url);
+}
+
+
