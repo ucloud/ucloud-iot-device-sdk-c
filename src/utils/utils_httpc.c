@@ -25,6 +25,7 @@ extern "C" {
 #include "utils_httpc.h"
 #include "utils_net.h"
 #include "utils_timer.h"
+#include "utils_md5.h"
 
 #define MIN_TIMEOUT                   (100)
 #define MAX_RETRY_COUNT               (600)
@@ -538,6 +539,35 @@ void http_client_close(http_client_t *client) {
     client->net.handle = 0;
     LOG_INFO("client disconnected");
 }
+
+void http_client_file_md5(char* file_path, char *output)
+{
+    iot_md5_context ctx;
+    
+    utils_md5_init(&ctx);
+    utils_md5_starts(&ctx);
+    
+    char *buffer = (char *)HAL_Malloc(1024);
+    if (NULL == buffer) {
+        return;
+    }
+    memset(buffer,0,1024);
+    uint32_t count = 0;
+    FILE *fp = fopen(file_path, "rb+");
+    if(NULL == fp)
+    {
+        return;
+    }
+
+    while((count = fread(buffer,1,1024,fp))){
+        utils_md5_update(&ctx, (unsigned char *)buffer, count);
+    }
+    utils_md5_finish_hb2hex(&ctx, output);
+    utils_md5_free(&ctx);
+    fclose(fp);
+    HAL_Free(buffer);
+}
+
 
 #ifdef __cplusplus
 }

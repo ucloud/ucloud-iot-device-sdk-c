@@ -82,6 +82,9 @@ int http_client_recv_data(http_client_t *client, uint32_t timeout_ms, http_clien
 
 void http_client_close(http_client_t *client);
 
+int _http_send_user_data(http_client_t *client, http_client_data_t *client_data);
+
+void http_client_file_md5(char* file_path, char *output);
 
 #ifdef __cplusplus
 }

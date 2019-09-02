@@ -17,6 +17,8 @@ $(call CompLib_Map, OTA_ENABLED, src/ota/src)
 
 $(call CompLib_Map, DEVICE_MODEL_ENABLED, src/dev_model/src)
 
+$(call CompLib_Map, FILE_UPLOAD_ENABLED, src/http)
+
 IOTSDK_SRC_FILES := \
 
 $(foreach v, \

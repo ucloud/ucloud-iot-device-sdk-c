@@ -58,15 +58,7 @@ void ota_lib_md5_update(void *md5, const char *buf, size_t buf_len) {
 
 
 void ota_lib_md5_finalize(void *md5, char *output_str) {
-    int i;
-    unsigned char buf_out[16];
-    utils_md5_finish(md5, buf_out);
-
-    for (i = 0; i < 16; ++i) {
-        output_str[i * 2] = utils_hb2hex(buf_out[i] >> 4);
-        output_str[i * 2 + 1] = utils_hb2hex(buf_out[i]);
-    }
-    output_str[32] = '\0';
+    utils_md5_finish_hb2hex(md5, output_str);
 }
 
 
@@ -142,7 +134,6 @@ int ota_lib_get_params(char *json, char **url, char **version, char **md5,
     HAL_Free(file_size_str);
     FUNC_EXIT_RC(SUCCESS);
 }
-
 
 int ota_lib_gen_upstream_msg(char *buf, size_t bufLen, const char *version, int progress,
                              IOT_OTA_UpstreamMsgType reportType) {

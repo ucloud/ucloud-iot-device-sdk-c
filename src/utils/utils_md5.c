@@ -23,7 +23,6 @@ extern "C" {
 
 #include <stdlib.h>
 #include <string.h>
-#include "uiot_import.h"
 
 #define MD5_DIGEST_SIZE 16
 
@@ -306,11 +305,26 @@ void utils_md5(const unsigned char *input, size_t ilen, unsigned char output[16]
     utils_md5_free(&ctx);
 }
 
+
 int8_t utils_hb2hex(uint8_t hb)
 {
     hb = hb & 0xF;
     return (int8_t)(hb < 10 ? '0' + hb : hb - 10 + 'a');
 }
+
+void utils_md5_finish_hb2hex(void *md5, char *output_str) 
+{
+    int i;
+    unsigned char buf_out[16];
+    utils_md5_finish(md5, buf_out);
+
+    for (i = 0; i < 16; ++i) {
+        output_str[i * 2] = utils_hb2hex(buf_out[i] >> 4);
+        output_str[i * 2 + 1] = utils_hb2hex(buf_out[i]);
+    }
+    output_str[32] = '\0';
+}
+
 
 #ifdef __cplusplus
 }
