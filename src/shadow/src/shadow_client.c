@@ -50,7 +50,7 @@ void* IOT_Shadow_Construct(const char *product_sn, const char *device_sn, void *
 	shadow_client->inner_data.version = 0;
 	
 	ret = uiot_shadow_init(shadow_client);	
-	if (ret != SUCCESS) {
+	if (ret != SUCCESS_RET) {
 		goto end;
 	}
 
@@ -96,7 +96,7 @@ int IOT_Shadow_Destroy(void *handle)
 
     HAL_Free(handle);
 
-    FUNC_EXIT_RC(SUCCESS);
+    FUNC_EXIT_RC(SUCCESS_RET);
 }
 
 int IOT_Shadow_Yield(void *handle, uint32_t timeout_ms) 
@@ -165,7 +165,7 @@ int IOT_Shadow_UnRegister_Property(void *handle, DeviceProperty *pProperty)
 int IOT_Shadow_Get_Sync(void *handle, OnRequestCallback request_callback, uint32_t timeout_sec, void *user_context) 
 {
     FUNC_ENTRY;
-	int ret = SUCCESS;
+	int ret = SUCCESS_RET;
 
 	POINTER_VALID_CHECK(handle, ERR_PARAM_INVALID);
 	NUMERIC_VALID_CHECK(timeout_sec, ERR_PARAM_INVALID);
@@ -182,7 +182,7 @@ int IOT_Shadow_Get_Sync(void *handle, OnRequestCallback request_callback, uint32
 	}
 
 	ret = uiot_shadow_make_request(shadow_client, JsonDoc, sizeOfBuffer, pParams);
-	if (ret != SUCCESS) {
+	if (ret != SUCCESS_RET) {
         FUNC_EXIT_RC(ret);
     }
 
@@ -192,7 +192,7 @@ int IOT_Shadow_Get_Sync(void *handle, OnRequestCallback request_callback, uint32
 int IOT_Shadow_Update(void *handle, OnRequestCallback request_callback, uint32_t timeout_sec, void *user_context, int property_count, ...) 
 {
     FUNC_ENTRY;
-	int ret = SUCCESS;
+	int ret = SUCCESS_RET;
     int loop = 0;
 
 	POINTER_VALID_CHECK(handle, ERR_PARAM_INVALID);
@@ -213,10 +213,10 @@ int IOT_Shadow_Update(void *handle, OnRequestCallback request_callback, uint32_t
         pProperty  = va_arg(pArgs, DeviceProperty *);
         if(NULL != pProperty)
         {
-            if(SUCCESS != IOT_Shadow_Request_Add_Delta_Property(handle, pParams, pProperty))
+            if(SUCCESS_RET != IOT_Shadow_Request_Add_Delta_Property(handle, pParams, pProperty))
             {
                 va_end(pArgs);                
-                return FAILURE;
+                return FAILURE_RET;
             }
          }
     }
@@ -229,7 +229,7 @@ int IOT_Shadow_Update(void *handle, OnRequestCallback request_callback, uint32_t
 	}
 
 	ret = uiot_shadow_make_request(shadow_client, JsonDoc, sizeOfBuffer, pParams);
-	if (ret != SUCCESS) {
+	if (ret != SUCCESS_RET) {
         FUNC_EXIT_RC(ret);
     }
     
@@ -239,7 +239,7 @@ int IOT_Shadow_Update(void *handle, OnRequestCallback request_callback, uint32_t
 int IOT_Shadow_Update_And_Reset_Version(void *handle, OnRequestCallback request_callback, uint32_t timeout_sec, void *user_context, int property_count, ...) 
 {
     FUNC_ENTRY;
-	int ret = SUCCESS;
+	int ret = SUCCESS_RET;
     int loop = 0;
 
 	POINTER_VALID_CHECK(handle, ERR_PARAM_INVALID);
@@ -260,10 +260,10 @@ int IOT_Shadow_Update_And_Reset_Version(void *handle, OnRequestCallback request_
         pProperty  = va_arg(pArgs, DeviceProperty *);
         if(NULL != pProperty)
         {
-            if(SUCCESS != IOT_Shadow_Request_Add_Delta_Property(handle, pParams, pProperty))
+            if(SUCCESS_RET != IOT_Shadow_Request_Add_Delta_Property(handle, pParams, pProperty))
             {
                 va_end(pArgs);
-                return FAILURE;
+                return FAILURE_RET;
             }
          }
     }
@@ -276,7 +276,7 @@ int IOT_Shadow_Update_And_Reset_Version(void *handle, OnRequestCallback request_
 	}
 
 	ret = uiot_shadow_make_request(shadow_client, JsonDoc, sizeOfBuffer, pParams);
-	if (ret != SUCCESS) {
+	if (ret != SUCCESS_RET) {
         FUNC_EXIT_RC(ret);
     }
 
@@ -286,7 +286,7 @@ int IOT_Shadow_Update_And_Reset_Version(void *handle, OnRequestCallback request_
 int IOT_Shadow_Delete(void *handle, OnRequestCallback request_callback, uint32_t timeout_sec, void *user_context, int property_count, ...) 
 {
     FUNC_ENTRY;
-	int ret = SUCCESS;
+	int ret = SUCCESS_RET;
     int loop = 0;
 
 	POINTER_VALID_CHECK(handle, ERR_PARAM_INVALID);
@@ -307,10 +307,10 @@ int IOT_Shadow_Delete(void *handle, OnRequestCallback request_callback, uint32_t
         pProperty  = va_arg(pArgs, DeviceProperty *);
         if(NULL != pProperty)
         {
-            if(SUCCESS != IOT_Shadow_Request_Add_Delta_Property(handle, pParams, pProperty))
+            if(SUCCESS_RET != IOT_Shadow_Request_Add_Delta_Property(handle, pParams, pProperty))
             {
                 va_end(pArgs);
-                return FAILURE;
+                return FAILURE_RET;
             }             
         }
     }
@@ -323,7 +323,7 @@ int IOT_Shadow_Delete(void *handle, OnRequestCallback request_callback, uint32_t
 	}
 
 	ret = uiot_shadow_make_request(shadow_client, JsonDoc, sizeOfBuffer, pParams);
-	if (ret != SUCCESS) {
+	if (ret != SUCCESS_RET) {
         FUNC_EXIT_RC(ret);
     }
 
@@ -333,7 +333,7 @@ int IOT_Shadow_Delete(void *handle, OnRequestCallback request_callback, uint32_t
 int IOT_Shadow_Delete_All(void *handle, OnRequestCallback request_callback, uint32_t timeout_sec, void *user_context) 
 {
     FUNC_ENTRY;
-	int ret = SUCCESS;
+	int ret = SUCCESS_RET;
 
 	POINTER_VALID_CHECK(handle, ERR_PARAM_INVALID);
 	NUMERIC_VALID_CHECK(timeout_sec, ERR_PARAM_INVALID);
@@ -350,7 +350,7 @@ int IOT_Shadow_Delete_All(void *handle, OnRequestCallback request_callback, uint
 	}
 
 	ret = uiot_shadow_make_request(shadow_client, JsonDoc, sizeOfBuffer, pParams);
-	if (ret != SUCCESS) {
+	if (ret != SUCCESS_RET) {
         FUNC_EXIT_RC(ret);
     }
 
@@ -367,7 +367,7 @@ int IOT_Shadow_Request_Add_Delta_Property(void *handle, RequestParams *pParams, 
     POINTER_VALID_CHECK(pProperty->key, ERR_PARAM_INVALID);
     
     ret = request_common_add_delta_property(pParams, pProperty);
-    if(SUCCESS != ret)
+    if(SUCCESS_RET != ret)
     {
         LOG_ERROR("request_common_add_delta_property fail\n");        
         FUNC_EXIT_RC(ret);
@@ -379,7 +379,7 @@ int IOT_Shadow_Request_Add_Delta_Property(void *handle, RequestParams *pParams, 
 int IOT_Shadow_Direct_Update_Value(char *value, DeviceProperty *pProperty) {
     FUNC_ENTRY;
 
-    int ret = SUCCESS;
+    int ret = SUCCESS_RET;
 
     if (pProperty->type == JBOOL) {
         ret = LITE_get_boolean(pProperty->data, value);

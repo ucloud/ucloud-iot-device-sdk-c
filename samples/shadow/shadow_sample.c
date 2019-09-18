@@ -81,7 +81,7 @@ static void _update_ack_cb(void *pClient, Method method, RequestAck requestAck, 
  */
 static int _setup_connect_init_params(MQTTInitParams* initParams)
 {
-    int ret = SUCCESS;
+    int ret = SUCCESS_RET;
 	initParams->device_sn = (char *)UIOT_MY_DEVICE_SN;
 	initParams->product_sn = (char *)UIOT_MY_PRODUCT_SN;
 	initParams->device_secret = (char *)UIOT_MY_DEVICE_SECRET;
@@ -95,9 +95,9 @@ static int _setup_connect_init_params(MQTTInitParams* initParams)
 
 int main()  
 {    
-    int ret = SUCCESS;
+    int ret = SUCCESS_RET;
     ret = _setup_connect_init_params(&sg_initParams);
-    if(ret != SUCCESS)
+    if(ret != SUCCESS_RET)
     {
         HAL_Printf("_setup_connect_init_params fail:%d\n", ret);
         return ret;
@@ -135,7 +135,7 @@ int main()
     Property1->data = &num1;
     Property1->type = JINT32;
     ret = IOT_Shadow_Register_Property(sg_pshadow, Property1, RegCallback_hold); 
-    if(SUCCESS != ret)
+    if(SUCCESS_RET != ret)
     {
         HAL_Printf("Register Property1 fail:%d\n", ret);
         return ret;
@@ -148,7 +148,7 @@ int main()
     Property2->data = &num2;
     Property2->type = JFLOAT;
     ret = IOT_Shadow_Register_Property(sg_pshadow, Property2, RegCallback_update); 
-    if(SUCCESS != ret)
+    if(SUCCESS_RET != ret)
     {
         HAL_Printf("Register Property2 fail:%d\n", ret);
         return ret;
@@ -161,7 +161,7 @@ int main()
     Property3->data = &num3;
     Property3->type = JDOUBLE;
     ret = IOT_Shadow_Register_Property(sg_pshadow, Property3, RegCallback_update); 
-    if(SUCCESS != ret)
+    if(SUCCESS_RET != ret)
     {
         HAL_Printf("Register Property3 fail:%d\n", ret);
         return ret;
@@ -174,7 +174,7 @@ int main()
     Property4->data = num4;
     Property4->type = JSTRING;
     ret = IOT_Shadow_Register_Property(sg_pshadow, Property4, RegCallback_update); 
-    if(SUCCESS != ret)
+    if(SUCCESS_RET != ret)
     {
         HAL_Printf("Register Property4 fail:%d\n", ret);
         return ret;
@@ -187,7 +187,7 @@ int main()
     Property5->data = &num5;
     Property5->type = JBOOL;
     ret = IOT_Shadow_Register_Property(sg_pshadow, Property5, RegCallback_update); 
-    if(SUCCESS != ret)
+    if(SUCCESS_RET != ret)
     {
         HAL_Printf("Register Property5 fail:%d\n", ret);
         return ret;
@@ -200,7 +200,7 @@ int main()
     Property6->data = num6;
     Property6->type = JOBJECT;
     ret = IOT_Shadow_Register_Property(sg_pshadow, Property6, RegCallback_update); 
-    if(SUCCESS != ret)
+    if(SUCCESS_RET != ret)
     {
         HAL_Printf("Register Property6 fail:%d\n", ret);
         return ret;
@@ -208,7 +208,7 @@ int main()
 
     /* 先同步一下版本号和设备掉电期间更新的属性 */
     ret = IOT_Shadow_Get_Sync(sg_pshadow, _update_ack_cb, time_sec, &ack_update);
-    if(SUCCESS != ret)
+    if(SUCCESS_RET != ret)
     {
         HAL_Printf("Get Sync fail:%d\n", ret);
         return ret;
@@ -221,7 +221,7 @@ int main()
     /* update */    
     ack_update = ACK_NONE;
     ret = IOT_Shadow_Update(sg_pshadow, _update_ack_cb, time_sec, &ack_update, 6, Property1, Property2, Property3, Property4, Property5, Property6);
-    if(SUCCESS != ret)
+    if(SUCCESS_RET != ret)
     {
         HAL_Printf("Update Property1 Property2 Property3 Property4 Property5 Property6 fail:%d\n", ret);
         return ret;
@@ -247,7 +247,7 @@ int main()
 
     ack_update = ACK_NONE;
     ret = IOT_Shadow_Update(sg_pshadow, _update_ack_cb, time_sec, &ack_update, 2, Property1, Property4);
-    if(SUCCESS != ret)
+    if(SUCCESS_RET != ret)
     {
         HAL_Printf("Update Property1 Property4 fail:%d\n", ret);
         return ret;
@@ -260,7 +260,7 @@ int main()
     /* delete */    
     ack_update = ACK_NONE;
     ret = IOT_Shadow_Delete(sg_pshadow, _update_ack_cb, time_sec, &ack_update, 2, Property1, Property2);
-    if(SUCCESS != ret)
+    if(SUCCESS_RET != ret)
     {
         HAL_Printf("Delete Property1 Property2 fail:%d\n", ret);
         return ret;
@@ -281,7 +281,7 @@ int main()
     /* delete all */
     ack_update = ACK_NONE;
     ret = IOT_Shadow_Delete_All(sg_pshadow, _update_ack_cb, time_sec, &ack_update);
-    if(SUCCESS != ret)
+    if(SUCCESS_RET != ret)
     {
         HAL_Printf("Delete All fail:%d\n", ret);
         return ret;
@@ -308,7 +308,7 @@ int main()
     /* update */    
     ack_update = ACK_NONE;
     ret = IOT_Shadow_Update_And_Reset_Version(sg_pshadow, _update_ack_cb, time_sec, &ack_update, 4, Property1, Property4, Property5, Property6);
-    if(SUCCESS != ret)
+    if(SUCCESS_RET != ret)
     {
         HAL_Printf("Update and Reset Ver fail:%d\n", ret);
         return ret;

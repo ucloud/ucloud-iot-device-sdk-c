@@ -87,7 +87,7 @@ static void _ota_callback(void *pContext, const char *msg, uint32_t msg_len) {
 
     HAL_Snprintf(msg_str, msg_len + 1, "%s", msg);
 
-    if (SUCCESS != ota_lib_get_msg_type(msg_str, &msg_method)) {
+    if (SUCCESS_RET != ota_lib_get_msg_type(msg_str, &msg_method)) {
         LOG_ERROR("Get message type failed!");
         goto do_exit;
     }
@@ -97,7 +97,7 @@ static void _ota_callback(void *pContext, const char *msg, uint32_t msg_len) {
         goto do_exit;
     }
 
-    if (SUCCESS != ota_lib_get_params(msg_str, &h_ota->url, &h_ota->version,
+    if (SUCCESS_RET != ota_lib_get_params(msg_str, &h_ota->url, &h_ota->version,
                                 &h_ota->md5sum, &h_ota->size_file)) {
         LOG_ERROR("Get firmware parameter failed");
         goto do_exit;
@@ -108,7 +108,7 @@ static void _ota_callback(void *pContext, const char *msg, uint32_t msg_len) {
         goto do_exit;
     }
 
-    if (SUCCESS != ofc_connect(h_ota->ch_fetch)) {
+    if (SUCCESS_RET != ofc_connect(h_ota->ch_fetch)) {
         LOG_ERROR("Connect fetch module failed");
         h_ota->state = OTA_STATE_DISCONNECTED;
         goto do_exit;
@@ -149,7 +149,7 @@ int IOT_OTA_ReportProgress(void *handle, int progress, IOT_OTA_ProgressState sta
     }
 
     ret = ota_lib_gen_upstream_msg(msg_report, OTA_UPSTREAM_MSG_BUF_LEN, h_ota->version, progress, (IOT_OTA_UpstreamMsgType)state);
-    if (SUCCESS != ret) {
+    if (SUCCESS_RET != ret) {
         LOG_ERROR("generate reported message failed");
         h_ota->err = ret;
         goto do_exit;
@@ -199,7 +199,7 @@ static int send_upstream_msg_with_version(void *handle, const char *version, IOT
     }
 
     ret = ota_lib_gen_upstream_msg(msg_upstream, OTA_UPSTREAM_MSG_BUF_LEN, version, 0, reportType);
-    if (SUCCESS != ret) {
+    if (SUCCESS_RET != ret) {
         LOG_ERROR("generate upstream message failed");
         h_ota->err = ret;
         goto do_exit;
@@ -275,7 +275,7 @@ int IOT_OTA_Destroy(void *handle)
 
     if (OTA_STATE_UNINITED == h_ota->state) {
         LOG_ERROR("handle is uninitialized");
-        return FAILURE;
+        return FAILURE_RET;
     }
 
     osc_deinit(h_ota->ch_signal);
@@ -295,7 +295,7 @@ int IOT_OTA_Destroy(void *handle)
     }
 
     HAL_Free(h_ota);
-    return SUCCESS;
+    return SUCCESS_RET;
 }
 
 
@@ -337,7 +337,7 @@ int IOT_OTA_ReportFail(void *handle, IOT_OTA_ReportErrCode err_code)
     }
 
     ret = ota_lib_gen_upstream_msg(msg_upstream, OTA_UPSTREAM_MSG_BUF_LEN, "", 0, (IOT_OTA_UpstreamMsgType)err_code);
-    if (SUCCESS != ret) {
+    if (SUCCESS_RET != ret) {
         LOG_ERROR("generate upstream message failed");
         h_ota->err = ret;
         goto do_exit;
@@ -482,20 +482,20 @@ int IOT_OTA_Ioctl(void *handle, IOT_OTA_CmdType type, void *buf, size_t buf_len)
             if ((4 != buf_len) || (0 != ((unsigned long)buf & 0x3))) {
                 LOG_ERROR("Invalid parameter");
                 h_ota->err = ERR_OTA_INVALID_PARAM;
-                return FAILURE;
+                return FAILURE_RET;
             } else {
                 *((uint32_t *)buf) = h_ota->size_fetched;
-                return SUCCESS;
+                return SUCCESS_RET;
             }
 
         case OTA_IOCTL_FILE_SIZE:
             if ((4 != buf_len) || (0 != ((unsigned long)buf & 0x3))) {
                 LOG_ERROR("Invalid parameter");
                 h_ota->err = ERR_OTA_INVALID_PARAM;
-                return FAILURE;
+                return FAILURE_RET;
             } else {
                 *((uint32_t *)buf) = h_ota->size_file;
-                return SUCCESS;
+                return SUCCESS_RET;
             }
 
         case OTA_IOCTL_VERSION:
@@ -512,11 +512,11 @@ int IOT_OTA_Ioctl(void *handle, IOT_OTA_CmdType type, void *buf, size_t buf_len)
             if ((4 != buf_len) || (0 != ((unsigned long)buf & 0x3))) {
                 LOG_ERROR("Invalid parameter");
                 h_ota->err = ERR_OTA_INVALID_PARAM;
-                return FAILURE;
+                return FAILURE_RET;
             } else if (h_ota->state != OTA_STATE_FETCHED) {
                 h_ota->err = ERR_OTA_INVALID_STATE;
                 LOG_ERROR("Firmware can be checked in OTA_STATE_FETCHED state only");
-                return FAILURE;
+                return FAILURE_RET;
             } else {
                 char md5_str[33];
                 ota_lib_md5_finalize(h_ota->md5, md5_str);
@@ -529,16 +529,16 @@ int IOT_OTA_Ioctl(void *handle, IOT_OTA_CmdType type, void *buf, size_t buf_len)
                     h_ota->err = ERR_OTA_MD5_MISMATCH;
                     IOT_OTA_ReportFail(h_ota, OTA_ERRCODE_MD5_MISMATCH);
                 }
-                return SUCCESS;
+                return SUCCESS_RET;
             }
 
         default:
             LOG_ERROR("invalid cmd type");
             h_ota->err = ERR_OTA_INVALID_PARAM;
-            return FAILURE;
+            return FAILURE_RET;
     }
 
-    return SUCCESS;
+    return SUCCESS_RET;
 }
 
 

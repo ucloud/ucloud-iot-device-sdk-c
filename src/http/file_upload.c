@@ -39,7 +39,7 @@ static int calc_file_len(char *file_path)
 
 int IOT_GET_URL_AND_AUTH(const char *product_sn, const char *device_sn, const char *device_sercret, char *file_path, char *md5, char *authorization, char *put_url)
 {
-    int ret = SUCCESS;
+    int ret = SUCCESS_RET;
     http_client_t *http_client_post = (http_client_t *)HAL_Malloc(sizeof(http_client_t));
     http_client_data_t *http_data_post = (http_client_data_t *)HAL_Malloc(sizeof(http_client_data_t));
     memset(http_client_post, 0, sizeof(http_client_t));
@@ -69,14 +69,14 @@ int IOT_GET_URL_AND_AUTH(const char *product_sn, const char *device_sn, const ch
     char *url = (char *)"https://file-cn-sh2.iot.ucloud.cn/api/v1/url";
 
     ret = http_client_common(http_client_post, url, 443, ca_crt, HTTP_POST, http_data_post);
-    if(SUCCESS != ret)
+    if(SUCCESS_RET != ret)
     {
         LOG_ERROR("HTTP_POST error\n");
         goto end;
     }
     
     ret = http_client_recv_data(http_client_post, 5000, http_data_post);
-    if(SUCCESS != ret)
+    if(SUCCESS_RET != ret)
     {
         LOG_ERROR("http_client_recv_data error\n");
         goto end;
@@ -105,7 +105,7 @@ end:
 
 int IOT_UPLOAD_FILE(char *file_path, char *md5, char *authorization, char *url)
 {
-    int ret = SUCCESS;
+    int ret = SUCCESS_RET;
     http_client_t *http_client_put = (http_client_t *)HAL_Malloc(sizeof(http_client_t));
     http_client_data_t *http_data_put = (http_client_data_t *)HAL_Malloc(sizeof(http_client_data_t));
     memset(http_client_put, 0, sizeof(http_client_t));

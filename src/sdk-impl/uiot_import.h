@@ -26,7 +26,6 @@ extern "C" {
 #include <stdbool.h>
 #include <stdarg.h>
 #include <inttypes.h>
-#include <sys/time.h>
 
 #include "uiot_defs.h"
 #include "HAL_Timer_Platform.h"
@@ -315,6 +314,15 @@ int32_t HAL_TCP_Write(_IN_ uintptr_t fd, _IN_ unsigned char *buf, _IN_ size_t le
  * @return					<0: TCP读取错误; =0: TCP读超时, 且没有读取任何数据; >0: TCP成功读取的字节数
  */
 int32_t HAL_TCP_Read(_IN_ uintptr_t fd, _OU_ unsigned char *buf, _IN_ size_t len, _IN_ uint32_t timeout_ms);
+
+int HAL_AT_Read(_IN_ void * pNetwork, _OU_ unsigned char *buffer, _IN_ size_t len);
+
+int HAL_AT_Write(_IN_ unsigned char *buffer, _IN_ size_t len);
+
+int HAL_AT_TCP_Disconnect();
+
+int HAL_AT_TCP_Connect(_IN_ void * pNetwork, _IN_ const char *host, _IN_ uint16_t port); 
+
 
 #if defined(__cplusplus)
 }

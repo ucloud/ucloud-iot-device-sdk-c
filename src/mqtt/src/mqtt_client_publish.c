@@ -45,7 +45,7 @@ extern "C" {
  * @return SUCCESS if successful, FAILURE if not
  */
 static int _read_string_with_len(char **string, uint16_t *stringLen, unsigned char **pptr, unsigned char *enddata) {
-    int ret = FAILURE;
+    int ret = FAILURE_RET;
 
     /* the first two bytes are the length of the string */
     /* enough length to read the integer? */
@@ -54,13 +54,13 @@ static int _read_string_with_len(char **string, uint16_t *stringLen, unsigned ch
 		
 		if(*stringLen > UIOT_MQTT_RX_BUF_LEN){
 			LOG_ERROR("stringLen exceed UIOT_MQTT_RX_BUF_LEN");
-			return FAILURE;
+			return FAILURE_RET;
 		}
 		
         if (&(*pptr)[*stringLen] <= enddata) {
             *string = (char *) *pptr;
             *pptr += *stringLen;
-            return SUCCESS;
+            return SUCCESS_RET;
         }
     }
 
@@ -93,7 +93,7 @@ static int _mask_push_pubInfo_to(UIoT_Client *c, int len, unsigned short msgId, 
 
     if ((len < 0) || (len > c->write_buf_size)) {
         LOG_ERROR("the param of len is error!");
-        return FAILURE;
+        return FAILURE_RET;
     }
 
     HAL_MutexLock(c->lock_list_pub);
@@ -101,14 +101,14 @@ static int _mask_push_pubInfo_to(UIoT_Client *c, int len, unsigned short msgId, 
     if (c->list_pub_wait_ack->len >= MAX_REPUB_NUM) {
         HAL_MutexUnlock(c->lock_list_pub);
         LOG_ERROR("more than %u elements in republish list. List overflow!", c->list_pub_wait_ack->len);
-        return FAILURE;
+        return FAILURE_RET;
     }
 
     UIoTPubInfo *repubInfo = (UIoTPubInfo *)HAL_Malloc(sizeof(UIoTPubInfo) + len);
     if (NULL == repubInfo) {
         HAL_MutexUnlock(c->lock_list_pub);
         LOG_ERROR("memory malloc failed!");
-        return FAILURE;
+        return FAILURE_RET;
     }
 
     repubInfo->node_state = MQTT_NODE_STATE_NORMAL;
@@ -125,14 +125,14 @@ static int _mask_push_pubInfo_to(UIoT_Client *c, int len, unsigned short msgId, 
     if (NULL == *node) {
         HAL_MutexUnlock(c->lock_list_pub);
         LOG_ERROR("list_node_new failed!");
-        return FAILURE;
+        return FAILURE_RET;
     }
 
     list_rpush(c->list_pub_wait_ack, *node);
 
     HAL_MutexUnlock(c->lock_list_pub);
 
-    return SUCCESS;
+    return SUCCESS_RET;
 }
 
 /**
@@ -180,20 +180,20 @@ int deserialize_publish_packet(uint8_t *dup, QoS *qos, uint8_t *retained, uint16
     *retained  = header&MQTT_HEADER_RETAIN_MASK;
         
     if (PUBLISH != type) {
-        return FAILURE;
+        return FAILURE_RET;
     }
 
     /* read remaining length */
     ret = mqtt_read_packet_rem_len_form_buf(curdata, &decodedLen, &readBytesLen);
-    if (SUCCESS != ret) {
+    if (SUCCESS_RET != ret) {
         return ret;
     }
     curdata += (readBytesLen);
     enddata = curdata + decodedLen;
 
     /* do we have enough data to read the protocol version byte? */
-    if (SUCCESS != _read_string_with_len(topicName, topicNameLen, &curdata, enddata) || (0 > (enddata - curdata))) {
-        return FAILURE;
+    if (SUCCESS_RET != _read_string_with_len(topicName, topicNameLen, &curdata, enddata) || (0 > (enddata - curdata))) {
+        return FAILURE_RET;
     }
 
     if (QOS0 != *qos) {
@@ -203,7 +203,7 @@ int deserialize_publish_packet(uint8_t *dup, QoS *qos, uint8_t *retained, uint16
     *payload_len = (size_t) (enddata - curdata);
     *payload = curdata;
 
-    return SUCCESS;
+    return SUCCESS_RET;
 }
 
 /**
@@ -232,7 +232,7 @@ int serialize_pub_ack_packet(unsigned char *buf, size_t buf_len, MessageTypes pa
         return ERR_MQTT_BUFFER_TOO_SHORT;
     }
 
-    if (SUCCESS != ret) {
+    if (SUCCESS_RET != ret) {
         return ret;
     }
     mqtt_write_char(&ptr, header); /* write header */
@@ -241,7 +241,7 @@ int serialize_pub_ack_packet(unsigned char *buf, size_t buf_len, MessageTypes pa
     mqtt_write_uint_16(&ptr, packet_id);
     *serialized_len = (uint32_t) (ptr - buf);
 
-    return SUCCESS;
+    return SUCCESS_RET;
 }
 
 
@@ -277,7 +277,7 @@ static int _serialize_publish_packet(unsigned char *buf, size_t buf_len, uint8_t
     }
 
     ret = mqtt_init_packet_header(&header, PUBLISH, qos, dup, retained);
-    if (SUCCESS != ret) {
+    if (SUCCESS_RET != ret) {
         return ret;
     }
 
@@ -296,7 +296,7 @@ static int _serialize_publish_packet(unsigned char *buf, size_t buf_len, uint8_t
 
     *serialized_len = (uint32_t) (ptr - buf);
 
-    return SUCCESS;
+    return SUCCESS_RET;
 }
 
 int uiot_mqtt_publish(UIoT_Client *pClient, char *topicName, PublishParams *pParams) {
@@ -337,14 +337,14 @@ int uiot_mqtt_publish(UIoT_Client *pClient, char *topicName, PublishParams *pPar
     }
     ret = _serialize_publish_packet(pClient->write_buf, pClient->write_buf_size, 0, pParams->qos, pParams->retained, pParams->id,
                                    topicName, (unsigned char *) pParams->payload, pParams->payload_len, &len);
-    if (SUCCESS != ret) {
+    if (SUCCESS_RET != ret) {
     	HAL_MutexUnlock(pClient->lock_write_buf);
         return ret;
     }
 
     if (pParams->qos > QOS0) {
         ret = _mask_push_pubInfo_to(pClient, len, pParams->id, &node);
-        if (SUCCESS != ret) {
+        if (SUCCESS_RET != ret) {
             LOG_ERROR("push publish into pubInfolist failed!");
             HAL_MutexUnlock(pClient->lock_write_buf);
             return ret;
@@ -353,7 +353,7 @@ int uiot_mqtt_publish(UIoT_Client *pClient, char *topicName, PublishParams *pPar
 
     /* send the publish packet */
     ret = send_mqtt_packet(pClient, len, &timer);
-	if (SUCCESS != ret) {
+	if (SUCCESS_RET != ret) {
 		if (pParams->qos > QOS0) {
 			HAL_MutexLock(pClient->lock_list_pub);
 			list_remove(pClient->list_pub_wait_ack, node);

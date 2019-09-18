@@ -24,6 +24,11 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#ifdef ENABLE_AT_CMD
+#include "stm32f7xx_hal.h"
+#include "at_client.h"
+#endif
+
 /**
  * @brief The structure of network connection(TCP or SSL).
  *   The user has to allocate memory for this structure.
@@ -32,6 +37,27 @@
 struct utils_network;
 typedef struct utils_network utils_network_t, *utils_network_pt;
 
+#ifdef ENABLE_AT_CMD
+struct utils_network {
+    const char *pHostAddress;
+    uint16_t port;
+
+    /**< uart for send at cmd */
+    at_client *pclient;
+
+    /**< Read data from server function pointer. */
+    int (*read)(utils_network_pt,unsigned char *, size_t, uint32_t);
+
+    /**< Send data to server function pointer. */
+    int (*write)(utils_network_pt,unsigned char *, size_t, uint32_t);
+
+    /**< Disconnect the network */
+    int (*disconnect)(utils_network_pt);
+
+    /**< Establish the network */
+    int (*connect)(utils_network_pt);
+};
+#else
 struct utils_network {
     const char *pHostAddress;
     uint16_t port;
@@ -54,7 +80,7 @@ struct utils_network {
     /**< Establish the network */
     int (*connect)(utils_network_pt);
 };
-
+#endif
 int utils_net_read(utils_network_pt pNetwork, unsigned char *buffer, size_t len, uint32_t timeout_ms);
 int utils_net_write(utils_network_pt pNetwork, unsigned char *buffer, size_t len, uint32_t timeout_ms);
 int utils_net_disconnect(utils_network_pt pNetwork);

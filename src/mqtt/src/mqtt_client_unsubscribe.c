@@ -85,7 +85,7 @@ static int _serialize_unsubscribe_packet(unsigned char *buf, size_t buf_len,
     }
 
     ret = mqtt_init_packet_header(&header, UNSUBSCRIBE, QOS1, dup, 0);
-    if (SUCCESS != ret) {
+    if (SUCCESS_RET != ret) {
         return ret;
     }
     mqtt_write_char(&ptr, header); /* write header */
@@ -100,7 +100,7 @@ static int _serialize_unsubscribe_packet(unsigned char *buf, size_t buf_len,
 
     *serialized_len = (uint32_t) (ptr - buf);
 
-    return SUCCESS;
+    return SUCCESS_RET;
 }
 
 int uiot_mqtt_unsubscribe(UIoT_Client *pClient, char *topicFilter) {
@@ -150,7 +150,7 @@ int uiot_mqtt_unsubscribe(UIoT_Client *pClient, char *topicFilter) {
     char *topic_filter_stored = HAL_Malloc(topicLen + 1);
     if (topic_filter_stored == NULL) {
         LOG_ERROR("malloc failed");
-        return FAILURE;
+        return FAILURE_RET;
     }
     strcpy(topic_filter_stored, topicFilter);
     topic_filter_stored[topicLen] = 0;
@@ -162,7 +162,7 @@ int uiot_mqtt_unsubscribe(UIoT_Client *pClient, char *topicFilter) {
     packet_id = get_next_packet_id(pClient);
     ret = _serialize_unsubscribe_packet(pClient->write_buf, pClient->write_buf_size, 0, packet_id, 1, &topic_filter_stored,
                                        &len);
-    if (SUCCESS != ret) {
+    if (SUCCESS_RET != ret) {
     	HAL_MutexUnlock(pClient->lock_write_buf);
     	HAL_Free(topic_filter_stored);
         return ret;
@@ -174,7 +174,7 @@ int uiot_mqtt_unsubscribe(UIoT_Client *pClient, char *topicFilter) {
     sub_handle.message_handler_data = NULL;
 
     ret = push_sub_info_to(pClient, len, (unsigned int)packet_id, UNSUBSCRIBE, &sub_handle, &node);
-    if (SUCCESS != ret) {
+    if (SUCCESS_RET != ret) {
         LOG_ERROR("push publish into to pubInfolist failed: %d", ret);
         HAL_MutexUnlock(pClient->lock_write_buf);
         HAL_Free(topic_filter_stored);
@@ -183,7 +183,7 @@ int uiot_mqtt_unsubscribe(UIoT_Client *pClient, char *topicFilter) {
 
     /* send the unsubscribe packet */
     ret = send_mqtt_packet(pClient, len, &timer);
-    if (SUCCESS != ret) {
+    if (SUCCESS_RET != ret) {
         HAL_MutexLock(pClient->lock_list_sub);
         list_remove(pClient->list_sub_wait_ack, node);
         HAL_MutexUnlock(pClient->lock_list_sub);

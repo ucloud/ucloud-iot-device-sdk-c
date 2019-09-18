@@ -37,7 +37,7 @@ extern "C" {
 #define HTTP_CLIENT_MAX_URL_LEN       (256)
 #define HTTP_RETRIEVE_MORE_DATA       (1)             /**< More data needs to be retrieved. */
 #define HTTP_CLIENT_CHUNK_SIZE        (1024)
-
+#ifndef ENABLE_AT_CMD
 static int _utils_parse_url(const char *url, char *host, char *path) {
     char *host_ptr = (char *) strstr(url, "://");
     uint32_t host_len = 0;
@@ -70,7 +70,7 @@ static int _utils_parse_url(const char *url, char *host, char *path) {
     memcpy(path, path_ptr, path_len);
     path[path_len] = '\0';
 
-    return SUCCESS;
+    return SUCCESS_RET;
 }
 
 static int _utils_fill_tx_buffer(http_client_t *client, unsigned char *send_buf, int *send_idx, char *buf, uint32_t len) {
@@ -106,7 +106,7 @@ static int _utils_fill_tx_buffer(http_client_t *client, unsigned char *send_buf,
     } while (len);
 
     *send_idx = idx;
-    return SUCCESS;
+    return SUCCESS_RET;
 }
 
 static int _http_send_header(http_client_t *client, char *host, const char *path, int method,
@@ -155,7 +155,7 @@ static int _http_send_header(http_client_t *client, char *host, const char *path
         return (ret == 0) ? ERR_HTTP_CLOSED : ERR_HTTP_CONN_ERROR;
     }
 
-    return SUCCESS;
+    return SUCCESS_RET;
 }
 
 int _http_send_user_data(http_client_t *client, http_client_data_t *client_data) {
@@ -169,7 +169,7 @@ int _http_send_user_data(http_client_t *client, http_client_data_t *client_data)
         }
     }
 
-    return SUCCESS;
+    return SUCCESS_RET;
 }
 
 /* 0 on success, err code on failure */
@@ -190,7 +190,7 @@ static int _http_recv(http_client_t *client, unsigned char *buf, int max_len, in
         return 0;
     } else if (ret == 0) {
         /* timeout */
-        return FAILURE;
+        return FAILURE_RET;
     } else {
         return ERR_HTTP_CONN_ERROR;
     }
@@ -207,7 +207,7 @@ static int _utils_check_deadloop(int len, Timer *timer, int ret, unsigned int *d
     }
 
     /* if it falls into deadloop before reconnected to internet, we just quit*/
-    if ((0 == len) && (0 == left_ms(timer)) && (FAILURE == ret)) {
+    if ((0 == len) && (0 == left_ms(timer)) && (FAILURE_RET == ret)) {
         (*dead_loop_count)++;
         if (*dead_loop_count > MAX_RETRY_COUNT) {
             LOG_ERROR("deadloop detected, exit");
@@ -218,11 +218,11 @@ static int _utils_check_deadloop(int len, Timer *timer, int ret, unsigned int *d
     }
 
     /*if the internet connection is fixed during the loop, the download stream might be disconnected. we have to quit */
-    if ((0 == len) && (*extend_count > 2 * MAX_RETRY_COUNT) && (FAILURE == ret)) {
+    if ((0 == len) && (*extend_count > 2 * MAX_RETRY_COUNT) && (FAILURE_RET == ret)) {
         LOG_ERROR("extend timer for too many times, exit");
         return ERR_HTTP_CONN_ERROR;
     }
-    return SUCCESS;
+    return SUCCESS_RET;
 }
 
 static int _utils_fill_rx_buf(int *recv_count, int len_to_write_to_response_buf, http_client_data_t *client_data,
@@ -234,7 +234,7 @@ static int _utils_fill_rx_buf(int *recv_count, int len_to_write_to_response_buf,
         client_data->response_buf[count] = '\0';
         client_data->retrieve_len -= len_to_write_to_response_buf;
         *recv_count = count;
-        return SUCCESS;
+        return SUCCESS_RET;
     } else {
         memcpy(client_data->response_buf + count, data, client_data->response_buf_len - 1 - count);
         client_data->response_buf[client_data->response_buf_len - 1] = '\0';
@@ -301,7 +301,7 @@ static int _http_get_response_body(http_client_t *client, unsigned char *data, i
         break;
     }
 
-    return SUCCESS;
+    return SUCCESS_RET;
 }
 
 static int _http_parse_response_header(http_client_t *client, char *data, int len, uint32_t timeout_ms,
@@ -393,7 +393,7 @@ static int _http_connect(http_client_t *client) {
         }
     } while (++retry_cnt <= retry_max);
 
-    return SUCCESS;
+    return SUCCESS_RET;
 }
 
 int _http_send_request(http_client_t *client, const char *url, HTTP_Request_Method method,
@@ -409,7 +409,7 @@ int _http_send_request(http_client_t *client, const char *url, HTTP_Request_Meth
     char path[HTTP_CLIENT_MAX_URL_LEN] = {0};
 
     rc = _utils_parse_url(url, host, path);
-    if (rc != SUCCESS) {
+    if (rc != SUCCESS_RET) {
         return rc;
     }
 
@@ -473,17 +473,17 @@ int http_client_connect(http_client_t *client, const char *url, int port, const 
     char path[HTTP_CLIENT_MAX_URL_LEN] = {0};
 
     rc = _utils_parse_url(url, host, path);
-    if (rc != SUCCESS) {
+    if (rc != SUCCESS_RET) {
         return rc;
     }
 
     rc = utils_net_init(&client->net, host, port, ca_crt);
-    if (rc != SUCCESS) {
+    if (rc != SUCCESS_RET) {
         return rc;
     }
 
     rc = _http_connect(client);
-    if (rc != SUCCESS) {
+    if (rc != SUCCESS_RET) {
         LOG_ERROR("_http_connect error, rc = %d", rc);
         http_client_close(client);
     } else {
@@ -498,19 +498,19 @@ int http_client_common(http_client_t *client, const char *url, int port, const c
 
     if (client->net.handle == 0) {
         rc = http_client_connect(client, url, port, ca_crt);
-        if (rc != SUCCESS) {
+        if (rc != SUCCESS_RET) {
             return rc;
         }
     }
 
     rc = _http_send_request(client, url, method, client_data);
-    if (rc != SUCCESS) {
+    if (rc != SUCCESS_RET) {
         LOG_ERROR("http_send_request error, rc = %d", rc);
         http_client_close(client);
         return rc;
     }
 
-    return SUCCESS;
+    return SUCCESS_RET;
 }
 
 int http_client_recv_data(http_client_t *client, uint32_t timeout_ms, http_client_data_t *client_data) {
@@ -529,7 +529,7 @@ int http_client_recv_data(http_client_t *client, uint32_t timeout_ms, http_clien
             return rc;
         }
     }
-    return SUCCESS;
+    return SUCCESS_RET;
 }
 
 void http_client_close(http_client_t *client) {
@@ -567,7 +567,7 @@ void http_client_file_md5(char* file_path, char *output)
     fclose(fp);
     HAL_Free(buffer);
 }
-
+#endif
 
 #ifdef __cplusplus
 }

@@ -112,7 +112,7 @@ TEST_F(HTTPClientTests, HTTPUploadFile) {
     memset(authorization, 0, 1024);
     char *put_url = (char *)malloc(1024);
     memset(put_url, 0, 1024);
-    int ret = SUCCESS;
+    int ret = SUCCESS_RET;
 
     http_client_file_md5(file_path, md5);
     HAL_Printf("MD5:%s\n", md5);
@@ -122,10 +122,10 @@ TEST_F(HTTPClientTests, HTTPUploadFile) {
     const char *DeviceSecret = "wi9c195t7vo3xt1e";
     
     ret = IOT_GET_URL_AND_AUTH(ProductSN, DeviceSN, DeviceSecret, file_path, md5, authorization, put_url);
-    ASSERT_TRUE(SUCCESS == ret);
+    ASSERT_TRUE(SUCCESS_RET == ret);
 
     ret = IOT_UPLOAD_FILE(file_path, md5, authorization, put_url);
-    ASSERT_TRUE(SUCCESS == ret);  
+    ASSERT_TRUE(SUCCESS_RET == ret);  
     HAL_Free(authorization);
     HAL_Free(put_url);
 }

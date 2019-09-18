@@ -66,7 +66,7 @@ static int _ota_mqtt_gen_topic_name(char *buf, size_t buf_len, const char *ota_t
         FUNC_EXIT_RC(ERR_OTA_GENERAL_FAILURE);
     }
 
-    FUNC_EXIT_RC(SUCCESS);
+    FUNC_EXIT_RC(SUCCESS_RET);
 }
 
 static int _ota_mqtt_publish(OTA_MQTT_Struct_t *handle, const char *topic_type, int qos, const char *msg)
@@ -173,7 +173,7 @@ int osc_deinit(void *handle)
         HAL_Free(handle);
     }
 
-    FUNC_EXIT_RC(SUCCESS);
+    FUNC_EXIT_RC(SUCCESS_RET);
 }
 
 /* report progress of OTA */

@@ -45,18 +45,18 @@ void *IOT_DM_Init(const char *product_sn, const char *device_sn, void *ch_signal
 
 int IOT_DM_Destroy(void *handle)
 {
-    POINTER_VALID_CHECK(handle, FAILURE);
+    POINTER_VALID_CHECK(handle, NULL);
 
     DM_Struct_t *h_dm = (DM_Struct_t*) handle;
 
     dsc_deinit(h_dm->ch_signal);
     HAL_Free(h_dm);
-    return SUCCESS;
+    return SUCCESS_RET;
 }
 
 int IOT_DM_Property_Report(void *handle, DM_Type type, int request_id, const char *payload)
 {
-    POINTER_VALID_CHECK(handle, FAILURE);
+    POINTER_VALID_CHECK(handle, NULL);
 
     DM_Struct_t *h_dm = (DM_Struct_t*) handle;
 
@@ -65,7 +65,7 @@ int IOT_DM_Property_Report(void *handle, DM_Type type, int request_id, const cha
 
 int IOT_DM_TriggerEvent(void *handle, int request_id, const char *identifier, const char *payload)
 {
-    POINTER_VALID_CHECK(handle, FAILURE);
+    POINTER_VALID_CHECK(handle, NULL);
 
     DM_Struct_t *h_dm = (DM_Struct_t*) handle;
 
@@ -74,7 +74,7 @@ int IOT_DM_TriggerEvent(void *handle, int request_id, const char *identifier, co
 
 int IOT_DM_Yield(void *handle, uint32_t timeout_ms)
 {
-    POINTER_VALID_CHECK(handle, FAILURE);
+    POINTER_VALID_CHECK(handle, NULL);
 
     DM_Struct_t *h_dm = (DM_Struct_t*) handle;
 

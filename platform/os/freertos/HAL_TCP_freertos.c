@@ -13,60 +13,11 @@
 * permissions and limitations under the License.
 */
 
-// Based on qcloud-iot-sdk-embedded-c
-/*
- * Tencent is pleased to support the open source community by making IoT Hub available.
- * Copyright (C) 2016 THL A29 Limited, a Tencent company. All rights reserved.
-
- * Licensed under the MIT License (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://opensource.org/licenses/MIT
-
- * Unless required by applicable law or agreed to in writing, software distributed under the License is
- * distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
- * either express or implied. See the License for the specific language governing permissions and
- * limitations under the License.
- *
- */
-
 #include <stdio.h>
 #include <string.h>
-#include <errno.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/time.h>
-#include <signal.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <netinet/tcp.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <netdb.h>
 
-#include "uiot_import.h"
-
-static uint64_t _linux_get_time_ms(void) {
-    struct timeval tv = {0};
-    uint64_t time_ms;
-
-    gettimeofday(&tv, NULL);
-
-    time_ms = tv.tv_sec * 1000 + tv.tv_usec / 1000;
-
-    return time_ms;
-}
-
-static uint64_t _linux_time_left(uint64_t t_end, uint64_t t_now) {
-    uint64_t t_left;
-
-    if (t_end > t_now) {
-        t_left = t_end - t_now;
-    } else {
-        t_left = 0;
-    }
-
-    return t_left;
-}
+#include "netdb.h"
+#include "sockets.h"
 
 uintptr_t HAL_TCP_Connect(_IN_ const char *host, _IN_ uint16_t port) {
     struct addrinfo hints;
@@ -76,16 +27,15 @@ uintptr_t HAL_TCP_Connect(_IN_ const char *host, _IN_ uint16_t port) {
     int rc = 0;
     char service[6];
 
-    memset(&hints, 0, sizeof(hints));
-
     printf("establish tcp connection with server(host='%s', port=[%u])\n", host, port);
 
     hints.ai_family = AF_INET; /* only IPv4 */
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_protocol = IPPROTO_TCP;
+    hints.ai_flags = AI_PASSIVE;    
     sprintf(service, "%u", port);
 
-    if ((rc = getaddrinfo(host, service, &hints, &addrInfoList)) != 0) {
+    if ((rc = lwip_getaddrinfo(host, service, &hints, &addrInfoList)) != 0) {
         printf("getaddrinfo error(%d), host = '%s', port = [%d]\n", rc, host, port);
         return (uintptr_t) (-1);
     }
@@ -97,14 +47,14 @@ uintptr_t HAL_TCP_Connect(_IN_ const char *host, _IN_ uint16_t port) {
             continue;
         }
 
-        fd = socket(cur->ai_family, cur->ai_socktype, cur->ai_protocol);
+        fd = lwip_socket(cur->ai_family, cur->ai_socktype, cur->ai_protocol);
         if (fd < 0) {
             printf("create socket error\n");
             rc = -1;
             continue;
         }
 
-        if (connect(fd, cur->ai_addr, cur->ai_addrlen) == 0) {
+        if (lwip_connect(fd, cur->ai_addr, cur->ai_addrlen) == 0) {
             rc = fd;
             break;
         }
@@ -119,10 +69,7 @@ uintptr_t HAL_TCP_Connect(_IN_ const char *host, _IN_ uint16_t port) {
     } else {
         printf("success to establish tcp, fd=%d\n", rc);
     }
-    freeaddrinfo(addrInfoList);
-
-    //忽略SIGPIPE，防止在网络异常时进程退出
-    signal(SIGPIPE, SIG_IGN);
+    lwip_freeaddrinfo(addrInfoList);
 
     return (uintptr_t) rc;
 }
@@ -132,13 +79,13 @@ int32_t HAL_TCP_Disconnect(_IN_ uintptr_t fd) {
     int rc;
 
     /* Shutdown both send and receive operations. */
-    rc = shutdown((int) fd, 2);
+    rc = lwip_shutdown((int) fd, 2);
     if (0 != rc) {
         printf("shutdown error\n");
         return FAILURE_RET;
     }
 
-    rc = close((int) fd);
+    rc = lwip_close((int) fd);
     if (0 != rc) {
         printf("close socket error\n");
         return FAILURE_RET;
@@ -151,11 +98,10 @@ int32_t HAL_TCP_Disconnect(_IN_ uintptr_t fd) {
 int32_t HAL_TCP_Write(_IN_ uintptr_t fd, _IN_ unsigned char *buf, _IN_ size_t len, _IN_ uint32_t timeout_ms) {
     int ret,tcp_fd;
     size_t len_sent;
-    uint64_t t_end;
-    fd_set sets;
     IoT_Error_t net_err = SUCCESS_RET;
+    fd_set sets;
+    struct timeval tv;
 
-    t_end = _linux_get_time_ms() + timeout_ms;
     len_sent = 0;
     ret = 1; /* send one time if timeout_ms is value 0 */
 
@@ -165,42 +111,36 @@ int32_t HAL_TCP_Write(_IN_ uintptr_t fd, _IN_ unsigned char *buf, _IN_ size_t le
     tcp_fd = (int)fd;
 
     do {
-        uint64_t t_left = _linux_time_left(t_end, _linux_get_time_ms());
-
-        if (0 != t_left) {
-            struct timeval timeout;
-
-            FD_ZERO(&sets);
-            FD_SET(tcp_fd, &sets);
-
-            timeout.tv_sec = t_left / 1000;
-            timeout.tv_usec = (t_left % 1000) * 1000;
-
-            ret = select(tcp_fd + 1, NULL, &sets, NULL, &timeout);
-            if (ret > 0) {
-                if (0 == FD_ISSET(tcp_fd, &sets)) {
-                    printf("Should NOT arrive\n");
-                    /* If timeout in next loop, it will not sent any data */
-                    ret = 0;
-                    continue;
-                }
-            } else if (0 == ret) {
-                printf("select-write timeout %d\n", tcp_fd);
-                break;
-            } else {
-                if (EINTR == errno) {
-                    printf("EINTR be caught\n");
-                    continue;
-                }
-
-                printf("select-write fail, ret = select() = %d\n", ret);
-                net_err = ERR_TCP_WRITE_FAILED;
-                break;
+        FD_ZERO(&sets);
+        FD_SET(tcp_fd, &sets);
+    
+        tv.tv_sec = 0;
+        tv.tv_usec = timeout_ms;
+        ret = select(tcp_fd + 1, NULL, &sets, NULL, &tv);
+        if (ret > 0) {
+            if (0 == FD_ISSET(tcp_fd, &sets)) {
+                printf("Should NOT arrive\n");
+                /* If timeout in next loop, it will not sent any data */
+                ret = 0;
+                continue;
             }
+        } else if (0 == ret) {
+            printf("select-write timeout %d\n", tcp_fd);
+            break;
+        } else {
+            if (EINTR == errno) {
+                printf("EINTR be caught\n");
+                continue;
+            }
+
+            printf("select-write fail, ret = select() = %d\n", ret);
+            net_err = ERR_TCP_WRITE_FAILED;
+            break;
         }
+        
 
         if (ret > 0) {
-            ret = send(tcp_fd, buf + len_sent, len - len_sent, 0);
+            ret = lwip_send(tcp_fd, buf + len_sent, len - len_sent, 0);
             if (ret > 0) {
                 len_sent += ret;
             } else if (0 == ret) {
@@ -216,7 +156,7 @@ int32_t HAL_TCP_Write(_IN_ uintptr_t fd, _IN_ unsigned char *buf, _IN_ size_t le
                 break;
             }
         }
-    } while (!net_err && (len_sent < len) && (_linux_time_left(t_end, _linux_get_time_ms()) > 0));
+    } while (!net_err && (len_sent < len));
 
     return net_err != SUCCESS_RET ? net_err : len_sent;
 }
@@ -226,11 +166,9 @@ int32_t HAL_TCP_Read(_IN_ uintptr_t fd, _OU_ unsigned char *buf, _IN_ size_t len
     int tcp_fd;
     IoT_Error_t err_code;
     size_t len_recv;
-    uint64_t t_end;
     fd_set sets;
-    struct timeval timeout;
+    struct timeval tv;
 
-    t_end = _linux_get_time_ms() + timeout_ms;
     len_recv = 0;
     err_code = SUCCESS_RET;
 
@@ -240,19 +178,14 @@ int32_t HAL_TCP_Read(_IN_ uintptr_t fd, _OU_ unsigned char *buf, _IN_ size_t len
     tcp_fd = (int)fd;
 
     do {
-        uint64_t t_left = _linux_time_left(t_end, _linux_get_time_ms());
-        if (0 == t_left) {
-            break;
-        }
         FD_ZERO(&sets);
         FD_SET(tcp_fd, &sets);
 
-        timeout.tv_sec = t_left / 1000;
-        timeout.tv_usec = (t_left % 1000) * 1000;
-
-        int ret = select(tcp_fd + 1, &sets, NULL, NULL, &timeout);
+        tv.tv_sec = 0;
+        tv.tv_usec = timeout_ms;
+        int ret = lwip_select(tcp_fd + 1, &sets, NULL, NULL, &tv);
         if (ret > 0) {
-            ret = recv(tcp_fd, buf + len_recv, len - len_recv, 0);
+            ret = lwip_recv(tcp_fd, buf + len_recv, len - len_recv, 0);
             if (ret > 0) {
                 len_recv += ret;
             } else if (0 == ret) {

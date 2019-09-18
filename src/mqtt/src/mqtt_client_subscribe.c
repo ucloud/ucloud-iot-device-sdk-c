@@ -84,7 +84,7 @@ static int _serialize_subscribe_packet(unsigned char *buf, size_t buf_len, uint8
     }
     // 初始化报文头部
     ret = mqtt_init_packet_header(&header, SUBSCRIBE, QOS1, dup, 0);
-    if (SUCCESS != ret) {
+    if (SUCCESS_RET != ret) {
         return ret;
     }
     // 写报文固定头部第一个字节
@@ -101,7 +101,7 @@ static int _serialize_subscribe_packet(unsigned char *buf, size_t buf_len, uint8
 
     *serialized_len = (uint32_t) (ptr - buf);
 
-    return SUCCESS;
+    return SUCCESS_RET;
 }
 
 int uiot_mqtt_subscribe(UIoT_Client *pClient, char *topicFilter, SubscribeParams *pParams) {
@@ -135,7 +135,7 @@ int uiot_mqtt_subscribe(UIoT_Client *pClient, char *topicFilter, SubscribeParams
     char *topic_filter_stored = HAL_Malloc(topicLen + 1);
     if (topic_filter_stored == NULL) {
         LOG_ERROR("malloc failed");
-        return FAILURE;
+        return FAILURE_RET;
     }
     
     strcpy(topic_filter_stored, topicFilter);
@@ -147,11 +147,11 @@ int uiot_mqtt_subscribe(UIoT_Client *pClient, char *topicFilter, SubscribeParams
     HAL_MutexLock(pClient->lock_write_buf);
     // 序列化SUBSCRIBE报文
     packet_id = get_next_packet_id(pClient);
-    LOG_DEBUG("topicName=%s|packet_id=%d|Userdata=%s", topic_filter_stored, packet_id, (char *)pParams->user_data);
+    LOG_DEBUG("topicName=%s|packet_id=%d|Userdata=%s\n", topic_filter_stored, packet_id, (char *)pParams->user_data);
 
     ret = _serialize_subscribe_packet(pClient->write_buf, pClient->write_buf_size, 0, packet_id, 1, &topic_filter_stored,
                                      &pParams->qos, &len);
-    if (SUCCESS != ret) {
+    if (SUCCESS_RET != ret) {
     	HAL_MutexUnlock(pClient->lock_write_buf);
     	HAL_Free(topic_filter_stored);
         return ret;
@@ -165,7 +165,7 @@ int uiot_mqtt_subscribe(UIoT_Client *pClient, char *topicFilter, SubscribeParams
     sub_handle.message_handler_data = pParams->user_data;
 
     ret = push_sub_info_to(pClient, len, (unsigned int)packet_id, SUBSCRIBE, &sub_handle, &node);
-    if (SUCCESS != ret) {
+    if (SUCCESS_RET != ret) {
         LOG_ERROR("push publish into to pubInfolist failed!");
         HAL_MutexUnlock(pClient->lock_write_buf);
         HAL_Free(topic_filter_stored);
@@ -174,7 +174,7 @@ int uiot_mqtt_subscribe(UIoT_Client *pClient, char *topicFilter, SubscribeParams
     
     // 发送SUBSCRIBE报文
     ret = send_mqtt_packet(pClient, len, &timer);
-    if (SUCCESS != ret) {
+    if (SUCCESS_RET != ret) {
         HAL_MutexLock(pClient->lock_list_sub);
         list_remove(pClient->list_sub_wait_ack, node);
         HAL_MutexUnlock(pClient->lock_list_sub);
@@ -218,7 +218,7 @@ int uiot_mqtt_resubscribe(UIoT_Client *pClient) {
         }
     }
 
-    return SUCCESS;
+    return SUCCESS_RET;
 }
 
 #ifdef __cplusplus

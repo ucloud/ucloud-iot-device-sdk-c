@@ -169,19 +169,19 @@ static int _setup_connect_init_params(MQTTInitParams* initParams)
     initParams->event_handler.context = NULL;
 
     ret = HAL_SetProductSN(initParams->product_sn);  
-    if(SUCCESS != ret)
+    if(SUCCESS_RET != ret)
     {
         HAL_Printf("set ProductSN fail:%d\n", ret);
         return ret;
     }
     ret = HAL_SetDeviceSN(initParams->device_sn);
-    if(SUCCESS != ret)
+    if(SUCCESS_RET != ret)
     {
         HAL_Printf("set DeviceSN fail:%d\n", ret);
         return ret;
     }
     ret = HAL_SetDeviceSecret(initParams->device_secret);
-    if(SUCCESS != ret)
+    if(SUCCESS_RET != ret)
     {
         HAL_Printf("set DeviceSecret fail:%d\n", ret);
         return ret;
@@ -195,7 +195,7 @@ TEST_F(MqttTests, IOT_MQTT_test) {
     int ret = 0;
     MQTTInitParams init_params = DEFAULT_MQTT_INIT_PARAMS;
     ret = _setup_connect_init_params(&init_params);
-    ASSERT_TRUE(ret == SUCCESS);
+    ASSERT_TRUE(ret == SUCCESS_RET);
     
     void *client = IOT_MQTT_Construct(&init_params);
     ASSERT_TRUE(client != NULL);
@@ -223,6 +223,6 @@ TEST_F(MqttTests, IOT_MQTT_test) {
     ASSERT_TRUE(true == IOT_MQTT_IsConnected(client));
     
     ret = IOT_MQTT_Destroy(&client);
-    ASSERT_TRUE(SUCCESS == ret);
+    ASSERT_TRUE(SUCCESS_RET == ret);
 }
 

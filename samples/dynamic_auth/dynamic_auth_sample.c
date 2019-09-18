@@ -110,7 +110,7 @@ static int _setup_connect_init_params(MQTTInitParams* initParams)
 	initParams->event_handler.h_fp = event_handler;
 	initParams->event_handler.context = NULL;
 
-    return SUCCESS;
+    return SUCCESS_RET;
 }
 
 int main()
@@ -118,17 +118,17 @@ int main()
     int ret = 0;
     char secret[IOT_DEVICE_SECRET_LEN+1];
     ret = _setup_connect_init_params(&init_params);
-	if (ret != SUCCESS) {
+	if (ret != SUCCESS_RET) {
 		return ret;
 	}
     
     ret = IOT_MQTT_Dynamic_Register(&init_params);
-	if (ret != SUCCESS) {
+	if (ret != SUCCESS_RET) {
 		return ret;
 	}
     
     ret = HAL_GetDeviceSecret(secret);
-    if(ret != SUCCESS)
+    if(ret != SUCCESS_RET)
     {   
         LOG_ERROR("get device secret fail\n");
         return ret;
@@ -139,7 +139,7 @@ int main()
     if(static_client == NULL)
     {   
         LOG_ERROR("static_client Construct fail\n");
-        return FAILURE;
+        return FAILURE_RET;
     }
     _register_subscribe_topics(static_client);
     IOT_MQTT_Yield(static_client, 200);

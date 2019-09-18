@@ -45,7 +45,6 @@ extern "C" {
 #include "uiot_import.h"
 #include "uiot_export.h"
 #include "utils_list.h"
-#include "lite-utils.h"
 
 
 
@@ -75,9 +74,9 @@ void* IOT_MQTT_Construct(MQTTInitParams *pParams)
 		LOG_ERROR("malloc MQTTClient failed\n");
 		return NULL;
 	}
-
+    
 	int ret = uiot_mqtt_init(mqtt_client, pParams);
-	if (ret != SUCCESS) {
+	if (ret != SUCCESS_RET) {
 		LOG_ERROR("mqtt init failed: %d\n", ret);
         goto end;
     }
@@ -136,7 +135,7 @@ void* IOT_MQTT_Construct(MQTTInitParams *pParams)
 	connect_params.auto_connect_enable = pParams->auto_connect_enable;
 
 	ret = uiot_mqtt_connect(mqtt_client, &connect_params);
-	if (ret != SUCCESS) {
+	if (ret != SUCCESS_RET) {
 		LOG_ERROR("mqtt connect failed: %d\n", ret);
         HAL_Free(connect_params.username);
         HAL_Free(connect_params.client_id);
@@ -236,7 +235,7 @@ static void on_message_callback_get_device_secret(void *pClient, MQTTMessage *me
         return;
     }
 
-    if(SUCCESS != RetCode)
+    if(SUCCESS_RET != RetCode)
     {
         LOG_ERROR("get device secret fail\n");
         return;
@@ -274,7 +273,7 @@ static void on_message_callback_get_device_secret(void *pClient, MQTTMessage *me
 int IOT_MQTT_Dynamic_Register(MQTTInitParams *pParams)
 {   
     POINTER_VALID_CHECK(pParams, ERR_PARAM_INVALID);
-    int ret = SUCCESS;
+    int ret = SUCCESS_RET;
 
     void *client = IOT_MQTT_Construct(pParams);
 
@@ -283,7 +282,7 @@ int IOT_MQTT_Dynamic_Register(MQTTInitParams *pParams)
     {
         LOG_ERROR("topic_name malloc fail\n");
         IOT_MQTT_Destroy(&client);
-        return FAILURE;
+        return FAILURE_RET;
     }
     memset(pub_name, 0x0, MAX_SIZE_OF_CLOUD_TOPIC);
 	HAL_Snprintf(pub_name, MAX_SIZE_OF_CLOUD_TOPIC, DYNAMIC_REGISTER_PUB_TEMPLATE, pParams->product_sn, pParams->device_sn);
@@ -295,7 +294,7 @@ int IOT_MQTT_Dynamic_Register(MQTTInitParams *pParams)
         LOG_ERROR("topic_name malloc fail\n");
         HAL_Free(pub_name);
         IOT_MQTT_Destroy(&client);
-        return FAILURE;
+        return FAILURE_RET;
     }
     memset(sub_name, 0x0, MAX_SIZE_OF_CLOUD_TOPIC);
 	HAL_Snprintf(sub_name, MAX_SIZE_OF_CLOUD_TOPIC, DYNAMIC_REGISTER_SUB_TEMPLATE, pParams->product_sn, pParams->device_sn);
@@ -318,7 +317,7 @@ int IOT_MQTT_Dynamic_Register(MQTTInitParams *pParams)
     IOT_MQTT_Publish(client, pub_name, &pub_params);
 
     ret = IOT_MQTT_Yield(client,200);
-    if (SUCCESS != ret) 
+    if (SUCCESS_RET != ret) 
     {
         LOG_ERROR("get device password fail\n");
         goto end;
@@ -326,7 +325,7 @@ int IOT_MQTT_Dynamic_Register(MQTTInitParams *pParams)
 
     IOT_MQTT_Unsubscribe(client, sub_name);
     ret = IOT_MQTT_Yield(client,200);
-    if (SUCCESS != ret) 
+    if (SUCCESS_RET != ret) 
     {
         LOG_ERROR("unsub %s fail\n", sub_name);
         goto end;
@@ -347,7 +346,7 @@ int uiot_mqtt_init(UIoT_Client *pClient, MQTTInitParams *pParams) {
 
     int size = HAL_Snprintf(s_uiot_host, HOST_STR_LENGTH, "%s", UIOT_MQTT_DIRECT_DOMAIN);
     if (size < 0 || size > HOST_STR_LENGTH - 1) {
-		return FAILURE;
+		return FAILURE_RET;
 	}
 
     if (pParams->command_timeout < MIN_COMMAND_TIMEOUT)
@@ -365,7 +364,7 @@ int uiot_mqtt_init(UIoT_Client *pClient, MQTTInitParams *pParams) {
 
     pClient->lock_generic = HAL_MutexCreate();
     if (NULL == pClient->lock_generic) {
-        return FAILURE;
+        return FAILURE_RET;
     }
 
     set_client_conn_state(pClient, DISCONNECTED);
@@ -404,14 +403,20 @@ int uiot_mqtt_init(UIoT_Client *pClient, MQTTInitParams *pParams) {
     pClient->network_stack.port = s_uiot_port;
 
     // 底层网络操作相关的数据结构初始化
+    #ifdef ENABLE_AT_CMD
+    uiot_mqtt_network_init(&(pClient->network_stack), pClient->network_stack.pHostAddress,
+            pClient->network_stack.port, NULL);
+    #else
     uiot_mqtt_network_init(&(pClient->network_stack), pClient->network_stack.pHostAddress,
             pClient->network_stack.port, pClient->network_stack.ca_crt);
+    #endif
+
 
     // ping定时器以及重连延迟定时器相关初始化
     init_timer(&(pClient->ping_timer));
     init_timer(&(pClient->reconnect_delay_timer));
 
-    return SUCCESS;
+    return SUCCESS_RET;
 
 error:
 	if (pClient->list_pub_wait_ack) {
@@ -439,7 +444,7 @@ error:
 		pClient->lock_write_buf = NULL;
 	}
 
-	return FAILURE;
+	return FAILURE_RET;
 }
 
 int uiot_mqtt_set_autoreconnect(UIoT_Client *pClient, bool value) {
@@ -447,7 +452,7 @@ int uiot_mqtt_set_autoreconnect(UIoT_Client *pClient, bool value) {
 
     pClient->options.auto_connect_enable = (uint8_t) value;
 
-    return SUCCESS;
+    return SUCCESS_RET;
 }
 
 bool uiot_mqtt_is_autoreconnect_enabled(UIoT_Client *pClient) {
@@ -472,7 +477,7 @@ int uiot_mqtt_reset_network_disconnected_count(UIoT_Client *pClient) {
 
     pClient->counter_network_disconnected = 0;
 
-    return SUCCESS;
+    return SUCCESS_RET;
 }
 
 #ifdef __cplusplus

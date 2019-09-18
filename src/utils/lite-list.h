@@ -23,7 +23,10 @@
 extern "C" {
 #endif
 
+#if ( defined(__ARMCC_VERSION) || defined(_MSC_VER) ) && \
+    !defined(inline) && !defined(__cplusplus)
 #define inline __inline
+#endif
 
 typedef struct list_head list_head_t;
 
