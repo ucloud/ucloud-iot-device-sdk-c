@@ -53,8 +53,8 @@ static int _add_property_handle_to_list(UIoT_Shadow *pShadow, DeviceProperty *pP
 int shadow_common_check_property_match(void *pProperty, void *property_handle)
 {
     FUNC_ENTRY;
-    POINTER_VALID_CHECK(property_handle, NULL);
-    POINTER_VALID_CHECK(pProperty, NULL);
+    POINTER_VALID_CHECK(property_handle, ERR_PARAM_INVALID);
+    POINTER_VALID_CHECK(pProperty, ERR_PARAM_INVALID);
 
     int ret = SUCCESS_RET;
     PropertyHandler *property_handle_bak = property_handle;

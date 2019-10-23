@@ -21,7 +21,6 @@ extern "C" {
 #endif
 
 #include <stdint.h>
-#include <sys/types.h>
 
 #include "uiot_export_ota.h"
 

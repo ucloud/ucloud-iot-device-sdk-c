@@ -25,7 +25,9 @@
 #include "uiot_import.h"
 
 sRingbuff g_ring_buff;	
+sRingbuff g_ring_tcp_buff[3];	
 static at_client sg_at_client;
+int last_tcp_link = 0;
 
 /**
  * Create response object.
@@ -57,7 +59,7 @@ at_response_t at_create_resp(uint32_t buf_size, uint32_t line_num, uint32_t time
 		HAL_Free(resp);
 		return NULL;
 	}
-
+    
 	resp->buf_size = buf_size;
 	resp->line_num = line_num;
 	resp->line_counts = 0;
@@ -227,7 +229,7 @@ int at_resp_parse_line_args_by_kw(at_response_t resp, const char *keyword, const
 
 static const at_custom *get_urc_obj(at_client_t client)
 {
-	int i, prefix_len, suffix_len;
+	int i;
 	int buf_sz;
 	char *buffer = NULL;
     const char *cmd = NULL;
@@ -255,6 +257,102 @@ static const at_custom *get_urc_obj(at_client_t client)
 	return NULL;
 }
 
+static void client_parser(void *userContex)
+{
+	int resp_buf_len = 0;
+	const at_custom *urc = NULL;
+	int line_counts = 0;
+	at_client_t client = at_client_get();
+
+	while(1)
+	{
+		if (at_recv_readline(client) > 0)
+		{
+
+#ifdef 	AT_PRINT_RAW_CMD	
+                const char *cmd = NULL;
+                int cmdsize = 0;
+                cmd = at_get_last_cmd(&cmdsize);
+                LOG_DEBUG("last_cmd:(%.*s), readline:%s",  cmdsize, cmd, client->recv_buffer);
+#endif			
+                if ((urc = get_urc_obj(client)) != NULL)
+                {
+                    /* current receive is request, try to execute related operations */
+                    if (urc->func != NULL)
+                    {
+                    	if(SUCCESS_RET == urc->func(client->recv_buffer, client->cur_recv_len))
+                        {
+                            client->resp_status = AT_RESP_OK;
+                        }   
+                        else
+                        {
+                            client->resp_status = AT_RESP_ERROR;
+                        }
+                    }
+#ifdef SINGLE_TASK
+                    client->resp_notice = true;
+                    break;
+#endif                    
+                }
+                else if (client->resp != NULL)
+                {
+                    /* current receive is response */
+                    client->recv_buffer[client->cur_recv_len - 1] = '\0';
+                    if (resp_buf_len + client->cur_recv_len < client->resp->buf_size)
+                    {
+                    	/* copy response lines, separated by '\0' */
+                    	memcpy(client->resp->buf + resp_buf_len, client->recv_buffer, client->cur_recv_len);
+                    	resp_buf_len += client->cur_recv_len;
+
+                    	line_counts++;					
+                    }
+                    else
+                    {
+                    	client->resp_status = AT_RESP_BUFF_FULL;
+                    	LOG_ERROR("Read response buffer failed. The Response buffer size is out of buffer size(%d)!", client->resp->buf_size);
+                    }
+                    /* check response result */
+                    if ((memcmp(client->recv_buffer, AT_RESP_END_OK, strlen(AT_RESP_END_OK)) == 0)
+                    		&& client->resp->line_num == 0 && client->resp->custom_flag == false)
+                    {
+                    	/* get the end data by response result, return response state END_OK. */
+                    	client->resp_status = AT_RESP_OK;
+                    }
+                    else if (strstr(client->recv_buffer, AT_RESP_END_ERROR)
+                    		|| (memcmp(client->recv_buffer, AT_RESP_END_FAIL, strlen(AT_RESP_END_FAIL)) == 0))
+                    {
+                    	client->resp_status = AT_RESP_ERROR;
+                    }
+                    else if ((strstr(client->recv_buffer, AT_RESP_END_SEND1)) || (strstr(client->recv_buffer, AT_RESP_END_SEND2)))
+                    {
+                    	client->resp_status = AT_RESP_OK;
+                    }        
+                    else if (line_counts == client->resp->line_num && client->resp->line_num)
+                    {
+                    	/* get the end data by response line, return response state END_OK.*/
+                    	client->resp_status = AT_RESP_OK;
+                    }
+                    else
+                    {
+                    	continue;
+                    }
+                    client->resp->line_counts = line_counts;
+
+                    client->resp = NULL;
+                    client->resp_notice = true;
+                    resp_buf_len = 0;
+                    line_counts = 0;
+#ifdef SINGLE_TASK
+                    break;
+#endif;
+                }
+            }		
+	}
+#ifdef SINGLE_TASK
+    return;
+#endif;
+}
+
 /**
  * Send commands to AT server and wait response.
  *
@@ -270,17 +368,15 @@ static const at_custom *get_urc_obj(at_client_t client)
  *		  -1 : response status error
  *		  -2 : wait timeout
  */
-IoT_Error_t at_obj_exec_cmd(at_response_t resp, bool custom_flag, at_data_type data_type, size_t data_size, const char *cmd_expr, ...)
+IoT_Error_t at_obj_exec_cmd(at_response_t resp, at_data_type data_type, size_t data_size, const char *cmd_expr, ...)
 {
-	POINTER_VALID_CHECK(cmd_expr, NULL);
+	POINTER_VALID_CHECK(cmd_expr, ERR_PARAM_INVALID);
 
 	va_list args;
 	int cmd_size = 0;
 	Timer timer;
 	IoT_Error_t result = SUCCESS_RET;
 	const char *cmd = NULL;
-	int resp_buf_len = 0;
-	const at_custom *urc;
 	int line_counts = 0;
 	at_client_t client = at_client_get();
 	
@@ -306,72 +402,9 @@ IoT_Error_t at_obj_exec_cmd(at_response_t resp, bool custom_flag, at_data_type d
 		HAL_Timer_Countdown_ms(&timer, resp->timeout);
 		do
 		{
-            if (at_recv_readline(client) > 0)
-            {
-
-#ifdef 	AT_PRINT_RAW_CMD	
-                const char *cmd = NULL;
-                int cmdsize = 0;
-                cmd = at_get_last_cmd(&cmdsize);
-                LOG_DEBUG("last_cmd:(%.*s), readline:%s",  cmdsize, cmd, client->recv_buffer);
-#endif			
-                if ((urc = get_urc_obj(client)) != NULL)
-                {
-                    /* current receive is request, try to execute related operations */
-                    if (urc->func != NULL)
-                    {
-                    	urc->func(client->recv_buffer, client->cur_recv_len);
-                    }
-                    break;
-                }
-                else if (client->resp != NULL)
-                {
-                    /* current receive is response */
-                    client->recv_buffer[client->cur_recv_len - 1] = '\0';
-                    if (resp_buf_len + client->cur_recv_len < client->resp->buf_size)
-                    {
-                    	/* copy response lines, separated by '\0' */
-                    	memcpy(client->resp->buf + resp_buf_len, client->recv_buffer, client->cur_recv_len);
-                    	resp_buf_len += client->cur_recv_len;
-
-                    	line_counts++;					
-                    }
-                    else
-                    {
-                    	client->resp_status = AT_RESP_BUFF_FULL;
-                    	LOG_ERROR("Read response buffer failed. The Response buffer size is out of buffer size(%d)!", client->resp->buf_size);
-                    }
-                    /* check response result */
-                    if (((memcmp(client->recv_buffer, AT_RESP_END_OK, strlen(AT_RESP_END_OK)) == 0)
-                    		|| (strstr(client->recv_buffer, AT_RESP_END_OK)))
-                    		&& client->resp->line_num == 0 && false == custom_flag)
-                    {
-                    	/* get the end data by response result, return response state END_OK. */
-                    	client->resp_status = AT_RESP_OK;
-                    }
-                    else if (strstr(client->recv_buffer, AT_RESP_END_ERROR)
-                    		|| (memcmp(client->recv_buffer, AT_RESP_END_FAIL, strlen(AT_RESP_END_FAIL)) == 0))
-                    {
-                    	client->resp_status = AT_RESP_ERROR;
-                    }
-                    else if (line_counts == client->resp->line_num && client->resp->line_num)
-                    {
-                    	/* get the end data by response line, return response state END_OK.*/
-                    	client->resp_status = AT_RESP_OK;
-                    }
-                    else
-                    {
-                    	continue;
-                    }
-                    client->resp->line_counts = line_counts;
-
-                    client->resp = NULL;
-                    client->resp_notice = true;
-                    resp_buf_len = 0;
-                    line_counts = 0;
-                }
-            }
-          
+#ifdef SINGLE_TASK
+            client_parser(NULL);
+#endif          
 			if(client->resp_notice)
 			{
 				if (client->resp_status != AT_RESP_OK)
@@ -402,75 +435,7 @@ __exit:
 	return result;
 }
 
-/**
- * Waiting for connection to external devices.
- *
- * @param client current AT client object
- * @param timeout millisecond for timeout
- *
- * @return 0 : success
- *		  -2 : timeout
- *		  -5 : no memory
- */
-IoT_Error_t at_client_wait_connect(uint32_t timeout)
-{
-	IoT_Error_t result = SUCCESS_RET;
-	at_response_t resp = NULL;
-	at_client_t client = at_client_get();
-	Timer timer;
-
-
-	if (client == NULL)
-	{
-		LOG_ERROR("input AT Client object is NULL, please create or get AT Client object!");
-		return FAILURE_RET;
-	}
-
-	resp = at_create_resp(16, 0, CMD_TIMEOUT_MS);
-	if (resp == NULL)
-	{
-		LOG_ERROR("No memory for response object!");
-		return FAILURE_RET;
-	}
-
-	HAL_MutexLock(client->lock);
-
-	client->resp = resp;
-	resp->line_counts = 0;
-
-	HAL_Timer_Countdown_ms(&timer, timeout);
-
-
-
-	/* Check whether it is already connected */	
-	do
-	{		
-		HAL_AT_Write("AT\r\n", 4);	
-		//LOG_DEBUG("AT cmd send");
-
-		HAL_SleepMs(CMD_RESPONSE_INTERVAL_MS);
-
-		if (client->resp_notice)
-			break;
-		else
-			continue;
-	}while (!HAL_Timer_Expired(&timer));
-
-	if(HAL_Timer_Expired(&timer))
-	{
-		LOG_DEBUG("read ring buff timeout");
-		result = FAILURE_RET;
-	}
-
-	at_delete_resp(resp);
-
-	client->resp = NULL;
-	
-	HAL_MutexUnlock(client->lock);
-	return result;
-}
-
-static IoT_Error_t at_client_getchar(at_client_t client, char *pch, uint32_t timeout)
+IoT_Error_t at_client_getchar(at_client_t client, char *pch, uint32_t timeout)
 {
 	IoT_Error_t ret = SUCCESS_RET;
 	Timer timer;
@@ -479,7 +444,8 @@ static IoT_Error_t at_client_getchar(at_client_t client, char *pch, uint32_t tim
 	do   
     {
     	if(0 == ring_buff_pop_data(client->pRingBuff, (uint8_t *)pch, 1))
-    	{
+    	{    	
+            HAL_SleepMs(10);
 			continue;
 		}
 		else
@@ -578,8 +544,6 @@ void at_set_end_sign(char ch)
  */
 void at_set_urc_table(at_client_t client, const at_custom_t urc_table, uint32_t table_sz)
 {
-	int idx;
-
 	if (client == NULL)
 	{
 		LOG_ERROR("input AT Client object is NULL, please create or get AT Client object!");
@@ -596,7 +560,7 @@ at_client_t at_client_get(void)
     return &sg_at_client;
 }
 
-static int at_recv_readline(at_client_t client)
+int at_recv_readline(at_client_t client)
 {
 	int read_len = 0;
 	char ch = 0, last_ch = 0;
@@ -647,8 +611,39 @@ static int at_recv_readline(at_client_t client)
 
 	return read_len;
 }
-char ringBuff[CLINET_BUFF_LEN] = {0};
 
+char ringBuff[RING_BUFF_LEN] = {0};
+char ringTcp0Buff[RING_BUFF_LEN] = {0};
+char ringTcp1Buff[RING_BUFF_LEN] = {0};
+char recvBuff_test[RING_BUFF_LEN] = {0};
+
+IoT_Error_t at_client_tcp_init(at_client_t client, int link_num)
+{   
+
+    if(link_num == 0)
+    {
+    	ring_buff_init(&(g_ring_tcp_buff[link_num]), ringTcp0Buff,  RING_BUFF_LEN);
+    	client->pRingTcpBuff[link_num] = &(g_ring_tcp_buff[link_num]);
+    }
+    else if(link_num == 1)
+    {
+    	ring_buff_init(&(g_ring_tcp_buff[link_num]), ringTcp1Buff,  RING_BUFF_LEN);
+        client->pRingTcpBuff[link_num] = &(g_ring_tcp_buff[link_num]);
+    }
+
+    /*
+	char * ringBuff = HAL_Malloc(RING_BUFF_LEN);
+	if(NULL == ringBuff)
+	{
+		LOG_ERROR("malloc ringbuff err");
+		return FAILURE_RET;
+	}
+
+    ring_buff_init(&(g_ring_tcp_buff[link_num]), ringBuff,  RING_BUFF_LEN);
+    client->pRingTcpBuff[link_num] = &(g_ring_tcp_buff[link_num]);
+    */
+    return SUCCESS_RET;
+}
 /* initialize the client parameters */
 IoT_Error_t at_client_para_init(at_client_t client)
 {
@@ -672,16 +667,24 @@ IoT_Error_t at_client_para_init(at_client_t client)
 	*/
 	ring_buff_init(&g_ring_buff, ringBuff,  RING_BUFF_LEN);
 
+    /*
 	char * recvBuff = HAL_Malloc(CLINET_BUFF_LEN);
 	if(NULL == recvBuff)
 	{
 		LOG_ERROR("malloc recvbuff err");
 		return FAILURE_RET;
 	}
-	client->recv_buffer = recvBuff;
+	*/
+	client->recv_buffer = recvBuff_test;
 
 	client->pRingBuff = &g_ring_buff;
-	client->recv_bufsz = CLINET_BUFF_LEN;	
+
+    for(int loop = 0; loop < 3; loop++)
+    {
+        client->pRingTcpBuff[loop] = NULL;
+    }
+    
+	client->recv_bufsz = RING_BUFF_LEN;	
 	client->cur_recv_len = 0;
 
 	client->resp = NULL;
@@ -702,7 +705,7 @@ IoT_Error_t at_client_para_init(at_client_t client)
  */
 IoT_Error_t at_client_init(at_client_t pClient)
 {
-	POINTER_VALID_CHECK(pClient, NULL); 	
+	POINTER_VALID_CHECK(pClient, ERR_PARAM_INVALID); 	
 	IoT_Error_t result;
 	
 	result = at_client_para_init(pClient);

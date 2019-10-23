@@ -45,6 +45,8 @@ int ring_buff_init(sRingbuff* ring_buff, char* buff, uint32_t size );
 int ring_buff_flush(sRingbuff* ring_buff);
 int ring_buff_push_data(sRingbuff* ring_buff, uint8_t *pData, int len);
 int ring_buff_pop_data(sRingbuff* ring_buff, uint8_t *pData, int len);
+bool ring_buff_is_empty(sRingbuff* ring_buff);
+
 #endif // __ringbuff_h__
 
 

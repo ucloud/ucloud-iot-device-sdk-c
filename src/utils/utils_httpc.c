@@ -37,7 +37,6 @@ extern "C" {
 #define HTTP_CLIENT_MAX_URL_LEN       (256)
 #define HTTP_RETRIEVE_MORE_DATA       (1)             /**< More data needs to be retrieved. */
 #define HTTP_CLIENT_CHUNK_SIZE        (1024)
-#ifndef ENABLE_AT_CMD
 static int _utils_parse_url(const char *url, char *host, char *path) {
     char *host_ptr = (char *) strstr(url, "://");
     uint32_t host_len = 0;
@@ -477,7 +476,7 @@ int http_client_connect(http_client_t *client, const char *url, int port, const 
         return rc;
     }
 
-    rc = utils_net_init(&client->net, host, port, ca_crt);
+    rc = utils_net_init(&client->net, host, port, SSL_CA_VERIFY_REQUIRED, ca_crt);
     if (rc != SUCCESS_RET) {
         return rc;
     }
@@ -567,7 +566,6 @@ void http_client_file_md5(char* file_path, char *output)
     fclose(fp);
     HAL_Free(buffer);
 }
-#endif
 
 #ifdef __cplusplus
 }

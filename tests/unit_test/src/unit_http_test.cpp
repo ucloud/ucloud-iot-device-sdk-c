@@ -117,9 +117,9 @@ TEST_F(HTTPClientTests, HTTPUploadFile) {
     http_client_file_md5(file_path, md5);
     HAL_Printf("MD5:%s\n", md5);
 
-    const char *ProductSN = "nvtmx50n2j9nilik";
-    const char *DeviceSN = "yjs2mfkbfuqf07hu";
-    const char *DeviceSecret = "wi9c195t7vo3xt1e";
+    const char *ProductSN = "PRODUCT_SN";
+    const char *DeviceSN = "DEVICE_SN";
+    const char *DeviceSecret = "DEVICE_SECRET";
     
     ret = IOT_GET_URL_AND_AUTH(ProductSN, DeviceSN, DeviceSecret, file_path, md5, authorization, put_url);
     ASSERT_TRUE(SUCCESS_RET == ret);

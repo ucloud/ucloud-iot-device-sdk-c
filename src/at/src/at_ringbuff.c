@@ -26,7 +26,7 @@ int ring_buff_init(sRingbuff* ring_buff, char* buff, uint32_t size )
     ring_buff->writepoint = 0;
 	memset(ring_buff->buffer, 0, ring_buff->size);
 	ring_buff->full = false;
-	
+    
     return RINGBUFF_OK;
 }
 
@@ -36,7 +36,7 @@ int ring_buff_flush(sRingbuff* ring_buff)
     ring_buff->writepoint = 0;
 	memset(ring_buff->buffer, 0, ring_buff->size);
 	ring_buff->full = false;
-	
+    
     return RINGBUFF_OK;
 }
 
@@ -105,4 +105,12 @@ int ring_buff_pop_data(sRingbuff* ring_buff, uint8_t *pData, int len)
 	}
 	
 	return i;
+}
+
+bool ring_buff_is_empty(sRingbuff* ring_buff)
+{
+    if(ring_buff->writepoint == ring_buff->readpoint)
+        return RINGBUFF_OK;
+    else
+        return RINGBUFF_ERR;
 }

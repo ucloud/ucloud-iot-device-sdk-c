@@ -30,15 +30,11 @@
  */
 
 #include <string.h>
-#include <unistd.h>
 
 #include "uiot_export_ota.h"
 #include "uiot_import.h"
-
 #include "ota_internal.h"
-
 #include "ca.h"
-
 #include "utils_httpc.h"
 
 typedef struct {

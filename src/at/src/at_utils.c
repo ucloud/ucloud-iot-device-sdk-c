@@ -72,6 +72,8 @@ const char *at_get_last_cmd(int *cmd_size)
 
 int at_vprintf(at_data_type data_type, size_t data_size, const char *format, va_list args)
 {
+    memset(send_buf, 0, AT_CMD_MAX_LEN);
+
     if(at_command == data_type)
     {
         last_cmd_len = vsnprintf(send_buf, sizeof(send_buf), format, args);
@@ -327,8 +329,8 @@ int at_req_parse_args(const char *req_args, const char *req_expr, ...)
     va_list args;
     int req_args_num = 0;
 
-    POINTER_VALID_CHECK(req_args, 0);
-    POINTER_VALID_CHECK(req_expr, 0);
+    POINTER_VALID_CHECK(req_args, ERR_PARAM_INVALID);
+    POINTER_VALID_CHECK(req_expr, ERR_PARAM_INVALID);
 
     va_start(args, req_expr);
 

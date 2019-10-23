@@ -167,7 +167,7 @@ int _server_certificate_verify(void *hostname, mbedtls_x509_crt *crt, int depth,
     return *flags;
 }
 
-uintptr_t HAL_TLS_Connect(_IN_ const char *host, _IN_ uint16_t port, _IN_ const char *ca_crt,
+uintptr_t HAL_TLS_Connect(_IN_ const char *host, _IN_ uint16_t port, _IN_ uint16_t authmode, _IN_ const char *ca_crt,
                           _IN_ size_t ca_crt_len) {
     int ret = 0;
 
@@ -191,7 +191,7 @@ uintptr_t HAL_TLS_Connect(_IN_ const char *host, _IN_ uint16_t port, _IN_ const 
 
     mbedtls_ssl_conf_verify(&(pDataParams->ssl_conf), _server_certificate_verify, (void *) host);
 
-    mbedtls_ssl_conf_authmode(&(pDataParams->ssl_conf), MBEDTLS_SSL_VERIFY_REQUIRED);
+    mbedtls_ssl_conf_authmode(&(pDataParams->ssl_conf), authmode);
 
     mbedtls_ssl_conf_rng(&(pDataParams->ssl_conf), mbedtls_ctr_drbg_random, &(pDataParams->ctr_drbg));
 

@@ -70,6 +70,7 @@ static int connect_ssl(utils_network_pt pNetwork)
     if (0 != (pNetwork->handle = (intptr_t)HAL_TLS_Connect(
             pNetwork->pHostAddress,
             pNetwork->port,
+            pNetwork->authmode,
             pNetwork->ca_crt,
             pNetwork->ca_crt_len))) {
         return SUCCESS_RET;
@@ -88,36 +89,17 @@ static int at_read_tcp(utils_network_pt pNetwork, unsigned char *buffer, size_t 
         return FAILURE_RET;
     }
 
-    return HAL_AT_Read(pNetwork, buffer, len);
+    return HAL_AT_Read_Tcp(pNetwork, buffer, len);
 }
-
 
 static int at_write_tcp(utils_network_pt pNetwork, unsigned char *buffer, size_t len, uint32_t timeout_ms)
 {
-    int ret = 0;
     if (NULL == pNetwork) {
         LOG_ERROR("network is null");
         return FAILURE_RET;
     }
 
-    at_response_t resp = NULL;
-    
-	resp = at_create_resp(256, 0, CMD_TIMEOUT_MS);
-	if (resp == NULL)
-	{
-		LOG_ERROR("No memory for response object!");
-		return FAILURE_RET;
-	}
-    
-    at_exec_cmd(resp, true, at_command, 0, "AT+CIPSEND=%d\r", len); 
-    HAL_SleepMs(200);
-    ret = at_exec_cmd(resp, false, at_data, len, buffer); 
-    HAL_SleepMs(100);
-
-    if(ret == SUCCESS_RET)
-        return len;
-    else
-        return 0;
+    return HAL_AT_Write_Tcp(pNetwork, buffer, len);
 }
 
 static int at_disconnect_tcp(utils_network_pt pNetwork)
@@ -127,7 +109,7 @@ static int at_disconnect_tcp(utils_network_pt pNetwork)
         return FAILURE_RET;
     }
 
-    return HAL_AT_TCP_Disconnect();
+    return HAL_AT_TCP_Disconnect(pNetwork);
 }
 
 static int at_connect_tcp(utils_network_pt pNetwork)
@@ -264,7 +246,7 @@ int utils_net_connect(utils_network_pt pNetwork)
     return ret;
 }
 
-int utils_net_init(utils_network_pt pNetwork, const char *host, uint16_t port, const char *ca_crt)
+int utils_net_init(utils_network_pt pNetwork, const char *host, uint16_t port, uint16_t authmode, const char *ca_crt)
 {
     if (!pNetwork || !host) {
         LOG_ERROR("parameter error! pNetwork=%p, host = %p", pNetwork, host);
@@ -273,6 +255,7 @@ int utils_net_init(utils_network_pt pNetwork, const char *host, uint16_t port, c
     pNetwork->pHostAddress = host;
     pNetwork->port = port;
 #ifndef ENABLE_AT_CMD
+    pNetwork->authmode = authmode;
     pNetwork->ca_crt = ca_crt;
 
     if (NULL == ca_crt) {
@@ -280,9 +263,9 @@ int utils_net_init(utils_network_pt pNetwork, const char *host, uint16_t port, c
     } else {
         pNetwork->ca_crt_len = strlen(ca_crt);
     }
+#endif 
 
     pNetwork->handle = 0;
-#endif    
     pNetwork->read = utils_net_read;
     pNetwork->write = utils_net_write;
     pNetwork->disconnect = utils_net_disconnect;

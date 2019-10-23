@@ -119,6 +119,7 @@ static void _ota_callback(void *pContext, const char *msg, uint32_t msg_len) {
 do_exit:
     HAL_Free(msg_str);
     HAL_Free(msg_method);
+    return;
 }
 
 
@@ -240,6 +241,8 @@ void *IOT_OTA_Init(const char *product_sn, const char *device_sn, void *ch_signa
         LOG_ERROR("initialize signal channel failed");
         goto do_exit;
     }
+
+    IOT_MQTT_Yield(ch_signal, 200);
 
     h_ota->md5 = ota_lib_md5_init();
     if (NULL == h_ota->md5) {
@@ -531,7 +534,7 @@ int IOT_OTA_Ioctl(void *handle, IOT_OTA_CmdType type, void *buf, size_t buf_len)
                 }
                 return SUCCESS_RET;
             }
-
+            
         default:
             LOG_ERROR("invalid cmd type");
             h_ota->err = ERR_OTA_INVALID_PARAM;

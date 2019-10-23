@@ -119,7 +119,7 @@ void HAL_Printf(_IN_ const char *fmt, ...)
     va_list args;
 
     va_start(args, fmt);
-    vprintf(fmt, args);
+    printf(fmt, args);
     va_end(args);
 
     fflush(stdout);
@@ -150,6 +150,42 @@ void HAL_SleepMs(uint32_t ms)
     vTaskDelay(ms);
 }
 
+IoT_Error_t HAL_GetProductSN(_OU_ char productSN[IOT_PRODUCT_SN_LEN + 1]) {
+#ifdef DEBUG_DEV_INFO_USED
+    int len = strlen(sg_product_sn);
+    memset(productSN, 0x0, IOT_PRODUCT_SN_LEN + 1);
+    strncpy(productSN, sg_product_sn, len);
+    return SUCCESS_RET;
+#else
+    HAL_Printf("HAL_GetProductSN is not implement");
+    return FAILURE_RET;
+#endif
+}
+
+IoT_Error_t HAL_GetProductSecret(_OU_ char productSecret[IOT_PRODUCT_SECRET_LEN + 1]) {
+#ifdef DEBUG_DEV_INFO_USED
+    int len = strlen(sg_product_secret);
+    memset(productSecret, 0x0, IOT_PRODUCT_SECRET_LEN + 1);
+    strncpy(productSecret, sg_product_secret, len);
+    return SUCCESS_RET;
+#else
+    Log_e("HAL_GetProductSecret is not implement");
+    return FAILURE_RET;
+#endif
+}
+
+IoT_Error_t HAL_GetDeviceSN(_OU_ char deviceSN[IOT_DEVICE_SN_LEN + 1]) {
+#ifdef DEBUG_DEV_INFO_USED
+    int len = strlen(sg_device_sn);
+    memset(deviceSN, 0x0, IOT_DEVICE_SN_LEN + 1);
+    strncpy(deviceSN, sg_device_sn, len);
+    return SUCCESS_RET;
+#else
+    HAL_Printf("HAL_GetDeviceSN is not implement");
+    return FAILURE_RET;
+#endif
+}
+
 IoT_Error_t HAL_GetDeviceSecret(_OU_ char deviceSecret[IOT_DEVICE_SECRET_LEN + 1]) {
 #ifdef DEBUG_DEV_INFO_USED
     int len = strlen(sg_device_secret);
@@ -158,6 +194,58 @@ IoT_Error_t HAL_GetDeviceSecret(_OU_ char deviceSecret[IOT_DEVICE_SECRET_LEN + 1
     return SUCCESS_RET;
 #else
     HAL_Printf("HAL_GetDeviceSecret is not implement");
+    return FAILURE_RET;
+#endif
+}
+
+IoT_Error_t HAL_SetProductSN(_IN_ const char *pProductSN) {
+#ifdef DEBUG_DEV_INFO_USED
+    int len = strlen(pProductSN);
+    if (len > IOT_PRODUCT_SN_LEN) {
+        return FAILURE_RET;
+    }
+
+    memset(sg_product_sn, 0x0, IOT_PRODUCT_SN_LEN + 1);
+    strncpy(sg_product_sn, pProductSN, len);
+
+    return SUCCESS_RET;
+#else
+    HAL_Printf("HAL_SetProductSN is not implement");
+    return FAILURE_RET;
+#endif
+}
+
+IoT_Error_t HAL_SetProductSecret(_IN_ const char *pProductSecret) {
+#ifdef DEBUG_DEV_INFO_USED
+    int len = strlen(pProductSecret);
+    if (len > IOT_PRODUCT_SECRET_LEN) {
+        return FAILURE_RET;
+    }
+
+    memset(sg_product_secret, 0x0, IOT_PRODUCT_SECRET_LEN + 1);
+    strncpy(sg_product_secret, pProductSecret, len);
+
+    return SUCCESS_RET;
+#else
+    HAL_Printf("HAL_SetProductSecret is not implement");
+    return FAILURE_RET;
+#endif
+
+}
+
+IoT_Error_t HAL_SetDeviceSN(_IN_ const char *pDeviceSN) {
+#ifdef DEBUG_DEV_INFO_USED
+    int len = strlen(pDeviceSN);
+    if (len > IOT_DEVICE_SN_LEN) {
+        return FAILURE_RET;
+    }
+
+    memset(sg_device_sn, 0x0, IOT_DEVICE_SN_LEN + 1);
+    strncpy(sg_device_sn, pDeviceSN, len);
+
+    return SUCCESS_RET;
+#else
+    HAL_Printf("HAL_SetDeviceSN is not implement");
     return FAILURE_RET;
 #endif
 }
@@ -178,3 +266,4 @@ IoT_Error_t HAL_SetDeviceSecret(_IN_ const char *pDeviceSecret) {
     return FAILURE_RET;
 #endif
 }
+

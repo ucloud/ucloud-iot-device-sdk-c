@@ -45,7 +45,7 @@ extern "C" {
 #include "uiot_import.h"
 #include "uiot_export.h"
 #include "utils_list.h"
-
+#include "utils_net.h"
 
 
 #define HOST_STR_LENGTH 64
@@ -54,7 +54,7 @@ static char s_uiot_host[HOST_STR_LENGTH] = {0};
 #ifdef SUPPORT_TLS
 static int s_uiot_port = 8883;
 #else
-static int s_uiot_port = 1883;
+static int s_uiot_port = 1883; 
 #endif
 
 void* IOT_MQTT_Construct(MQTTInitParams *pParams)
@@ -269,13 +269,18 @@ static void on_message_callback_get_device_secret(void *pClient, MQTTMessage *me
     HAL_Free(Password);    
     return;
 }
-
+extern char ringBuff[];
 int IOT_MQTT_Dynamic_Register(MQTTInitParams *pParams)
 {   
     POINTER_VALID_CHECK(pParams, ERR_PARAM_INVALID);
     int ret = SUCCESS_RET;
 
     void *client = IOT_MQTT_Construct(pParams);
+    if(NULL == client)
+    {
+        LOG_ERROR("mqtt client Dynamic register fail\n");
+        return FAILURE_RET;
+    }
 
     char *pub_name = (char *)HAL_Malloc(MAX_SIZE_OF_CLOUD_TOPIC * sizeof(char));
     if (pub_name == NULL) 
@@ -303,7 +308,14 @@ int IOT_MQTT_Dynamic_Register(MQTTInitParams *pParams)
     sub_params.qos = QOS1;
     sub_params.user_data = (void *)pParams->device_sn;
     sub_params.on_message_handler = on_message_callback_get_device_secret;
-    IOT_MQTT_Subscribe(client, sub_name, &sub_params);
+    ret = IOT_MQTT_Subscribe(client, sub_name, &sub_params);
+    if(ret <= 0)
+    {
+        LOG_ERROR("subscribe %s fail\n",sub_name);
+        goto end;
+    }
+    
+    ret = IOT_MQTT_Yield(client,1000);
 
     /* 向topic发送消息请求回复设备密钥 */
 	char auth_msg[UIOT_MQTT_TX_BUF_LEN];
@@ -316,13 +328,13 @@ int IOT_MQTT_Dynamic_Register(MQTTInitParams *pParams)
     
     IOT_MQTT_Publish(client, pub_name, &pub_params);
 
-    ret = IOT_MQTT_Yield(client,200);
+    ret = IOT_MQTT_Yield(client,5000);
     if (SUCCESS_RET != ret) 
     {
         LOG_ERROR("get device password fail\n");
         goto end;
     }
-
+    
     IOT_MQTT_Unsubscribe(client, sub_name);
     ret = IOT_MQTT_Yield(client,200);
     if (SUCCESS_RET != ret) 
@@ -330,7 +342,7 @@ int IOT_MQTT_Dynamic_Register(MQTTInitParams *pParams)
         LOG_ERROR("unsub %s fail\n", sub_name);
         goto end;
     }
-
+    
 end:
     HAL_Free(pub_name);
     HAL_Free(sub_name);
@@ -396,6 +408,7 @@ int uiot_mqtt_init(UIoT_Client *pClient, MQTTInitParams *pParams) {
 
 #ifdef SUPPORT_TLS
     // TLS连接参数初始化
+    pClient->network_stack.authmode = SSL_CA_VERIFY_NONE;
     pClient->network_stack.ca_crt = iot_ca_get();
     pClient->network_stack.ca_crt_len = strlen(pClient->network_stack.ca_crt);
 #endif
@@ -405,10 +418,10 @@ int uiot_mqtt_init(UIoT_Client *pClient, MQTTInitParams *pParams) {
     // 底层网络操作相关的数据结构初始化
     #ifdef ENABLE_AT_CMD
     uiot_mqtt_network_init(&(pClient->network_stack), pClient->network_stack.pHostAddress,
-            pClient->network_stack.port, NULL);
+            pClient->network_stack.port, pClient->network_stack.authmode, NULL);
     #else
     uiot_mqtt_network_init(&(pClient->network_stack), pClient->network_stack.pHostAddress,
-            pClient->network_stack.port, pClient->network_stack.ca_crt);
+            pClient->network_stack.port, pClient->network_stack.authmode, pClient->network_stack.ca_crt);
     #endif
 
 
