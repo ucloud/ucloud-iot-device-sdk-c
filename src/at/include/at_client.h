@@ -39,6 +39,7 @@ extern "C" {
 #define AT_RESP_END_FAIL               "FAIL"
 #define AT_RESP_END_SEND1              "DATA ACCEPT:"
 #define AT_RESP_END_SEND2              "Recv "
+#define AT_RESP_END_SEND3              "SEND OK"
 #define AT_END_CR_LF                   "\r\n"
 
 typedef void (*ParserFunc)(void *userContex);

@@ -315,7 +315,7 @@ int IOT_MQTT_Dynamic_Register(MQTTInitParams *pParams)
         goto end;
     }
     
-    ret = IOT_MQTT_Yield(client,1000);
+    ret = IOT_MQTT_Yield(client,200);
 
     /* 向topic发送消息请求回复设备密钥 */
 	char auth_msg[UIOT_MQTT_TX_BUF_LEN];
@@ -328,7 +328,7 @@ int IOT_MQTT_Dynamic_Register(MQTTInitParams *pParams)
     
     IOT_MQTT_Publish(client, pub_name, &pub_params);
 
-    ret = IOT_MQTT_Yield(client,5000);
+    ret = IOT_MQTT_Yield(client,2000);
     if (SUCCESS_RET != ret) 
     {
         LOG_ERROR("get device password fail\n");

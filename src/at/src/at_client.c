@@ -323,7 +323,9 @@ static void client_parser(void *userContex)
                     {
                     	client->resp_status = AT_RESP_ERROR;
                     }
-                    else if ((strstr(client->recv_buffer, AT_RESP_END_SEND1)) || (strstr(client->recv_buffer, AT_RESP_END_SEND2)))
+                    else if ((strstr(client->recv_buffer, AT_RESP_END_SEND1)) 
+                        || (strstr(client->recv_buffer, AT_RESP_END_SEND2))
+                        || (strstr(client->recv_buffer, AT_RESP_END_SEND3)))
                     {
                     	client->resp_status = AT_RESP_OK;
                     }        

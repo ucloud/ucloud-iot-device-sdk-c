@@ -289,15 +289,8 @@ int uiot_shadow_subscribe_topic(UIoT_Shadow *pShadow, char *topicFilter, OnMessa
     if (ret < 0) 
     {
         LOG_ERROR("subscribe topic: %s failed: %d.\n", topicFilter, ret);
-        goto end;
     }
 
-    ret = IOT_MQTT_Yield(mqtt_client, MAX_WAIT_TIME_MS);
-    if (ret != SUCCESS_RET) {
-        LOG_ERROR("unsubscribe topic: %s failed: %d.\n", topic_name, ret);
-    }
-
-end:    
     HAL_Free(topic_name);
     FUNC_EXIT_RC(ret);
 }
@@ -364,15 +357,8 @@ static int uiot_shadow_unsubscribe_topic(UIoT_Shadow *pShadow, char *topicFilter
     if (ret < 0) 
     {
         LOG_ERROR("unsubscribe topic: %s failed: %d.\n", topicFilter, ret);
-        goto end;
-    }
-
-    ret = IOT_MQTT_Yield(mqtt_client, MAX_WAIT_TIME_MS);
-    if (ret != SUCCESS_RET) {
-        LOG_ERROR("unsubscribe topic: %s failed: %d.\n", topic_name, ret);
     }
     
-end:    
     HAL_Free(topic_name);
     FUNC_EXIT_RC(ret);
 }
@@ -505,8 +491,6 @@ static void _handle_delta(UIoT_Shadow *pShadow, char* delta_str)
     
     /* 根据回复的设备影子文档中Desired字段的属性值修改完后,把更新完的结果回复服务器 */
     uiot_shadow_make_request(pShadow, JsonDoc, sizeOfBuffer, pParams_property);
-
-    IOT_MQTT_Yield(pShadow->mqtt, MAX_WAIT_TIME_MS);
 
     HAL_Free(property_value);
     FUNC_EXIT;
