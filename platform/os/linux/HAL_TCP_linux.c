@@ -135,16 +135,16 @@ int32_t HAL_TCP_Disconnect(_IN_ uintptr_t fd) {
     rc = shutdown((int) fd, 2);
     if (0 != rc) {
         printf("shutdown error\n");
-        return FAILURE;
+        return FAILURE_RET;
     }
 
     rc = close((int) fd);
     if (0 != rc) {
         printf("close socket error\n");
-        return FAILURE;
+        return FAILURE_RET;
     }
 
-    return SUCCESS;
+    return SUCCESS_RET;
 }
 
 
@@ -153,7 +153,7 @@ int32_t HAL_TCP_Write(_IN_ uintptr_t fd, _IN_ unsigned char *buf, _IN_ size_t le
     size_t len_sent;
     uint64_t t_end;
     fd_set sets;
-    IoT_Error_t net_err = SUCCESS;
+    IoT_Error_t net_err = SUCCESS_RET;
 
     t_end = _linux_get_time_ms() + timeout_ms;
     len_sent = 0;
@@ -218,7 +218,7 @@ int32_t HAL_TCP_Write(_IN_ uintptr_t fd, _IN_ unsigned char *buf, _IN_ size_t le
         }
     } while (!net_err && (len_sent < len) && (_linux_time_left(t_end, _linux_get_time_ms()) > 0));
 
-    return net_err != SUCCESS ? net_err : len_sent;
+    return net_err != SUCCESS_RET ? net_err : len_sent;
 }
 
 
@@ -232,10 +232,10 @@ int32_t HAL_TCP_Read(_IN_ uintptr_t fd, _OU_ unsigned char *buf, _IN_ size_t len
 
     t_end = _linux_get_time_ms() + timeout_ms;
     len_recv = 0;
-    err_code = SUCCESS;
+    err_code = SUCCESS_RET;
 
     if (fd >= FD_SETSIZE) {
-        return FAILURE;
+        return FAILURE_RET;
     }
     tcp_fd = (int)fd;
 

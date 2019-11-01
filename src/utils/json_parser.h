@@ -23,8 +23,6 @@
 extern "C" {
 #endif
 
-#include "lite-utils.h"
-
 /**
 The descriptions of the json value node type
 **/

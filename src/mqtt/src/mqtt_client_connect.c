@@ -130,7 +130,7 @@ static int _serialize_connect_packet(unsigned char *buf, size_t buf_len, MQTTCon
     }
 
     ret = mqtt_init_packet_header(&header, CONNECT, QOS0, 0, 0);
-    if (SUCCESS != ret) {
+    if (SUCCESS_RET != ret) {
         return ret;
     }
 
@@ -174,8 +174,8 @@ static int _serialize_connect_packet(unsigned char *buf, size_t buf_len, MQTTCon
     }
 
     *serialized_len = (uint32_t) (ptr - buf);
-
-    return SUCCESS;
+    
+    return SUCCESS_RET;
 }
 
 /**
@@ -208,18 +208,18 @@ static int _deserialize_connack_packet(uint8_t *sessionPresent, int *connack_rc,
     header = mqtt_read_char(&curdata);
     type = (header&MQTT_HEADER_TYPE_MASK)>>MQTT_HEADER_TYPE_SHIFT;
     if (CONNACK != type) {
-        return FAILURE;
+        return FAILURE_RET;
     }
 
     // 读取固定头部剩余长度字段
     ret = mqtt_read_packet_rem_len_form_buf(curdata, &decodedLen, &readBytesLen);
-    if (SUCCESS != ret) {
+    if (SUCCESS_RET != ret) {
         return ret;
     }
     curdata += (readBytesLen);
     enddata = curdata + decodedLen;
     if (enddata - curdata != 2) {
-        return FAILURE;
+        return FAILURE_RET;
     }
 
     // 读取可变头部-连接确认标志 参考MQTT协议说明文档3.2.2.1小结
@@ -252,7 +252,7 @@ static int _deserialize_connack_packet(uint8_t *sessionPresent, int *connack_rc,
             break;
     }
 
-    return SUCCESS;
+    return SUCCESS_RET;
 }
 
 /**
@@ -264,7 +264,7 @@ static int _deserialize_connack_packet(uint8_t *sessionPresent, int *connack_rc,
  */
 static int _mqtt_connect(UIoT_Client *pClient, MQTTConnectParams *options) {
     Timer connect_timer;
-    int connack_rc = FAILURE, ret = FAILURE;
+    int connack_rc = FAILURE_RET, ret = FAILURE_RET;
     uint8_t sessionPresent = 0;
     uint32_t len = 0;
 
@@ -277,21 +277,21 @@ static int _mqtt_connect(UIoT_Client *pClient, MQTTConnectParams *options) {
 
     // 根据连接参数，建立TLS或NOTLS连接
     ret = pClient->network_stack.connect(&(pClient->network_stack));
-    if (SUCCESS != ret) {
+    if (SUCCESS_RET != ret) {
         return ret;
     }
 
     HAL_MutexLock(pClient->lock_write_buf);
     // 序列化CONNECT报文
     ret = _serialize_connect_packet(pClient->write_buf, pClient->write_buf_size, &(pClient->options), &len);
-    if (SUCCESS != ret || 0 == len) {
+    if (SUCCESS_RET != ret || 0 == len) {
     	HAL_MutexUnlock(pClient->lock_write_buf);
         return ret;
     }
 
     // 发送CONNECT报文
     ret = send_mqtt_packet(pClient, len, &connect_timer);
-    if (SUCCESS != ret) {
+    if (SUCCESS_RET != ret) {
     	HAL_MutexUnlock(pClient->lock_write_buf);
         return ret;
     }
@@ -299,13 +299,13 @@ static int _mqtt_connect(UIoT_Client *pClient, MQTTConnectParams *options) {
 
     // 阻塞等待CONNACK的报文,
     ret = wait_for_read(pClient, CONNACK, &connect_timer, 0);
-    if (SUCCESS != ret) {
+    if (SUCCESS_RET != ret) {
         return ret;
     }
 
     // 反序列化CONNACK包, 检查返回码
     ret = _deserialize_connack_packet(&sessionPresent, &connack_rc, pClient->read_buf, pClient->read_buf_size);
-    if (SUCCESS != ret) {
+    if (SUCCESS_RET != ret) {
         return ret;
     }
 
@@ -320,7 +320,7 @@ static int _mqtt_connect(UIoT_Client *pClient, MQTTConnectParams *options) {
     countdown(&pClient->ping_timer, pClient->options.keep_alive_interval);
     HAL_MutexUnlock(pClient->lock_generic);
 
-    return SUCCESS;
+    return SUCCESS_RET;
 }
 
 int uiot_mqtt_connect(UIoT_Client *pClient, MQTTConnectParams *pParams) {
@@ -336,7 +336,7 @@ int uiot_mqtt_connect(UIoT_Client *pClient, MQTTConnectParams *pParams) {
     ret = _mqtt_connect(pClient, pParams);
 
     // 如果MQTT连接建立失败, 则断开底层的TLS连接
-    if (ret != SUCCESS) {
+    if (ret != SUCCESS_RET) {
         pClient->network_stack.disconnect(&(pClient->network_stack));
     }
 
@@ -360,7 +360,7 @@ int uiot_mqtt_attempt_reconnect(UIoT_Client *pClient) {
     }
 
     ret = uiot_mqtt_resubscribe(pClient);
-    if (ret != SUCCESS) {
+    if (ret != SUCCESS_RET) {
         return ret;
     }
 
@@ -381,7 +381,7 @@ int uiot_mqtt_disconnect(UIoT_Client *pClient) {
     // 1. 组disconnect包
     HAL_MutexLock(pClient->lock_write_buf);
     ret = serialize_packet_with_zero_payload(pClient->write_buf, pClient->write_buf_size, DISCONNECT, &serialized_len);
-    if (ret != SUCCESS) {
+    if (ret != SUCCESS_RET) {
         HAL_MutexUnlock(pClient->lock_write_buf);
         return ret;
     }
@@ -392,7 +392,7 @@ int uiot_mqtt_disconnect(UIoT_Client *pClient) {
     // 2. 发送disconnect包
     if (serialized_len > 0) {
         ret = send_mqtt_packet(pClient, serialized_len, &timer);
-        if (ret != SUCCESS) {
+        if (ret != SUCCESS_RET) {
             HAL_MutexUnlock(pClient->lock_write_buf);
             return ret;
         }
@@ -406,7 +406,7 @@ int uiot_mqtt_disconnect(UIoT_Client *pClient) {
 
     LOG_INFO("mqtt disconnect!");
 
-    return SUCCESS;
+    return SUCCESS_RET;
 }
 
 #ifdef __cplusplus

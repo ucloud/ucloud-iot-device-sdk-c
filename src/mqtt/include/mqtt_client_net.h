@@ -29,7 +29,7 @@ extern "C" {
  * @param pNetwork 网络操作相关结构体
  * @return 返回0, 表示初始化成功
  */
-int uiot_mqtt_network_init(utils_network_pt pNetwork, const char *host, uint16_t port, const char *ca_crt);
+int uiot_mqtt_network_init(utils_network_pt pNetwork, const char *host, uint16_t port, uint16_t authmode, const char *ca_crt);
 
 #ifdef __cplusplus
 }

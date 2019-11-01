@@ -40,10 +40,10 @@ static int _dm_mqtt_gen_topic_name(char *buf, size_t buf_len, const char *topic_
 
     if (ret < 0 || ret >= buf_len) {
         LOG_ERROR("HAL_Snprintf failed");
-        FUNC_EXIT_RC(FAILURE);
+        FUNC_EXIT_RC(FAILURE_RET);
     }
 
-    FUNC_EXIT_RC(SUCCESS);
+    FUNC_EXIT_RC(SUCCESS_RET);
 }
 
 static int _dm_mqtt_gen_property_payload(char *buf, size_t buf_len, DM_Type type, int request_id, const char *payload) {
@@ -63,14 +63,14 @@ static int _dm_mqtt_gen_property_payload(char *buf, size_t buf_len, DM_Type type
         case PROPERTY_DESIRED_DELETE:
             ret = HAL_Snprintf(buf, buf_len, "{\"RequestID\": \"%d\", \"Delete\": %s}", request_id, payload);
             break;
-        default: FUNC_EXIT_RC(FAILURE);
+        default: FUNC_EXIT_RC(FAILURE_RET);
     }
     if (ret < 0 || ret >= buf_len) {
         LOG_ERROR("generate property payload failed");
-        FUNC_EXIT_RC(FAILURE);
+        FUNC_EXIT_RC(FAILURE_RET);
     }
 
-    FUNC_EXIT_RC(SUCCESS);
+    FUNC_EXIT_RC(SUCCESS_RET);
 }
 
 static int _dm_mqtt_gen_event_payload(char *buf, size_t buf_len, int request_id, const char *identifier, const char *payload) {
@@ -82,10 +82,10 @@ static int _dm_mqtt_gen_event_payload(char *buf, size_t buf_len, int request_id,
 
     if (ret < 0 || ret >= buf_len) {
         LOG_ERROR("generate event payload failed");
-        FUNC_EXIT_RC(FAILURE);
+        FUNC_EXIT_RC(FAILURE_RET);
     }
 
-    FUNC_EXIT_RC(SUCCESS);
+    FUNC_EXIT_RC(SUCCESS_RET);
 }
 
 static int _dm_mqtt_publish(DM_MQTT_Struct_t *handle, char *topic_name, int qos, const char *msg) {
@@ -106,7 +106,7 @@ static int _dm_mqtt_publish(DM_MQTT_Struct_t *handle, char *topic_name, int qos,
     ret = IOT_MQTT_Publish(handle->mqtt, topic_name, &pub_params);
     if (ret < 0) {
         LOG_ERROR("publish to topic: %s failed", topic_name);
-        FUNC_EXIT_RC(FAILURE);
+        FUNC_EXIT_RC(FAILURE_RET);
     }
 
     FUNC_EXIT_RC(ret);
@@ -131,7 +131,7 @@ static void _dm_mqtt_common_reply_cb(MQTTMessage *message, CommonReplyCB cb) {
         LOG_ERROR("allocate for ret_code_char failed");
         goto do_exit;
     }
-    if (SUCCESS != LITE_get_int8(&ret_code, ret_code_char)) {
+    if (SUCCESS_RET != LITE_get_int8(&ret_code, ret_code_char)) {
         LOG_ERROR("get ret_code failed");
         goto do_exit;
     }
@@ -179,7 +179,7 @@ void dm_mqtt_property_restore_cb(void *pClient, MQTTMessage *message, void *pCon
         LOG_ERROR("allocate for ret_code_char failed");
         goto do_exit;
     }
-    if (SUCCESS != LITE_get_int8(&ret_code, ret_code_char)) {
+    if (SUCCESS_RET != LITE_get_int8(&ret_code, ret_code_char)) {
         LOG_ERROR("get for ret_code failed");
         goto do_exit;
     }
@@ -267,7 +267,7 @@ void dm_mqtt_property_set_cb(void *pClient, MQTTMessage *message, void *pContext
         LOG_ERROR("allocate for topic failed");
         goto do_exit;
     }
-    if (SUCCESS != _dm_mqtt_gen_topic_name(topic, DM_TOPIC_BUF_LEN, handle->upstream_topic_templates[PROPERTY_SET],
+    if (SUCCESS_RET != _dm_mqtt_gen_topic_name(topic, DM_TOPIC_BUF_LEN, handle->upstream_topic_templates[PROPERTY_SET],
             handle->product_sn, handle->device_sn)) {
         LOG_ERROR("generate topic name failed");
         goto do_exit;
@@ -322,7 +322,7 @@ void dm_mqtt_property_desired_get_cb(void *pClient, MQTTMessage *message, void *
         LOG_ERROR("allocate for ret_code_char failed");
         goto do_exit;
     }
-    if (SUCCESS != LITE_get_int8(&ret_code, ret_code_char)) {
+    if (SUCCESS_RET != LITE_get_int8(&ret_code, ret_code_char)) {
         LOG_ERROR("get ret_code failed");
         goto do_exit;
     }
@@ -474,7 +474,7 @@ int _dsc_mqtt_register_callback(DM_MQTT_Struct_t *handle, DM_Type dm_type, void 
     int ret;
     if (NULL == handle || callback == NULL) {
         LOG_ERROR("params error!");
-        FUNC_EXIT_RC(FAILURE);
+        FUNC_EXIT_RC(FAILURE_RET);
     }
     handle->callbacks[dm_type] = callback;
     handle->upstream_topic_templates[dm_type] = g_dm_mqtt_cb[dm_type].upstream_topic_template;
@@ -485,7 +485,7 @@ int _dsc_mqtt_register_callback(DM_MQTT_Struct_t *handle, DM_Type dm_type, void 
                                   handle->product_sn, handle->device_sn);
     if (ret < 0) {
         LOG_ERROR("generate topic name failed");
-        FUNC_EXIT_RC(FAILURE);
+        FUNC_EXIT_RC(FAILURE_RET);
     }
 
     SubscribeParams sub_params = DEFAULT_SUB_PARAMS;
@@ -496,10 +496,10 @@ int _dsc_mqtt_register_callback(DM_MQTT_Struct_t *handle, DM_Type dm_type, void 
     ret = IOT_MQTT_Subscribe(handle->mqtt, topic, &sub_params);
     if (ret < 0) {
         LOG_ERROR("mqtt subscribe failed!");
-        FUNC_EXIT_RC(FAILURE);
+        FUNC_EXIT_RC(FAILURE_RET);
     }
 
-    FUNC_EXIT_RC(SUCCESS);
+    FUNC_EXIT_RC(SUCCESS_RET);
 }
 
 
@@ -544,13 +544,13 @@ int dsc_deinit(void *handle) {
         HAL_Free(handle);
     }
 
-    FUNC_EXIT_RC(SUCCESS);
+    FUNC_EXIT_RC(SUCCESS_RET);
 }
 
 int dm_mqtt_property_report_publish(DM_MQTT_Struct_t *handle, DM_Type type, int request_id, const char *payload) {
     FUNC_ENTRY;
 
-    int ret = FAILURE;
+    int ret = FAILURE_RET;
     char *msg_report = NULL;
     char *topic = NULL;
 
@@ -563,7 +563,7 @@ int dm_mqtt_property_report_publish(DM_MQTT_Struct_t *handle, DM_Type type, int 
         goto do_exit;
     }
 
-    if (SUCCESS != _dm_mqtt_gen_topic_name(topic, DM_TOPIC_BUF_LEN, handle->upstream_topic_templates[type],
+    if (SUCCESS_RET != _dm_mqtt_gen_topic_name(topic, DM_TOPIC_BUF_LEN, handle->upstream_topic_templates[type],
             handle->product_sn, handle->device_sn)) {
         LOG_ERROR("generate topic failed");
         goto do_exit;
@@ -572,7 +572,7 @@ int dm_mqtt_property_report_publish(DM_MQTT_Struct_t *handle, DM_Type type, int 
     ret = _dm_mqtt_gen_property_payload(msg_report, DM_MSG_REPORT_BUF_LEN, type, request_id, payload);
     if (ret < 0) {
         LOG_ERROR("generate msg_report failed");
-        ret = FAILURE;
+        ret = FAILURE_RET;
         goto do_exit;
     }
     ret = _dm_mqtt_publish(handle, topic, 1, msg_report);
@@ -590,7 +590,7 @@ do_exit:
 int dm_mqtt_event_publish(DM_MQTT_Struct_t *handle, int request_id, const char *identifier, const char *payload) {
     FUNC_ENTRY;
 
-    int ret = FAILURE;
+    int ret = FAILURE_RET;
     char *msg_report = NULL;
     char *topic = NULL;
 
@@ -603,7 +603,7 @@ int dm_mqtt_event_publish(DM_MQTT_Struct_t *handle, int request_id, const char *
         goto do_exit;
     }
 
-    if (SUCCESS != _dm_mqtt_gen_topic_name(topic, DM_TOPIC_BUF_LEN, handle->upstream_topic_templates[EVENT_POST],
+    if (SUCCESS_RET != _dm_mqtt_gen_topic_name(topic, DM_TOPIC_BUF_LEN, handle->upstream_topic_templates[EVENT_POST],
             handle->product_sn, handle->device_sn)) {
         LOG_ERROR("generate topic failed");
         goto do_exit;

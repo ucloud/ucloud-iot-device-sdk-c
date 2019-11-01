@@ -125,7 +125,7 @@ static int _setup_connect_init_params(MQTTInitParams* initParams)
 	initParams->event_handler.h_fp = event_handler;
 	initParams->event_handler.context = NULL;
 
-    return SUCCESS;
+    return SUCCESS_RET;
 }
 
 
@@ -134,13 +134,13 @@ TEST_F(MqttTests, IOT_MQTT_DYNAMIC_AUTH_test)
     int ret = 0;
     char device_secret[IOT_DEVICE_SECRET_LEN+1];
     _setup_connect_init_params(&init_params);
-    ASSERT_TRUE(SUCCESS == ret);
+    ASSERT_TRUE(SUCCESS_RET == ret);
     
     ret = IOT_MQTT_Dynamic_Register(&init_params);
-    ASSERT_TRUE(SUCCESS == ret);
+    ASSERT_TRUE(SUCCESS_RET == ret);
     ret = HAL_GetDeviceSecret(device_secret);
     init_params.device_secret = device_secret;
-    ASSERT_TRUE(SUCCESS == ret);
+    ASSERT_TRUE(SUCCESS_RET == ret);
     HAL_Printf("Password:%s\n",init_params.device_secret);
     void *static_client = IOT_MQTT_Construct(&init_params);   
     ASSERT_TRUE(static_client != NULL);
@@ -149,6 +149,6 @@ TEST_F(MqttTests, IOT_MQTT_DYNAMIC_AUTH_test)
     _publish_msg(static_client);
     IOT_MQTT_Yield(static_client, 200);
     ret = IOT_MQTT_Destroy(&static_client);
-    ASSERT_TRUE(SUCCESS == ret);
+    ASSERT_TRUE(SUCCESS_RET == ret);
 }
 

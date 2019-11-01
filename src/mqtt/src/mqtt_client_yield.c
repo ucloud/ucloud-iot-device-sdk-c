@@ -74,7 +74,7 @@ static int _handle_disconnect(UIoT_Client *pClient) {
 
     ret = uiot_mqtt_disconnect(pClient);
     // 若断开连接失败, 强制断开底层TLS层连接
-    if (ret != SUCCESS) {
+    if (ret != SUCCESS_RET) {
         pClient->network_stack.disconnect(&(pClient->network_stack));
         set_client_conn_state(pClient, DISCONNECTED);
     }
@@ -140,11 +140,11 @@ static int _mqtt_keep_alive(UIoT_Client *pClient)
     uint32_t serialized_len = 0;
 
     if (0 == pClient->options.keep_alive_interval) {
-        return SUCCESS;
+        return SUCCESS_RET;
     }
 
     if (!has_expired(&pClient->ping_timer)) {
-        return SUCCESS;
+        return SUCCESS_RET;
     }
 
     if (pClient->is_ping_outstanding >= MQTT_PING_RETRY_TIMES) {
@@ -157,7 +157,7 @@ static int _mqtt_keep_alive(UIoT_Client *pClient)
     /* there is no ping outstanding - send one */    
     HAL_MutexLock(pClient->lock_write_buf);
     ret = serialize_packet_with_zero_payload(pClient->write_buf, pClient->write_buf_size, PINGREQ, &serialized_len);
-    if (SUCCESS != ret) {
+    if (SUCCESS_RET != ret) {
         HAL_MutexUnlock(pClient->lock_write_buf);
         return ret;
     }
@@ -168,9 +168,9 @@ static int _mqtt_keep_alive(UIoT_Client *pClient)
     do {
         countdown_ms(&timer, pClient->command_timeout_ms);
         ret = send_mqtt_packet(pClient, serialized_len, &timer);
-    } while (SUCCESS != ret && (i++ < 3));
+    } while (SUCCESS_RET != ret && (i++ < 3));
     
-    if (SUCCESS != ret) {
+    if (SUCCESS_RET != ret) {
         HAL_MutexUnlock(pClient->lock_write_buf);        
         //If sending a PING fails, probably the connection is not OK and we decide to disconnect and begin reconnection attempts
         LOG_ERROR("Fail to send PING request. Something wrong with the connection.");
@@ -186,11 +186,11 @@ static int _mqtt_keep_alive(UIoT_Client *pClient)
     HAL_MutexUnlock(pClient->lock_generic);
     LOG_DEBUG("PING request %u has been sent...", pClient->is_ping_outstanding);
 
-    return SUCCESS;
+    return SUCCESS_RET;
 }
 
 int uiot_mqtt_yield(UIoT_Client *pClient, uint32_t timeout_ms) {
-    int ret = SUCCESS;
+    int ret = SUCCESS_RET;
     Timer timer;
     uint8_t packet_type;
 
@@ -222,9 +222,12 @@ int uiot_mqtt_yield(UIoT_Client *pClient, uint32_t timeout_ms) {
             continue;
         }        
 
+        //防止任务独占CPU时间过长
+        HAL_SleepMs(100);
+
         ret = cycle_for_read(pClient, &timer, &packet_type, 0);
 
-        if (ret == SUCCESS) {
+        if (ret == SUCCESS_RET) {
             /* check list of wait publish ACK to remove node that is ACKED or timeout */
             uiot_mqtt_pub_info_proc(pClient);
 
@@ -238,9 +241,9 @@ int uiot_mqtt_yield(UIoT_Client *pClient, uint32_t timeout_ms) {
         	LOG_ERROR("network read failed, ret: %d. MQTT Disconnect.", ret);
         	ret = _handle_disconnect(pClient);
         }
-        else if(ret == FAILURE) //最后一次读肯定失败,因为没有数据了
+        else if(ret == FAILURE_RET) //最后一次读肯定失败,因为没有数据了
         {
-            ret = SUCCESS;
+            ret = SUCCESS_RET;
         }
 
         if (ret == ERR_MQTT_NO_CONN) {
@@ -255,9 +258,10 @@ int uiot_mqtt_yield(UIoT_Client *pClient, uint32_t timeout_ms) {
             } else {
                 break;
             }
-        } else if (ret != SUCCESS) {
+        } else if (ret != SUCCESS_RET) {
             break;
         }
+        
     }
 
     return ret;
@@ -345,7 +349,7 @@ int uiot_mqtt_pub_info_proc(UIoT_Client *pClient)
 
     HAL_MutexUnlock(pClient->lock_list_pub);
 
-    return SUCCESS;
+    return SUCCESS_RET;
 }
 
 /**
@@ -356,7 +360,7 @@ int uiot_mqtt_pub_info_proc(UIoT_Client *pClient)
  */
 int uiot_mqtt_sub_info_proc(UIoT_Client *pClient)
 {
-    int ret = SUCCESS;
+    int ret = SUCCESS_RET;
 
     if (!pClient) {
         return ERR_PARAM_INVALID;
@@ -377,7 +381,7 @@ int uiot_mqtt_sub_info_proc(UIoT_Client *pClient)
         if (NULL == (iter = list_iterator_new(pClient->list_sub_wait_ack, LIST_TAIL))) {
             LOG_ERROR("new list failed");
             HAL_MutexUnlock(pClient->lock_list_sub);
-            return SUCCESS;
+            return SUCCESS_RET;
         }
 
         for (;;) {

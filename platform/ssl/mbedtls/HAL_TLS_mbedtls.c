@@ -116,7 +116,7 @@ static int _mbedtls_client_init(TLSDataParams *pDataParams, const char *ca_crt, 
             return ERR_SSL_CERT_FAILED;
         }
     }
-    return SUCCESS;
+    return SUCCESS_RET;
 }
 
 /**
@@ -148,7 +148,7 @@ int _mbedtls_tcp_connect(mbedtls_net_context *socket_fd, const char *host, uint1
         return ERR_TCP_CONNECT_FAILED;
     }
 
-    return SUCCESS;
+    return SUCCESS_RET;
 }
 
 /**
@@ -167,18 +167,18 @@ int _server_certificate_verify(void *hostname, mbedtls_x509_crt *crt, int depth,
     return *flags;
 }
 
-uintptr_t HAL_TLS_Connect(_IN_ const char *host, _IN_ uint16_t port, _IN_ const char *ca_crt,
+uintptr_t HAL_TLS_Connect(_IN_ const char *host, _IN_ uint16_t port, _IN_ uint16_t authmode, _IN_ const char *ca_crt,
                           _IN_ size_t ca_crt_len) {
     int ret = 0;
 
     TLSDataParams *pDataParams = (TLSDataParams *) HAL_Malloc(sizeof(TLSDataParams));
 
-    if ((ret = _mbedtls_client_init(pDataParams, ca_crt, ca_crt_len)) != SUCCESS) {
+    if ((ret = _mbedtls_client_init(pDataParams, ca_crt, ca_crt_len)) != SUCCESS_RET) {
         goto error;
     }
 
     LOG_INFO("Connecting to /%s/%d...", host, port);
-    if ((ret = _mbedtls_tcp_connect(&(pDataParams->socket_fd), host, port)) != SUCCESS) {
+    if ((ret = _mbedtls_tcp_connect(&(pDataParams->socket_fd), host, port)) != SUCCESS_RET) {
         goto error;
     }
 
@@ -191,7 +191,7 @@ uintptr_t HAL_TLS_Connect(_IN_ const char *host, _IN_ uint16_t port, _IN_ const 
 
     mbedtls_ssl_conf_verify(&(pDataParams->ssl_conf), _server_certificate_verify, (void *) host);
 
-    mbedtls_ssl_conf_authmode(&(pDataParams->ssl_conf), MBEDTLS_SSL_VERIFY_REQUIRED);
+    mbedtls_ssl_conf_authmode(&(pDataParams->ssl_conf), authmode);
 
     mbedtls_ssl_conf_rng(&(pDataParams->ssl_conf), mbedtls_ctr_drbg_random, &(pDataParams->ctr_drbg));
 
@@ -244,7 +244,7 @@ uintptr_t HAL_TLS_Connect(_IN_ const char *host, _IN_ uint16_t port, _IN_ const 
 int32_t HAL_TLS_Disconnect(_IN_ uintptr_t handle) {
     if ((uintptr_t) NULL == handle) {
         LOG_DEBUG("handle is NULL");
-        return FAILURE;
+        return FAILURE_RET;
     }
     TLSDataParams *pParams = (TLSDataParams *) handle;
     int ret = 0;
@@ -253,7 +253,7 @@ int32_t HAL_TLS_Disconnect(_IN_ uintptr_t handle) {
     } while (ret == MBEDTLS_ERR_SSL_WANT_READ || ret == MBEDTLS_ERR_SSL_WANT_WRITE);
 
     _free_mbedtls(pParams);
-    return SUCCESS;
+    return SUCCESS_RET;
 }
 
 int32_t HAL_TLS_Write(_IN_ uintptr_t handle, _IN_ unsigned char *buf, _IN_ size_t len, _IN_ uint32_t timeout_ms) {

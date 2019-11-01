@@ -21,7 +21,29 @@
 #include "uiot_import.h"
 #include "uiot_defs.h"
 
+char *LITE_strdup(const char *src)
+{
+    int             len = 0;
+    char           *dst = NULL;
 
+    if (!src) {
+        return NULL;
+    }
+    len = strlen(src) + 1;
+    if (len > 1024) {
+        LOG_ERROR("Too long string to duplicate, abort! len = %d", len);
+        return NULL;
+    }
+
+    dst = (char *)HAL_Malloc(sizeof(char) * len);
+    if (!dst) {
+        return NULL;
+    }
+    strncpy(dst, src, len);
+
+    return dst;
+}
+     
 char *LITE_format_string(const char *fmt, ...)
 {
 #define TEMP_STRING_MAXLEN      (512)
@@ -65,29 +87,6 @@ char *LITE_format_nstring(const int len, const char *fmt, ...)
     dst = HAL_Malloc(len + 1);
     HAL_Snprintf(dst, (len + 1), "%s", tmp);
     HAL_Free(tmp);
-
-    return dst;
-}
-
-char *LITE_strdup(const char *src)
-{
-    int             len = 0;
-    char           *dst = NULL;
-
-    if (!src) {
-        return NULL;
-    }
-    len = strlen(src) + 1;
-    if (len > 1024) {
-        LOG_ERROR("Too long string to duplicate, abort! len = %d", len);
-        return NULL;
-    }
-
-    dst = (char *)HAL_Malloc(sizeof(char) * len);
-    if (!dst) {
-        return NULL;
-    }
-    strncpy(dst, src, len);
 
     return dst;
 }

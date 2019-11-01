@@ -41,8 +41,8 @@ typedef enum {
     MQTT_MANUALLY_DISCONNECTED                        = 2,       // 表示与MQTT服务器已经手动断开
     MQTT_RECONNECTED                                  = 1,       // 表示与MQTT服务器重连成功
 
-    SUCCESS                                           = 0,       // 表示成功返回
-    FAILURE                                           = -1,      // 表示失败返回
+    SUCCESS_RET                                       = 0,       // 表示成功返回
+    FAILURE_RET                                       = -1,      // 表示失败返回
 
     ERR_PARAM_INVALID                                 = -2,      // 表示参数无效错误
 

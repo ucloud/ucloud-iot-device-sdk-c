@@ -49,7 +49,7 @@ int _check_snprintf_return(int32_t returnCode, size_t maxSizeOfWrite)
         FUNC_EXIT_RC(ERR_JSON);
     }
 
-    FUNC_EXIT_RC(SUCCESS);
+    FUNC_EXIT_RC(SUCCESS_RET);
 }
 
 int put_json_node(char *jsonBuffer, size_t sizeOfBuffer, const char *pKey, void *pData, JsonDataType type) 
@@ -69,7 +69,7 @@ int put_json_node(char *jsonBuffer, size_t sizeOfBuffer, const char *pKey, void 
 
     ret_of_snprintf = HAL_Snprintf(jsonBuffer + strlen(jsonBuffer), remain_size, "\"%s\":", pKey);
     ret = _check_snprintf_return(ret_of_snprintf, remain_size);
-    if (ret != SUCCESS) 
+    if (ret != SUCCESS_RET) 
     {
         FUNC_EXIT_RC(ret);
     }

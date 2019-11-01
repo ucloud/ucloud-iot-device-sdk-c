@@ -77,7 +77,7 @@ int ota_lib_get_msg_type(char *json, char **type) {
         FUNC_EXIT_RC(ERR_OTA_GENERAL_FAILURE);
     }
 
-    FUNC_EXIT_RC(SUCCESS);
+    FUNC_EXIT_RC(SUCCESS_RET);
 }
 
 
@@ -126,13 +126,13 @@ int ota_lib_get_params(char *json, char **url, char **version, char **md5,
         FUNC_EXIT_RC(ERR_OTA_GENERAL_FAILURE);
     }
 
-    if (SUCCESS != LITE_get_uint32(fileSize, file_size_str)) {
+    if (SUCCESS_RET != LITE_get_uint32(fileSize, file_size_str)) {
         LOG_ERROR("get uint32 failed");
         HAL_Free(file_size_str);
         FUNC_EXIT_RC(ERR_OTA_GENERAL_FAILURE);
     }
     HAL_Free(file_size_str);
-    FUNC_EXIT_RC(SUCCESS);
+    FUNC_EXIT_RC(SUCCESS_RET);
 }
 
 int ota_lib_gen_upstream_msg(char *buf, size_t bufLen, const char *version, int progress,
@@ -182,5 +182,5 @@ int ota_lib_gen_upstream_msg(char *buf, size_t bufLen, const char *version, int 
         FUNC_EXIT_RC(ERR_OTA_STR_TOO_LONG);
     }
 
-    FUNC_EXIT_RC(SUCCESS);
+    FUNC_EXIT_RC(SUCCESS_RET);
 }

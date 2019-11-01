@@ -48,6 +48,9 @@
 
 static void event_handler(void *pClient, void *handle_context, MQTTEventMsg *msg)
 {
+    uintptr_t packet_id = 0;
+    packet_id = (uintptr_t)msg->msg;
+
 	switch(msg->event_type) {
 		case MQTT_EVENT_UNDEF:
 			LOG_INFO("undefined event occur.\n");
@@ -62,27 +65,27 @@ static void event_handler(void *pClient, void *handle_context, MQTTEventMsg *msg
 			break;
 
 		case MQTT_EVENT_SUBSCRIBE_SUCCESS:
-			LOG_INFO("subscribe success, packet-id=%u.\n", (unsigned int)msg->msg);
+			LOG_INFO("subscribe success, packet-id=%u.\n", (unsigned int)packet_id);
 			break;
 
 		case MQTT_EVENT_SUBSCRIBE_TIMEOUT:
-			LOG_INFO("subscribe wait ack timeout, packet-id=%u.\n", (unsigned int)msg->msg);
+			LOG_INFO("subscribe wait ack timeout, packet-id=%u.\n", (unsigned int)packet_id);
 			break;
 
 		case MQTT_EVENT_SUBSCRIBE_NACK:
-			LOG_INFO("subscribe nack, packet-id=%u.\n", (unsigned int)msg->msg);
+			LOG_INFO("subscribe nack, packet-id=%u.\n", (unsigned int)packet_id);
 			break;
 
 		case MQTT_EVENT_PUBLISH_SUCCESS:
-			LOG_INFO("publish success, packet-id=%u.\n", (unsigned int)msg->msg);
+			LOG_INFO("publish success, packet-id=%u.\n", (unsigned int)packet_id);
 			break;
 
 		case MQTT_EVENT_PUBLISH_TIMEOUT:
-			LOG_INFO("publish timeout, packet-id=%u.\n", (unsigned int)msg->msg);
+			LOG_INFO("publish timeout, packet-id=%u.\n", (unsigned int)packet_id);
 			break;
 
 		case MQTT_EVENT_PUBLISH_NACK:
-			LOG_INFO("publish nack, packet-id=%u.\n", (unsigned int)msg->msg);
+			LOG_INFO("publish nack, packet-id=%u.\n", (unsigned int)packet_id);
 			break;
 
 		default:
@@ -93,25 +96,25 @@ static void event_handler(void *pClient, void *handle_context, MQTTEventMsg *msg
 
 
 int event_post_cb(const char *request_id, const int ret_code){
-    LOG_INFO("event_post_cb; request_id: %s; ret_code: %d", request_id, ret_code)
-    return SUCCESS;
+    LOG_INFO("event_post_cb; request_id: %s; ret_code: %d", request_id, ret_code);
+    return SUCCESS_RET;
 }
 
 int property_post_cb(const char *request_id, const int ret_code){
-    LOG_INFO("property_post_cb; request_id: %s; ret_code: %d", request_id, ret_code)
-    return SUCCESS;
+    LOG_INFO("property_post_cb; request_id: %s; ret_code: %d", request_id, ret_code);
+    return SUCCESS_RET;
 }
 
 int command_cb(const char *request_id, const char *identifier, const char *input, char **output){
-    LOG_INFO("command_cb; request_id: %s; identifier: %s; input: %s", request_id, identifier, input)
+    LOG_INFO("command_cb; request_id: %s; identifier: %s; input: %s", request_id, identifier, input);
     *output = (char *)HAL_Malloc(100);
     HAL_Snprintf(*output, 1000, "{\"result\":%d}", 1);
-    return SUCCESS;
+    return SUCCESS_RET;
 }
 
 int property_set_cb(const char *request_id, const char *property){
-    LOG_INFO("property_set_cb; request_id: %s; property: %s", request_id, property)
-    return SUCCESS;
+    LOG_INFO("property_set_cb; request_id: %s; property: %s", request_id, property);
+    return SUCCESS_RET;
 }
 
 static int _setup_connect_init_params(MQTTInitParams* initParams)
@@ -124,7 +127,7 @@ static int _setup_connect_init_params(MQTTInitParams* initParams)
 	initParams->auto_connect_enable = 1;
     initParams->event_handler.h_fp = event_handler;
 
-    return SUCCESS;
+    return SUCCESS_RET;
 }
 
 int main(int argc, char **argv)
@@ -133,7 +136,7 @@ int main(int argc, char **argv)
 
     MQTTInitParams init_params = DEFAULT_MQTT_INIT_PARAMS;
     rc = _setup_connect_init_params(&init_params);
-	if (rc != SUCCESS) {
+	if (rc != SUCCESS_RET) {
 		return rc;
 	}
 
@@ -142,14 +145,14 @@ int main(int argc, char **argv)
         LOG_INFO("Cloud Device Construct Success");
     } else {
         LOG_ERROR("Cloud Device Construct Failed");
-        return FAILURE;
+        return FAILURE_RET;
     }
     IOT_MQTT_Yield(client, 50);
 
     void *h_dm = IOT_DM_Init(UIOT_MY_PRODUCT_SN, UIOT_MY_DEVICE_SN, client);
     if (NULL == h_dm) {
         LOG_ERROR("initialize device model failed");
-        return FAILURE;
+        return FAILURE_RET;
     }
     IOT_DM_Yield(h_dm, 50);
 

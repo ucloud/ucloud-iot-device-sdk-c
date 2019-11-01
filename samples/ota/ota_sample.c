@@ -49,6 +49,9 @@
 
 static void event_handler(void *pClient, void *handle_context, MQTTEventMsg *msg)
 {
+    uintptr_t packet_id = 0;
+    packet_id = (uintptr_t)msg->msg;
+
 	switch(msg->event_type) {
 		case MQTT_EVENT_UNDEF:
 			LOG_INFO("undefined event occur.\n");
@@ -63,27 +66,27 @@ static void event_handler(void *pClient, void *handle_context, MQTTEventMsg *msg
 			break;
 
 		case MQTT_EVENT_SUBSCRIBE_SUCCESS:
-			LOG_INFO("subscribe success, packet-id=%u.\n", (unsigned int)msg->msg);
+			LOG_INFO("subscribe success, packet-id=%u.\n", (unsigned int)packet_id);
 			break;
 
 		case MQTT_EVENT_SUBSCRIBE_TIMEOUT:
-			LOG_INFO("subscribe wait ack timeout, packet-id=%u.\n", (unsigned int)msg->msg);
+			LOG_INFO("subscribe wait ack timeout, packet-id=%u.\n", (unsigned int)packet_id);
 			break;
 
 		case MQTT_EVENT_SUBSCRIBE_NACK:
-			LOG_INFO("subscribe nack, packet-id=%u.\n", (unsigned int)msg->msg);
+			LOG_INFO("subscribe nack, packet-id=%u.\n", (unsigned int)packet_id);
 			break;
 
 		case MQTT_EVENT_PUBLISH_SUCCESS:
-			LOG_INFO("publish success, packet-id=%u.\n", (unsigned int)msg->msg);
+			LOG_INFO("publish success, packet-id=%u.\n", (unsigned int)packet_id);
 			break;
 
 		case MQTT_EVENT_PUBLISH_TIMEOUT:
-			LOG_INFO("publish timeout, packet-id=%u.\n", (unsigned int)msg->msg);
+			LOG_INFO("publish timeout, packet-id=%u.\n", (unsigned int)packet_id);
 			break;
 
 		case MQTT_EVENT_PUBLISH_NACK:
-			LOG_INFO("publish nack, packet-id=%u.\n", (unsigned int)msg->msg);
+			LOG_INFO("publish nack, packet-id=%u.\n", (unsigned int)packet_id);
 			break;
 		default:
 			LOG_INFO("Should NOT arrive here.\n");
@@ -102,7 +105,7 @@ static int _setup_connect_init_params(MQTTInitParams* initParams)
 	initParams->auto_connect_enable = 1;
     initParams->event_handler.h_fp = event_handler;
 
-    return SUCCESS;
+    return SUCCESS_RET;
 }
 
 int main(int argc, char **argv)
@@ -117,7 +120,7 @@ int main(int argc, char **argv)
 
     MQTTInitParams init_params = DEFAULT_MQTT_INIT_PARAMS;
     rc = _setup_connect_init_params(&init_params);
-	if (rc != SUCCESS) {
+	if (rc != SUCCESS_RET) {
 		return rc;
 	}
 
@@ -126,29 +129,29 @@ int main(int argc, char **argv)
         LOG_INFO("MQTT Construct Success");
     } else {
         LOG_ERROR("MQTT Construct Failed");
-        return FAILURE;
+        return FAILURE_RET;
     }
 
     void *h_ota = IOT_OTA_Init(UIOT_MY_PRODUCT_SN, UIOT_MY_DEVICE_SN, client);
     if (NULL == h_ota) {
         LOG_ERROR("init OTA failed");
-        return FAILURE;
+        return FAILURE_RET;
     }
 
     /* Must report version first */
     if (IOT_OTA_ReportVersion(h_ota, "1.0.0") < 0) {
         LOG_ERROR("report OTA version failed");
-        return FAILURE;
+        return FAILURE_RET;
     }
 
     if (IOT_OTA_RequestFirmware(h_ota, "1.0.0") < 0) {
         LOG_ERROR("Request firmware failed");
-        return FAILURE;
+        return FAILURE_RET;
     }
 
     if (NULL == (fp = fopen("ota.bin", "wb+"))) {
         LOG_ERROR("open file failed");
-        return FAILURE;
+        return FAILURE_RET;
     }
 
     do {

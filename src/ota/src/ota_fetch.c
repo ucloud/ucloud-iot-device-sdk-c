@@ -30,15 +30,11 @@
  */
 
 #include <string.h>
-#include <unistd.h>
 
 #include "uiot_export_ota.h"
 #include "uiot_import.h"
-
 #include "ota_internal.h"
-
 #include "ca.h"
-
 #include "utils_httpc.h"
 
 typedef struct {
@@ -105,7 +101,7 @@ int32_t ofc_fetch(void *handle, char *buf, uint32_t buf_len, uint32_t timeout_s)
     diff = h_ofc->http_data.response_content_len - h_ofc->http_data.retrieve_len;
     
     int rc = http_client_recv_data(&h_ofc->http, timeout_s * 1000, &h_ofc->http_data);
-    if (SUCCESS != rc) {
+    if (SUCCESS_RET != rc) {
         if (rc == ERR_HTTP_NOT_FOUND)
             FUNC_EXIT_RC(ERR_OTA_FILE_NOT_EXIST);
         
@@ -133,5 +129,5 @@ int ofc_deinit(void *handle)
         HAL_Free(handle);
     }
 
-    FUNC_EXIT_RC(SUCCESS);
+    FUNC_EXIT_RC(SUCCESS_RET);
 }

@@ -111,9 +111,9 @@ static int _setup_connect_init_params(MQTTInitParams* initParams)
 
 TEST_F(ShadowTest, ShadowDocTest_update)
 {    
-    int ret = SUCCESS;
+    int ret = SUCCESS_RET;
     ret = _setup_connect_init_params(&sg_initParams);
-    ASSERT_TRUE(ret == SUCCESS);
+    ASSERT_TRUE(ret == SUCCESS_RET);
     
     void *mqtt_client = IOT_MQTT_Construct(&sg_initParams);
     ASSERT_TRUE(mqtt_client != NULL);
@@ -135,7 +135,7 @@ TEST_F(ShadowTest, ShadowDocTest_update)
     Property1->data = &num1;
     Property1->type = JINT32;
     ret = IOT_Shadow_Register_Property(sg_pshadow, Property1, RegCallback); 
-    ASSERT_TRUE(ret == SUCCESS);
+    ASSERT_TRUE(ret == SUCCESS_RET);
     
     DeviceProperty *Property2 = (DeviceProperty *)HAL_Malloc(sizeof(DeviceProperty));
     float num2 = 20.2;
@@ -144,7 +144,7 @@ TEST_F(ShadowTest, ShadowDocTest_update)
     Property2->data = &num2;
     Property2->type = JFLOAT;
     ret = IOT_Shadow_Register_Property(sg_pshadow, Property2, RegCallback); 
-    ASSERT_TRUE(ret == SUCCESS);
+    ASSERT_TRUE(ret == SUCCESS_RET);
 
     DeviceProperty *Property3 = (DeviceProperty *)HAL_Malloc(sizeof(DeviceProperty));
     double num3 = 22.9;
@@ -153,7 +153,7 @@ TEST_F(ShadowTest, ShadowDocTest_update)
     Property3->data = &num3;
     Property3->type = JDOUBLE;
     ret = IOT_Shadow_Register_Property(sg_pshadow, Property3, RegCallback); 
-    ASSERT_TRUE(ret == SUCCESS);
+    ASSERT_TRUE(ret == SUCCESS_RET);
     
     DeviceProperty *Property4 = (DeviceProperty *)HAL_Malloc(sizeof(DeviceProperty));
     char num4[5] = "num4";
@@ -162,7 +162,7 @@ TEST_F(ShadowTest, ShadowDocTest_update)
     Property4->data = num4;
     Property4->type = JSTRING;
     ret = IOT_Shadow_Register_Property(sg_pshadow, Property4, RegCallback); 
-    ASSERT_TRUE(ret == SUCCESS);
+    ASSERT_TRUE(ret == SUCCESS_RET);
     
     DeviceProperty *Property5 = (DeviceProperty *)HAL_Malloc(sizeof(DeviceProperty));
     bool num5 = false;
@@ -171,7 +171,7 @@ TEST_F(ShadowTest, ShadowDocTest_update)
     Property5->data = &num5;
     Property5->type = JBOOL;
     ret = IOT_Shadow_Register_Property(sg_pshadow, Property5, RegCallback); 
-    ASSERT_TRUE(ret == SUCCESS);
+    ASSERT_TRUE(ret == SUCCESS_RET);
 
     DeviceProperty *Property6 = (DeviceProperty *)HAL_Malloc(sizeof(DeviceProperty));
     char num6[20] = "{\"temp\":25}";
@@ -180,11 +180,11 @@ TEST_F(ShadowTest, ShadowDocTest_update)
     Property6->data = num6;
     Property6->type = JOBJECT;
     ret = IOT_Shadow_Register_Property(sg_pshadow, Property6, RegCallback); 
-    ASSERT_TRUE(ret == SUCCESS);
+    ASSERT_TRUE(ret == SUCCESS_RET);
 
     /* 先同步一下版本号和设备掉电期间更新的属性 */
     ret = IOT_Shadow_Get_Sync(sg_pshadow, _update_ack_cb, time_sec, &ack_update);
-    ASSERT_TRUE(ret == SUCCESS);
+    ASSERT_TRUE(ret == SUCCESS_RET);
 
 	while (ACK_NONE == ack_update) {
         IOT_Shadow_Yield(sg_pshadow, MAX_WAIT_TIME_MS);
@@ -193,7 +193,7 @@ TEST_F(ShadowTest, ShadowDocTest_update)
     /* update */    
     ack_update = ACK_NONE;
     ret = IOT_Shadow_Update(sg_pshadow, _update_ack_cb, time_sec, &ack_update, 6, Property1, Property2, Property3, Property4, Property5, Property6);
-    ASSERT_TRUE(ret == SUCCESS);
+    ASSERT_TRUE(ret == SUCCESS_RET);
     
 	while (ACK_NONE == ack_update) {
         IOT_Shadow_Yield(sg_pshadow, MAX_WAIT_TIME_MS);
@@ -215,7 +215,7 @@ TEST_F(ShadowTest, ShadowDocTest_update)
 
     ack_update = ACK_NONE;
     ret = IOT_Shadow_Update(sg_pshadow, _update_ack_cb, time_sec, &ack_update, 2, Property1, Property4);
-    ASSERT_TRUE(ret == SUCCESS);
+    ASSERT_TRUE(ret == SUCCESS_RET);
     
 	while (ACK_NONE == ack_update) {
         IOT_Shadow_Yield(sg_pshadow, MAX_WAIT_TIME_MS);
@@ -224,7 +224,7 @@ TEST_F(ShadowTest, ShadowDocTest_update)
     /* delete */    
     ack_update = ACK_NONE;
     ret = IOT_Shadow_Delete(sg_pshadow, _update_ack_cb, time_sec, &ack_update, 2, Property1, Property2);
-    ASSERT_TRUE(ret == SUCCESS);
+    ASSERT_TRUE(ret == SUCCESS_RET);
 
 	while (ACK_NONE == ack_update) {
         IOT_Shadow_Yield(sg_pshadow, MAX_WAIT_TIME_MS);
@@ -241,7 +241,7 @@ TEST_F(ShadowTest, ShadowDocTest_update)
     /* delete all */
     ack_update = ACK_NONE;
     ret = IOT_Shadow_Delete_All(sg_pshadow, _update_ack_cb, time_sec, &ack_update);
-    ASSERT_TRUE(ret == SUCCESS);
+    ASSERT_TRUE(ret == SUCCESS_RET);
 
 
 	while (ACK_NONE == ack_update) {
@@ -262,7 +262,7 @@ TEST_F(ShadowTest, ShadowDocTest_update)
 
     ack_update = ACK_NONE;
     ret = IOT_Shadow_Update(sg_pshadow, _update_ack_cb, time_sec, &ack_update, 1, Property2);
-    ASSERT_TRUE(ret == SUCCESS);
+    ASSERT_TRUE(ret == SUCCESS_RET);
     
 	while (ACK_NONE == ack_update) {
         IOT_Shadow_Yield(sg_pshadow, MAX_WAIT_TIME_MS);
@@ -276,7 +276,7 @@ TEST_F(ShadowTest, ShadowDocTest_update)
     /* update */    
     ack_update = ACK_NONE;
     ret = IOT_Shadow_Update_And_Reset_Version(sg_pshadow, _update_ack_cb, time_sec, &ack_update, 4, Property1, Property4, Property5, Property6);
-    ASSERT_TRUE(ret == SUCCESS);
+    ASSERT_TRUE(ret == SUCCESS_RET);
 
     
 	while (ACK_NONE == ack_update) {
@@ -302,9 +302,9 @@ TEST_F(ShadowTest, ShadowDocTest_update)
 #if 0
 TEST_F(ShadowTest, ShadowDocTest_delete_control)
 {    
-    int ret = SUCCESS;
+    int ret = SUCCESS_RET;
     ret = _setup_connect_init_params(&sg_initParams);
-    ASSERT_TRUE(ret == SUCCESS);
+    ASSERT_TRUE(ret == SUCCESS_RET);
     
     void *mqtt_client = IOT_MQTT_Construct(&sg_initParams);
     ASSERT_TRUE(mqtt_client != NULL);

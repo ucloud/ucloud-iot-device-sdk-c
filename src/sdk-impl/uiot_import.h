@@ -26,10 +26,10 @@ extern "C" {
 #include <stdbool.h>
 #include <stdarg.h>
 #include <inttypes.h>
-#include <sys/time.h>
 
 #include "uiot_defs.h"
 #include "HAL_Timer_Platform.h"
+#include "utils_net.h"
 
 /**
  * @brief 创建互斥量
@@ -244,7 +244,7 @@ void HAL_Timer_Init(_IN_ Timer *timer);
  * @ca_crt_len  证书字节长度
  * @return      连接成功, 返回TLS连接句柄，连接失败，返回NULL
  */
-uintptr_t HAL_TLS_Connect(_IN_ const char *host, _IN_ uint16_t port, _IN_ const char *ca_crt,
+uintptr_t HAL_TLS_Connect(_IN_ const char *host, _IN_ uint16_t port, _IN_ uint16_t authmode, _IN_ const char *ca_crt,
                           _IN_ size_t ca_crt_len);
 
 /**
@@ -315,6 +315,18 @@ int32_t HAL_TCP_Write(_IN_ uintptr_t fd, _IN_ unsigned char *buf, _IN_ size_t le
  * @return					<0: TCP读取错误; =0: TCP读超时, 且没有读取任何数据; >0: TCP成功读取的字节数
  */
 int32_t HAL_TCP_Read(_IN_ uintptr_t fd, _OU_ unsigned char *buf, _IN_ size_t len, _IN_ uint32_t timeout_ms);
+
+int HAL_AT_Read(_IN_ utils_network_pt pNetwork, _OU_ unsigned char *buffer, _IN_ size_t len);
+
+int HAL_AT_Write(_IN_ unsigned char *buffer, _IN_ size_t len);
+
+int HAL_AT_TCP_Disconnect();
+
+int HAL_AT_TCP_Connect(_IN_ void * pNetwork, _IN_ const char *host, _IN_ uint16_t port); 
+
+int HAL_AT_Write_Tcp(_IN_ utils_network_pt pNetwork, _IN_ unsigned char *buffer, _IN_ size_t len);
+
+int HAL_AT_Read_Tcp(_IN_ utils_network_pt pNetwork, _IN_ unsigned char *buffer, _IN_ size_t len);
 
 #if defined(__cplusplus)
 }

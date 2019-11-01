@@ -23,8 +23,6 @@
 
 #include "json_parser.h"
 
-#include "lite-utils.h"
-
 #define json_debug Log_d
 
 typedef struct JSON_NV {

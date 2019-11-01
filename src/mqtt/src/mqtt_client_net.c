@@ -43,9 +43,9 @@ extern "C" {
  * @param pConnectParams
  * @return
  */
-int uiot_mqtt_network_init(utils_network_pt pNetwork, const char *host, uint16_t port, const char *ca_crt) {
+int uiot_mqtt_network_init(utils_network_pt pNetwork, const char *host, uint16_t port, uint16_t authmode, const char *ca_crt) {
     int ret;
-    ret = utils_net_init(pNetwork, host, port, ca_crt);
+    ret = utils_net_init(pNetwork, host, port, authmode, ca_crt);
 
     return ret;
 }

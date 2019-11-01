@@ -33,7 +33,7 @@ static int _add_property_handle_to_list(UIoT_Shadow *pShadow, DeviceProperty *pP
     if (NULL == property_handle)
     {
         LOG_ERROR("run memory malloc is error!\n");
-        FUNC_EXIT_RC(FAILURE);
+        FUNC_EXIT_RC(FAILURE_RET);
     }
 
     property_handle->callback = callback;
@@ -43,11 +43,11 @@ static int _add_property_handle_to_list(UIoT_Shadow *pShadow, DeviceProperty *pP
     if (NULL == node) 
     {
         LOG_ERROR("run list_node_new is error!\n");
-        FUNC_EXIT_RC(FAILURE);
+        FUNC_EXIT_RC(FAILURE_RET);
     }
     list_rpush(pShadow->inner_data.property_list, node);
 
-    FUNC_EXIT_RC(SUCCESS);
+    FUNC_EXIT_RC(SUCCESS_RET);
 }
 
 int shadow_common_check_property_match(void *pProperty, void *property_handle)
@@ -56,7 +56,7 @@ int shadow_common_check_property_match(void *pProperty, void *property_handle)
     POINTER_VALID_CHECK(property_handle, ERR_PARAM_INVALID);
     POINTER_VALID_CHECK(pProperty, ERR_PARAM_INVALID);
 
-    int ret = SUCCESS;
+    int ret = SUCCESS_RET;
     PropertyHandler *property_handle_bak = property_handle;
     DeviceProperty *property_in_handle = (DeviceProperty *)property_handle_bak->property;
     DeviceProperty *property_bak = (DeviceProperty *)pProperty;
@@ -92,7 +92,7 @@ int shadow_common_update_property(UIoT_Shadow *pShadow, DeviceProperty *pPropert
 {
     FUNC_ENTRY;
 
-    int ret = SUCCESS;
+    int ret = SUCCESS_RET;
     ListNode *node;
     PropertyHandler *property_handle = NULL;
     DeviceProperty *property_bak =  NULL;
@@ -133,7 +133,7 @@ int shadow_common_remove_property(UIoT_Shadow *pShadow, DeviceProperty *pPropert
 {
     FUNC_ENTRY;
 
-    int ret = SUCCESS;
+    int ret = SUCCESS_RET;
 
     ListNode *node;
     HAL_MutexLock(pShadow->property_mutex);
@@ -179,13 +179,13 @@ int request_common_add_delta_property(RequestParams *pParams, DeviceProperty *pP
     POINTER_VALID_CHECK(pProperty, ERR_PARAM_INVALID);
     POINTER_VALID_CHECK(pProperty->key, ERR_PARAM_INVALID);
 
-    int ret = SUCCESS;
+    int ret = SUCCESS_RET;
     
     ListNode *node = list_node_new(pProperty);
     if (NULL == node) 
     {
         LOG_ERROR("run list_node_new is error!\n");
-        FUNC_EXIT_RC(FAILURE);
+        FUNC_EXIT_RC(FAILURE_RET);
     }
     list_rpush(pParams->property_delta_list, node);
 

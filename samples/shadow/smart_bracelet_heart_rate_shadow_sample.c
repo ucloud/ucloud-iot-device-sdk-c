@@ -89,7 +89,7 @@ static void _update_ack_cb(void *pClient, Method method, RequestAck requestAck, 
  */
 static int _setup_connect_init_params(MQTTInitParams* initParams)
 {
-    int ret = SUCCESS;
+    int ret = SUCCESS_RET;
 	initParams->device_sn = (char *)UIOT_MY_DEVICE_SN;
 	initParams->product_sn = (char *)UIOT_MY_PRODUCT_SN;
 	initParams->device_secret = (char *)UIOT_MY_DEVICE_SECRET;
@@ -103,9 +103,9 @@ static int _setup_connect_init_params(MQTTInitParams* initParams)
 
 int main()  
 {    
-    int ret = SUCCESS;
+    int ret = SUCCESS_RET;
     ret = _setup_connect_init_params(&sg_initParams);
-    if(ret != SUCCESS)
+    if(ret != SUCCESS_RET)
     {
         HAL_Printf("_setup_connect_init_params fail:%d\n", ret);
         return ret;
@@ -144,7 +144,7 @@ int main()
     property_power->data = &power;
     property_power->type = JBOOL;
     ret = IOT_Shadow_Register_Property(sg_pshadow, property_power, Power_Callback); 
-    if(SUCCESS != ret)
+    if(SUCCESS_RET != ret)
     {
         HAL_Printf("Register power fail:%d\n", ret);
         return ret;
@@ -158,7 +158,7 @@ int main()
     property_heart_rate->data = &heart_rate_num;
     property_heart_rate->type = JUINT32;
     ret = IOT_Shadow_Register_Property(sg_pshadow, property_heart_rate, Heart_Rate_RegCallback); 
-    if(SUCCESS != ret)
+    if(SUCCESS_RET != ret)
     {
         HAL_Printf("Register heart_rate fail:%d\n", ret);
         return ret;
@@ -172,7 +172,7 @@ int main()
     property_alarm->data = &alarm_state;
     property_alarm->type = JBOOL;
     ret = IOT_Shadow_Register_Property(sg_pshadow, property_alarm, Alarm_RegCallback); 
-    if(SUCCESS != ret)
+    if(SUCCESS_RET != ret)
     {
         HAL_Printf("Register alarm_state fail:%d\n", ret);
         return ret;
@@ -180,7 +180,7 @@ int main()
 
     /* 先同步一下版本号和设备掉电期间更新的属性 */
     ret = IOT_Shadow_Get_Sync(sg_pshadow, _update_ack_cb, time_sec, &ack_update);
-    if(SUCCESS != ret)
+    if(SUCCESS_RET != ret)
     {
         HAL_Printf("Get Sync fail:%d\n", ret);
         return ret;
@@ -198,7 +198,7 @@ int main()
         {
             HAL_Printf("smart_bracelet is power on,heart_rate_num:%d alarm_state:%d\n", heart_rate_num, alarm_state);
             ret = IOT_Shadow_Update(sg_pshadow, _update_ack_cb, time_sec, &ack_update, 3, property_power, property_heart_rate, property_alarm);
-            if(SUCCESS != ret)
+            if(SUCCESS_RET != ret)
             {
                 HAL_Printf("Update property_power property_heart_rate property_alarm fail:%d\n", ret);
                 return ret;
@@ -224,7 +224,7 @@ int main()
         else
         {   
             ret = IOT_Shadow_Update(sg_pshadow, _update_ack_cb, time_sec, &ack_update, 3, property_power, property_heart_rate, property_alarm);
-            if(SUCCESS != ret)
+            if(SUCCESS_RET != ret)
             {
                 HAL_Printf("Update property_power property_heart_rate property_alarm fail:%d\n", ret);
                 return ret;

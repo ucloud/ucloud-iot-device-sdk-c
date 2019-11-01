@@ -124,7 +124,7 @@ static int _decode_packet_rem_len_from_buf_read(uint32_t (*getcharfn)(unsigned c
         uint32_t getLen = 0;
         getLen = (*getcharfn)(&c, 1);
         if (1 != getLen) {
-            return FAILURE;
+            return FAILURE_RET;
         }
         *value += (c & 127) * multiplier;
         multiplier *= 128;
@@ -132,7 +132,7 @@ static int _decode_packet_rem_len_from_buf_read(uint32_t (*getcharfn)(unsigned c
 
     *readBytesLen = len;
 
-    return SUCCESS;
+    return SUCCESS_RET;
 }
 
 static unsigned char *bufptr;
@@ -292,7 +292,7 @@ int mqtt_init_packet_header(unsigned char *header, MessageTypes message_type,
                 | ((qos<<MQTT_HEADER_QOS_SHIFT)&MQTT_HEADER_QOS_MASK)
                 | (retained&MQTT_HEADER_RETAIN_MASK);
 
-    return SUCCESS;
+    return SUCCESS_RET;
 }
 
 /**
@@ -327,14 +327,14 @@ int deserialize_ack_packet(uint8_t *packet_type, uint8_t *dup, uint16_t *packet_
 
     /* read remaining length */
     ret = mqtt_read_packet_rem_len_form_buf(curdata, &decodedLen, &readBytesLen);
-    if (SUCCESS != ret) {
+    if (SUCCESS_RET != ret) {
         return ret;
     }
     curdata += (readBytesLen);
     enddata = curdata + decodedLen;
 
     if (enddata - curdata < 2) {
-        return FAILURE;
+        return FAILURE_RET;
     }
 
     *packet_id = mqtt_read_uint16_t(&curdata);
@@ -344,11 +344,11 @@ int deserialize_ack_packet(uint8_t *packet_type, uint8_t *dup, uint16_t *packet_
         unsigned char ack_code = mqtt_read_char(&curdata);
         if (ack_code != 0) {
             LOG_ERROR("deserialize_ack_packet failure! ack_code = 0x%02x", ack_code);
-            return FAILURE;
+            return FAILURE_RET;
         }
     }
 
-    return SUCCESS;
+    return SUCCESS_RET;
 }
 
 /**
@@ -383,19 +383,19 @@ int deserialize_suback_packet(uint16_t *packet_id, uint32_t max_count, uint32_t 
     header = mqtt_read_char(&curdata);
     type = (header&MQTT_HEADER_TYPE_MASK)>>MQTT_HEADER_TYPE_SHIFT;
     if (type != SUBACK) {
-        return FAILURE;
+        return FAILURE_RET;
     }
 
     // 读取报文固定头部的剩余长度
     decodeRc = mqtt_read_packet_rem_len_form_buf(curdata, &decodedLen, &readBytesLen);
-    if (decodeRc != SUCCESS) {
+    if (decodeRc != SUCCESS_RET) {
         return decodeRc;
     }
 
     curdata += (readBytesLen);
     enddata = curdata + decodedLen;
     if (enddata - curdata < 2) {
-        return FAILURE;
+        return FAILURE_RET;
     }
 
     // 读取报文可变头部的报文标识符
@@ -405,12 +405,12 @@ int deserialize_suback_packet(uint16_t *packet_id, uint32_t max_count, uint32_t 
     *count = 0;
     while (curdata < enddata) {
         if (*count > max_count) {
-            return FAILURE;
+            return FAILURE_RET;
         }
         grantedQoSs[(*count)++] = (QoS) mqtt_read_char(&curdata);
     }
 
-    return SUCCESS;
+    return SUCCESS_RET;
 }
 
 /**
@@ -430,8 +430,8 @@ int deserialize_unsuback_packet(uint16_t *packet_id, unsigned char *buf, size_t 
     int ret;
 
     ret = deserialize_ack_packet(&type, &dup, packet_id, buf, buf_len);
-    if (SUCCESS == ret && UNSUBACK != type) {
-        ret = FAILURE;
+    if (SUCCESS_RET == ret && UNSUBACK != type) {
+        ret = FAILURE_RET;
     }
 
     return ret;
@@ -459,7 +459,7 @@ int serialize_packet_with_zero_payload(unsigned char *buf, size_t buf_len, Messa
     }
 
     ret = mqtt_init_packet_header(&header, packetType, QOS0, 0, 0);
-    if (SUCCESS != ret) {
+    if (SUCCESS_RET != ret) {
         return ret;
     }
 
@@ -470,7 +470,7 @@ int serialize_packet_with_zero_payload(unsigned char *buf, size_t buf_len, Messa
     ptr += mqtt_write_packet_rem_len(ptr, 0);
     *serialized_len = (uint32_t) (ptr - buf);
 
-    return SUCCESS;
+    return SUCCESS_RET;
 }
 
 int send_mqtt_packet(UIoT_Client *pClient, size_t length, Timer *timer) {
@@ -496,10 +496,10 @@ int send_mqtt_packet(UIoT_Client *pClient, size_t length, Timer *timer) {
     if (sent == length) {
         /* record the fact that we have successfully sent the packet */
         //countdown(&c->ping_timer, c->keep_alive_interval);
-        return SUCCESS;
+        return SUCCESS_RET;
     }
 
-    return FAILURE;
+    return FAILURE_RET;
 }
 
 /**
@@ -531,7 +531,7 @@ static int _decode_packet_rem_len_with_net_read(UIoT_Client *pClient, uint32_t *
         if (pClient->network_stack.read(&(pClient->network_stack), &i, 1, timeout) <= 0) {
             /* The value argument is the important value. len is just used temporarily
              * and never used by the calling function for anything else */
-            return FAILURE;
+            return FAILURE_RET;
         }
 
         *value += ((i & 127) * multiplier);
@@ -540,7 +540,7 @@ static int _decode_packet_rem_len_with_net_read(UIoT_Client *pClient, uint32_t *
 
     /* The value argument is the important value. len is just used temporarily
      * and never used by the calling function for anything else */
-    return SUCCESS;
+    return SUCCESS_RET;
 }
 
 /**
@@ -587,7 +587,7 @@ static int _read_mqtt_packet(UIoT_Client *pClient, Timer *timer, uint8_t *packet
     timer_left_ms += UIOT_MQTT_MAX_REMAIN_WAIT_MS; //确保一包MQTT报文接收完
 	
     ret = _decode_packet_rem_len_with_net_read(pClient, &rem_len, timer_left_ms);
-    if (SUCCESS != ret) {
+    if (SUCCESS_RET != ret) {
         return ret;
     }
 
@@ -652,7 +652,7 @@ static int _read_mqtt_packet(UIoT_Client *pClient, Timer *timer, uint8_t *packet
 
     *packet_type = (pClient->read_buf[0]&MQTT_HEADER_TYPE_MASK)>>MQTT_HEADER_TYPE_SHIFT;
     
-    return SUCCESS;
+    return SUCCESS_RET;
 }
 
 /**
@@ -751,7 +751,7 @@ static int _deliver_message(UIoT_Client *pClient, char *topicName, uint16_t topi
             HAL_MutexUnlock(pClient->lock_generic);
             if (pClient->sub_handles[i].message_handler != NULL) {
                 pClient->sub_handles[i].message_handler(pClient, message, pClient->sub_handles[i].message_handler_data);
-                return SUCCESS;
+                return SUCCESS_RET;
             }
             HAL_MutexLock(pClient->lock_generic);
         }
@@ -772,7 +772,7 @@ static int _deliver_message(UIoT_Client *pClient, char *topicName, uint16_t topi
         }
     }
 
-    return SUCCESS;
+    return SUCCESS_RET;
 }
 
 /**
@@ -786,7 +786,7 @@ static int _deliver_message(UIoT_Client *pClient, char *topicName, uint16_t topi
 static int _mask_pubInfo_from(UIoT_Client *c, uint16_t msgId)
 {
     if (!c) {
-        return FAILURE;
+        return FAILURE_RET;
     }
 
     HAL_MutexLock(c->lock_list_pub);
@@ -797,7 +797,7 @@ static int _mask_pubInfo_from(UIoT_Client *c, uint16_t msgId)
 
         if (NULL == (iter = list_iterator_new(c->list_pub_wait_ack, LIST_TAIL))) {
             HAL_MutexUnlock(c->lock_list_pub);
-            return SUCCESS;
+            return SUCCESS_RET;
         }
 
         for (;;) {
@@ -822,7 +822,7 @@ static int _mask_pubInfo_from(UIoT_Client *c, uint16_t msgId)
     }
     HAL_MutexUnlock(c->lock_list_pub);
 
-    return SUCCESS;
+    return SUCCESS_RET;
 }
 
 /* 从等待 subscribe(unsubscribe) ACK 的列表中，移除由 msdId 标记的元素 */
@@ -831,7 +831,7 @@ static int _mask_pubInfo_from(UIoT_Client *c, uint16_t msgId)
 static int _mask_sub_info_from(UIoT_Client *c, unsigned int msgId, SubTopicHandle *messageHandler)
 {
     if (NULL == c || NULL == messageHandler) {
-        return FAILURE;
+        return FAILURE_RET;
     }
 
     HAL_MutexLock(c->lock_list_sub);
@@ -842,7 +842,7 @@ static int _mask_sub_info_from(UIoT_Client *c, unsigned int msgId, SubTopicHandl
 
         if (NULL == (iter = list_iterator_new(c->list_sub_wait_ack, LIST_TAIL))) {
             HAL_MutexUnlock(c->lock_list_sub);
-            return SUCCESS;
+            return SUCCESS_RET;
         }
 
         for (;;) {
@@ -867,7 +867,7 @@ static int _mask_sub_info_from(UIoT_Client *c, unsigned int msgId, SubTopicHandl
     }
     HAL_MutexUnlock(c->lock_list_sub);
 
-    return SUCCESS;
+    return SUCCESS_RET;
 }
 
 /**
@@ -883,7 +883,7 @@ static int _handle_puback_packet(UIoT_Client *pClient, Timer *timer)
     int ret;
 
     ret = deserialize_ack_packet(&type, &dup, &packet_id, pClient->read_buf, pClient->read_buf_size);
-    if (SUCCESS != ret) {
+    if (SUCCESS_RET != ret) {
         return ret;
     }
 
@@ -897,7 +897,7 @@ static int _handle_puback_packet(UIoT_Client *pClient, Timer *timer)
         pClient->event_handler.h_fp(pClient, pClient->event_handler.context, &msg);
     }
 
-    return SUCCESS;
+    return SUCCESS_RET;
 }
 
 /**
@@ -916,7 +916,7 @@ static int _handle_suback_packet(UIoT_Client *pClient, Timer *timer, QoS qos)
     
     // 反序列化SUBACK报文
     ret = deserialize_suback_packet(&packet_id, 1, &count, grantedQoS, pClient->read_buf, pClient->read_buf_size);
-    if (SUCCESS != ret) {
+    if (SUCCESS_RET != ret) {
         return ret;
     }
 
@@ -978,7 +978,7 @@ static int _handle_suback_packet(UIoT_Client *pClient, Timer *timer, QoS qos)
         if (-1 == i_free) {
             LOG_ERROR("NO more @sub_handles space!");
             HAL_MutexUnlock(pClient->lock_generic);
-            return FAILURE;
+            return FAILURE_RET;
         } else {
             pClient->sub_handles[i_free].topic_filter = sub_handle.topic_filter;
             pClient->sub_handles[i_free].message_handler = sub_handle.message_handler;
@@ -998,7 +998,7 @@ static int _handle_suback_packet(UIoT_Client *pClient, Timer *timer, QoS qos)
             pClient->event_handler.h_fp(pClient, pClient->event_handler.context, &msg);
     }
 
-    return SUCCESS;
+    return SUCCESS_RET;
 }
 
 /**
@@ -1012,7 +1012,7 @@ static int _handle_unsuback_packet(UIoT_Client *pClient, Timer *timer)
     uint16_t packet_id = 0;
 
     int ret =  deserialize_unsuback_packet(&packet_id, pClient->read_buf, pClient->read_buf_size);
-    if (ret != SUCCESS) {
+    if (ret != SUCCESS_RET) {
         return ret;
     }
 
@@ -1052,7 +1052,7 @@ static int _handle_unsuback_packet(UIoT_Client *pClient, Timer *timer)
 
     HAL_MutexUnlock(pClient->lock_generic);
 
-    return SUCCESS;
+    return SUCCESS_RET;
 }
 
 #ifdef MQTT_CHECK_REPEAT_MSG
@@ -1111,7 +1111,7 @@ static int _handle_publish_packet(UIoT_Client *pClient, Timer *timer) {
 
     ret = deserialize_publish_packet(&msg.dup, &msg.qos, &msg.retained, &msg.id, &topic_name, &topic_len, (unsigned char **) &msg.payload,
                                     &msg.payload_len, pClient->read_buf, pClient->read_buf_size);
-    if (SUCCESS != ret) {
+    if (SUCCESS_RET != ret) {
         return ret;
     }
     
@@ -1127,7 +1127,7 @@ static int _handle_publish_packet(UIoT_Client *pClient, Timer *timer) {
     if (QOS0 == msg.qos)
     {
         ret = _deliver_message(pClient, fix_topic, topic_len, &msg);
-        if (SUCCESS != ret)
+        if (SUCCESS_RET != ret)
             return ret;
 
         /* No further processing required for QOS0 */
@@ -1143,7 +1143,7 @@ static int _handle_publish_packet(UIoT_Client *pClient, Timer *timer) {
         {
 #endif
             ret = _deliver_message(pClient, fix_topic, topic_len, &msg);
-            if (SUCCESS != ret)
+            if (SUCCESS_RET != ret)
                 return ret;
 #ifdef MQTT_CHECK_REPEAT_MSG
         }
@@ -1158,19 +1158,19 @@ static int _handle_publish_packet(UIoT_Client *pClient, Timer *timer) {
         ret = serialize_pub_ack_packet(pClient->write_buf, pClient->write_buf_size, PUBREC, 0, msg.id, &len);
     }
 
-    if (SUCCESS != ret) {
+    if (SUCCESS_RET != ret) {
         HAL_MutexUnlock(pClient->lock_write_buf);
         return ret;
     }
 
     ret = send_mqtt_packet(pClient, len, timer);
-    if (SUCCESS != ret) {
+    if (SUCCESS_RET != ret) {
         HAL_MutexUnlock(pClient->lock_write_buf);
         return ret;
     }
 
     HAL_MutexUnlock(pClient->lock_write_buf);
-    return SUCCESS;
+    return SUCCESS_RET;
 }
 
 /**
@@ -1187,27 +1187,27 @@ static int _handle_pubrec_packet(UIoT_Client *pClient, Timer *timer) {
     uint32_t len;
 
     ret = deserialize_ack_packet(&type, &dup, &packet_id, pClient->read_buf, pClient->read_buf_size);
-    if (SUCCESS != ret) {
+    if (SUCCESS_RET != ret) {
         return ret;
     }
 
     HAL_MutexLock(pClient->lock_write_buf);
     ret = serialize_pub_ack_packet(pClient->write_buf, pClient->write_buf_size, PUBREL, 0, packet_id, &len);
-    if (SUCCESS != ret) {
+    if (SUCCESS_RET != ret) {
         HAL_MutexUnlock(pClient->lock_write_buf);
         return ret;
     }
 
     /* send the PUBREL packet */
     ret = send_mqtt_packet(pClient, len, timer);
-    if (SUCCESS != ret) {
+    if (SUCCESS_RET != ret) {
         HAL_MutexUnlock(pClient->lock_write_buf);
         /* there was a problem */
         return ret;
     }
 
     HAL_MutexUnlock(pClient->lock_write_buf);
-    return SUCCESS;
+    return SUCCESS_RET;
 }
 
 /**
@@ -1234,10 +1234,10 @@ int cycle_for_read(UIoT_Client *pClient, Timer *timer, uint8_t *packet_type, QoS
 
     if (ERR_MQTT_NOTHING_TO_READ == ret) {
         /* Nothing to read, not a cycle failure */
-        return SUCCESS;
+        return SUCCESS_RET;
     }
 
-    if (SUCCESS != ret) {
+    if (SUCCESS_RET != ret) {
         return ret;
     }
 
@@ -1312,7 +1312,7 @@ int wait_for_read(UIoT_Client *pClient, uint8_t packet_type, Timer *timer, QoS q
 			break;
 		}
 		ret = cycle_for_read(pClient, timer, &read_packet_type, qos);
-	} while (SUCCESS == ret && read_packet_type != packet_type );
+	} while (SUCCESS_RET == ret && read_packet_type != packet_type );
 
 	return ret;
 }
@@ -1357,7 +1357,7 @@ int push_sub_info_to(UIoT_Client *c, int len, unsigned short msgId, MessageTypes
     if (NULL == sub_info) {
         HAL_MutexUnlock(c->lock_list_sub);
         LOG_ERROR("malloc failed!");
-        return FAILURE;
+        return FAILURE_RET;
     }
     
     sub_info->node_state = MQTT_NODE_STATE_NORMAL;
@@ -1377,14 +1377,14 @@ int push_sub_info_to(UIoT_Client *c, int len, unsigned short msgId, MessageTypes
     if (NULL == *node) {
         HAL_MutexUnlock(c->lock_list_sub);
         LOG_ERROR("list_node_new failed!");
-        return FAILURE;
+        return FAILURE_RET;
     }
 
     list_rpush(c->list_sub_wait_ack, *node);
 
     HAL_MutexUnlock(c->lock_list_sub);
 
-    return SUCCESS;
+    return SUCCESS_RET;
 }
 
 bool parse_mqtt_payload_retcode_type(char *pJsonDoc, uint32_t *pRetCode) 
@@ -1393,7 +1393,7 @@ bool parse_mqtt_payload_retcode_type(char *pJsonDoc, uint32_t *pRetCode)
 
     bool ret = false;
 
-    char *ret_code = LITE_json_value_of(PASSWORD_REPLY_RETCODE, pJsonDoc);
+    char *ret_code = (char *)LITE_json_value_of(PASSWORD_REPLY_RETCODE, pJsonDoc);
     if (ret_code == NULL) FUNC_EXIT_RC(false);
 
     if (sscanf(ret_code, "%" SCNu32, pRetCode) != 1) 
@@ -1411,13 +1411,13 @@ bool parse_mqtt_payload_retcode_type(char *pJsonDoc, uint32_t *pRetCode)
 
 bool parse_mqtt_state_request_id_type(char *pJsonDoc, char **pType)
 {
-    *pType = LITE_json_value_of(PASSWORD_REPLY_REQUEST_ID, pJsonDoc);
+    *pType = (char *)LITE_json_value_of(PASSWORD_REPLY_REQUEST_ID, pJsonDoc);
     return *pType == NULL ? false : true;
 }
 
 bool parse_mqtt_state_password_type(char *pJsonDoc, char **pType)
 {
-    *pType = LITE_json_value_of(PASSWORD_REPLY_PASSWORD, pJsonDoc);
+    *pType = (char *)LITE_json_value_of(PASSWORD_REPLY_PASSWORD, pJsonDoc);
     return *pType == NULL ? false : true;
 }
 
