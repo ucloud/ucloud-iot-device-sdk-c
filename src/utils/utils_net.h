@@ -24,7 +24,7 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#ifdef ENABLE_AT_CMD
+#ifdef SUPPORT_AT_CMD
 #include "stm32f7xx_hal.h"
 #include "at_client.h"
 #endif
@@ -45,7 +45,7 @@ typedef enum
     SSL_CA_VERIFY_UNSET = 3, 
 }SSL_AUTH_MODE;
 
-#ifdef ENABLE_AT_CMD
+#ifdef SUPPORT_AT_CMD
 struct utils_network {
     const char *pHostAddress;
     uint16_t port;

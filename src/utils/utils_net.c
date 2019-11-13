@@ -80,7 +80,7 @@ static int connect_ssl(utils_network_pt pNetwork)
     }
 }
 
-#elif ENABLE_AT_CMD
+#elif SUPPORT_AT_CMD
 /* connect TCP by AT cmd through uart */
 static int at_read_tcp(utils_network_pt pNetwork, unsigned char *buffer, size_t len, uint32_t timeout_ms)
 {
@@ -181,7 +181,7 @@ int utils_net_read(utils_network_pt pNetwork, unsigned char *buffer, size_t len,
     if (NULL != pNetwork->ca_crt) {
         ret = read_ssl(pNetwork, buffer, len, timeout_ms);
     }
-#elif ENABLE_AT_CMD
+#elif SUPPORT_AT_CMD
         ret = at_read_tcp(pNetwork, buffer, len, timeout_ms);
 #else
     if (NULL == pNetwork->ca_crt) {
@@ -199,7 +199,7 @@ int utils_net_write(utils_network_pt pNetwork,unsigned char *buffer, size_t len,
     if (NULL != pNetwork->ca_crt) {
         ret = write_ssl(pNetwork, buffer, len, timeout_ms);
     }
-#elif ENABLE_AT_CMD
+#elif SUPPORT_AT_CMD
         ret = at_write_tcp(pNetwork, buffer, len, timeout_ms);
 #else
     if (NULL == pNetwork->ca_crt) {
@@ -217,7 +217,7 @@ int utils_net_disconnect(utils_network_pt pNetwork)
     if (NULL != pNetwork->ca_crt) {
         ret = disconnect_ssl(pNetwork);
     }
-#elif ENABLE_AT_CMD
+#elif SUPPORT_AT_CMD
         ret = at_disconnect_tcp(pNetwork);
 #else
     if (NULL == pNetwork->ca_crt) {
@@ -235,7 +235,7 @@ int utils_net_connect(utils_network_pt pNetwork)
     if (NULL != pNetwork->ca_crt) {
         ret = connect_ssl(pNetwork);
     }
-#elif ENABLE_AT_CMD
+#elif SUPPORT_AT_CMD
         ret = at_connect_tcp(pNetwork);
 #else
     if (NULL == pNetwork->ca_crt) {
@@ -254,7 +254,7 @@ int utils_net_init(utils_network_pt pNetwork, const char *host, uint16_t port, u
     }
     pNetwork->pHostAddress = host;
     pNetwork->port = port;
-#ifndef ENABLE_AT_CMD
+#ifndef SUPPORT_AT_CMD
     pNetwork->authmode = authmode;
     pNetwork->ca_crt = ca_crt;
 

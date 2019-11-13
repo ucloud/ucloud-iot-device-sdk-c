@@ -13,22 +13,6 @@
 * permissions and limitations under the License.
 */
 
-// Based on qcloud-iot-sdk-embedded-c
-/*
- * Tencent is pleased to support the open source community by making IoT Hub available.
- * Copyright (C) 2016 THL A29 Limited, a Tencent company. All rights reserved.
-
- * Licensed under the MIT License (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://opensource.org/licenses/MIT
-
- * Unless required by applicable law or agreed to in writing, software distributed under the License is
- * distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
- * either express or implied. See the License for the specific language governing permissions and
- * limitations under the License.
- *
- */
-
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -328,7 +312,7 @@ int IOT_MQTT_Dynamic_Register(MQTTInitParams *pParams)
     
     IOT_MQTT_Publish(client, pub_name, &pub_params);
 
-    ret = IOT_MQTT_Yield(client,2000);
+    ret = IOT_MQTT_Yield(client,5000);
     if (SUCCESS_RET != ret) 
     {
         LOG_ERROR("get device password fail\n");
@@ -416,7 +400,7 @@ int uiot_mqtt_init(UIoT_Client *pClient, MQTTInitParams *pParams) {
     pClient->network_stack.port = s_uiot_port;
 
     // 底层网络操作相关的数据结构初始化
-    #ifdef ENABLE_AT_CMD
+    #ifdef SUPPORT_AT_CMD
     uiot_mqtt_network_init(&(pClient->network_stack), pClient->network_stack.pHostAddress,
             pClient->network_stack.port, pClient->network_stack.authmode, NULL);
     #else
