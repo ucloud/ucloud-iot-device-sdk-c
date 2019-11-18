@@ -12,6 +12,7 @@
 * express or implied. See the License for the specific language governing
 * permissions and limitations under the License.
 */
+
 #include <stdio.h>
 #include <string.h>
 #include "stm32f7xx_hal.h"
@@ -28,161 +29,22 @@ static UART_HandleTypeDef *pAtUart = &huart2;
 extern sRingbuff g_ring_buff;	
 extern sRingbuff g_ring_tcp_buff[3];	
 int ec20_link[EC20_MAX_TCP_LINK] = {0};
+int ec20_recv_len[EC20_MAX_TCP_LINK] = {0};
+
 extern int last_tcp_link;
-#if 0
 int HAL_AT_Read(_IN_ utils_network_pt pNetwork, _OU_ unsigned char *buffer, _IN_ size_t len)
 {
     int ret = 0;
-    at_client_t client = at_client_get();
-    char last_char = 0;
-    char temp_char = 0;
-    int temp_read_point = client->pRingBuff->readpoint;
-    char temp_string[30] = {0};
-    int rec_num = 0;
-    int link_num = 0;
 
     if(pAtUart->RxState == HAL_UART_STATE_BUSY_RX)
     {
         HAL_SleepMs(10);
     }
 
-    /* clear \r\n */
-    ret = at_client_getchar(client, &last_char, GET_RECEIVE_TIMEOUT_MS);
-    if(last_char == '\r')
-    {
-        while(1)
-        {
-            ret = at_client_getchar(client, &temp_char, GET_RECEIVE_TIMEOUT_MS);
-            if(temp_char == '\n')
-            {
-                temp_read_point = client->pRingBuff->readpoint;
-                ret = at_client_getchar(client, &temp_char, GET_RECEIVE_TIMEOUT_MS);
-                break;
-            }
-            else
-            {   
-                break;
-            }
-
-        }
-        
-        if(temp_char == '+')
-        {
-            int loop = 0;
-            do
-            {
-                ret = at_client_getchar(client, &temp_string[loop], GET_RECEIVE_TIMEOUT_MS);
-                if(loop == 7)
-                {   
-                    /* divide multi tcp link */
-                    if(0 != strncmp(temp_string, "QIURC: ", 7))
-                    {
-                        client->pRingBuff->readpoint = temp_read_point;
-                        break;
-                    }
-                }
-                loop++;
-            }while(temp_string[loop-1] != '\n');
-            temp_string[loop] = '\0';
-            if(2 == sscanf(temp_string,"QIURC: \"recv\",%d,%d\r\n", &link_num, &rec_num))
-            {
-                for(loop = rec_num; loop > 0; loop--)
-                {
-                    ret = at_client_getchar(client, &temp_char, GET_RECEIVE_TIMEOUT_MS);
-                    ret |= ring_buff_push_data(&(g_ring_tcp_buff[link_num]), &temp_char, 1);
-                    if(SUCCESS_RET != ret)
-                    {
-                        HAL_Printf("copy data to tcp buff fail\n");
-                    }
-                }
-            }
-        }
-
-    }
-    else
-    {
-        client->pRingBuff->readpoint = temp_read_point;
-    }
-
-
     ret = ring_buff_pop_data(&(g_ring_tcp_buff[pNetwork->handle-1]), buffer, len);
 
     return ret;
 }
-#endif
-
-int HAL_AT_Read(_IN_ utils_network_pt pNetwork, _OU_ unsigned char *buffer, _IN_ size_t len)
-{
-    int ret = 0;
-    at_client_t client = at_client_get();
-    char last_char = 0;
-    char temp_char = 0;
-    int temp_read_point = client->pRingBuff->readpoint;
-    char temp_string[30] = {0};
-    int rec_num = 0;
-    int link_num = 0;
-
-    if(pAtUart->RxState == HAL_UART_STATE_BUSY_RX)
-    {
-        HAL_SleepMs(10);
-    }
-
-    /* clear \r\n */
-    ret = at_client_getchar(client, &last_char, GET_RECEIVE_TIMEOUT_MS);
-    if(last_char == '\r')
-    {
-        while(1)
-        {
-            ret = at_client_getchar(client, &temp_char, GET_RECEIVE_TIMEOUT_MS);
-            if(temp_char == '\n')
-            {
-                temp_read_point = client->pRingBuff->readpoint;
-                ret = at_client_getchar(client, &temp_char, GET_RECEIVE_TIMEOUT_MS);
-                break;
-            }
-            else
-            {   
-                break;
-            }
-
-        }
-        
-        if(temp_char == '+')
-        {
-            int loop = 0;
-            do
-            {
-                ret = at_client_getchar(client, &temp_string[loop], GET_RECEIVE_TIMEOUT_MS);
-                if(loop == 7)
-                {   
-                    /* divide multi tcp link */
-                    if(0 != strncmp(temp_string, "QIURC: ", 7))
-                    {
-                        client->pRingBuff->readpoint = temp_read_point;
-                        break;
-                    }
-                }
-                loop++;
-            }while(temp_string[loop-1] != '\n');
-            temp_string[loop] = '\0';
-            if(1 == sscanf(temp_string,"QIURC: \"recv\",%d\r\n", &link_num))
-            {
-                HAL_Printf("The connect[%d] received data\n",link_num);
-            }
-        }
-
-    }
-    else
-    {
-        client->pRingBuff->readpoint = temp_read_point;
-    }
-
-
-    ret = ring_buff_pop_data(&(g_ring_tcp_buff[pNetwork->handle-1]), buffer, len);
-
-    return ret;
-}
-
 
 int HAL_AT_Write(_IN_ unsigned char *buffer, _IN_ size_t len)
 {   
@@ -191,6 +53,7 @@ int HAL_AT_Write(_IN_ unsigned char *buffer, _IN_ size_t len)
 
 int HAL_AT_Read_Tcp(_IN_ utils_network_pt pNetwork, _IN_ unsigned char *buffer, _IN_ size_t len)
 {
+	at_client_t client = at_client_get();
     at_response_t resp = NULL;
     
 	resp = at_create_resp(256, 0, CMD_TIMEOUT_MS);
@@ -198,14 +61,25 @@ int HAL_AT_Read_Tcp(_IN_ utils_network_pt pNetwork, _IN_ unsigned char *buffer, 
 	{
 		LOG_ERROR("No memory for response object!");
 		return FAILURE_RET;
-	}
+	}  
 
+    /* 被动接收模式，查询缓存TCP数据的长度 */
     resp->custom_flag = true;
-    at_exec_cmd(resp, at_command, 0, "AT+QIRD=%d,%d\r\n", pNetwork->handle-1, len); 
+    HAL_SleepMs(10);
+    at_exec_cmd(resp, at_command, 0, "AT+QIRD=%d,0\r\n", pNetwork->handle-1); 
 
-    at_delete_resp(resp);
-    return HAL_AT_Read(pNetwork, buffer, len);
-
+    if(ec20_recv_len[pNetwork->handle-1] >= len)
+    {
+        resp->custom_flag = true;
+        at_exec_cmd(resp, at_command, 0, "AT+QIRD=%d,%d\r\n", pNetwork->handle-1, len); 
+        at_delete_resp(resp);
+        return HAL_AT_Read(pNetwork, buffer, len);
+    }
+    else
+    {
+        at_delete_resp(resp);
+        return 0;
+    }
 
 }
 
@@ -220,7 +94,7 @@ int HAL_AT_Write_Tcp(_IN_ utils_network_pt pNetwork, _IN_ unsigned char *buffer,
 
     at_response_t resp = NULL;
     
-	resp = at_create_resp(256, 0, CMD_TIMEOUT_MS);
+	resp = at_create_resp(2048, 0, CMD_TIMEOUT_MS);
 	if (resp == NULL)
 	{
 		LOG_ERROR("No memory for response object!");
@@ -483,9 +357,13 @@ static int urc_qird_recv_func(const char *data, uint32_t size)
     int loop = 0;
     int ret = 0;
     int recv_data_num = 0;
+    int actual_len = 0;
     int link_num = 0;
     const char *cmd = NULL;
     int cmdsize = 0;
+    int total_len = 0;
+    int read_len = 0;
+    int unread_len = 0;
     
     do
     {
@@ -493,20 +371,39 @@ static int urc_qird_recv_func(const char *data, uint32_t size)
         loop++;
     }while(temp_string[loop-1] != '\n');
     
-    cmd = at_get_last_cmd(&cmdsize);
-    
+    cmd = (const char *)at_get_last_cmd(&cmdsize);
+
+    //读取收到的数据
     if(2 == sscanf(cmd,"AT+QIRD=%d,%d\r\n",&link_num,&recv_data_num))
     {
-        for(loop = recv_data_num; loop > 0; loop--)
+        printf("read link:%d num:%d \r\n",link_num,recv_data_num);
+        if(recv_data_num > 0)
         {
-            ret = at_client_getchar(client, &temp_char, GET_RECEIVE_TIMEOUT_MS);
-            ret |= ring_buff_push_data(&(g_ring_tcp_buff[link_num]), &temp_char, 1);
-            if(SUCCESS_RET != ret)
+            if(1 == sscanf(temp_string," %d\r\n",&actual_len))
+            {   
+                printf("actual num:%d \r\n",actual_len);
+                if(0 == actual_len)
+                    return SUCCESS_RET;
+            }
+            for(loop = recv_data_num; loop > 0; loop--)
             {
-                HAL_Printf("copy data to tcp buff fail\n");
+                ret = at_client_getchar(client, &temp_char, GET_RECEIVE_TIMEOUT_MS);
+                ret |= ring_buff_push_data(&(g_ring_tcp_buff[link_num]), &temp_char, 1);
+                if(SUCCESS_RET != ret)
+                {
+                    HAL_Printf("copy data to tcp buff fail\n");
+                }
             }
         }
-    }
+        else            //查询收到的数据长度
+        {
+            if(3 == sscanf(temp_string," %d,%d,%d\r\n", &total_len, &read_len, &unread_len))
+            {   
+                printf("total_len:%d read_len:%d unread_len:%d\r\n",total_len, read_len, unread_len);
+                ec20_recv_len[link_num] = unread_len;
+            }
+        }
+    } 
     
     return SUCCESS_RET;
 }
@@ -749,7 +646,8 @@ int HAL_AT_TCP_Connect(_IN_ void * pNetwork, _IN_ const char *host, _IN_ uint16_
     /* 建立TCP链接 */
     resp->custom_flag = true;
     //ret = at_exec_cmd(resp, at_command, 0,  "AT+QIOPEN=1,%d,\"TCP\",\"%s\",%d,0,1\r\n", link_num, pNet->pHostAddress, pNet->port);
-    ret = at_exec_cmd(resp, at_command, 0,  "AT+QIOPEN=1,%d,\"TCP\",\"%s\",%d,0,2\r\n", link_num, pNet->pHostAddress, pNet->port);
+    ret = at_exec_cmd(resp, at_command, 0,  "AT+QIOPEN=1,%d,\"TCP\",\"%s\",%d,0,0\r\n", link_num, pNet->pHostAddress, pNet->port);
+    
     if(SUCCESS_RET != ret)
     {
         HAL_Printf("build TCP link fail!\n");
@@ -761,9 +659,9 @@ int HAL_AT_TCP_Connect(_IN_ void * pNetwork, _IN_ const char *host, _IN_ uint16_
         /* handle can't be zero */
         pNet->handle = link_num + 1;
     }
-
 end:
     at_delete_resp(resp);
     return ret;
 }
+
 
