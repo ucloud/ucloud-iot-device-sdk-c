@@ -33,9 +33,6 @@
 
 static void event_handler(void *pClient, void *handle_context, MQTTEventMsg *msg)
 {
-    uintptr_t packet_id = 0;
-    packet_id = (uintptr_t)msg->msg;
-
 	switch(msg->event_type) {
 		case MQTT_EVENT_UNDEF:
 			LOG_INFO("undefined event occur.\n");
@@ -50,27 +47,27 @@ static void event_handler(void *pClient, void *handle_context, MQTTEventMsg *msg
 			break;
 
 		case MQTT_EVENT_SUBSCRIBE_SUCCESS:
-			LOG_INFO("subscribe success, packet-id=%u.\n", (unsigned int)packet_id);
+			LOG_INFO("subscribe success.\n");
 			break;
 
 		case MQTT_EVENT_SUBSCRIBE_TIMEOUT:
-			LOG_INFO("subscribe wait ack timeout, packet-id=%u.\n", (unsigned int)packet_id);
+			LOG_INFO("subscribe wait ack timeout.\n");
 			break;
 
 		case MQTT_EVENT_SUBSCRIBE_NACK:
-			LOG_INFO("subscribe nack, packet-id=%u.\n", (unsigned int)packet_id);
+			LOG_INFO("subscribe nack.\n");
 			break;
 
 		case MQTT_EVENT_PUBLISH_SUCCESS:
-			LOG_INFO("publish success, packet-id=%u.\n", (unsigned int)packet_id);
+			LOG_INFO("publish success.\n");
 			break;
 
 		case MQTT_EVENT_PUBLISH_TIMEOUT:
-			LOG_INFO("publish timeout, packet-id=%u.\n", (unsigned int)packet_id);
+			LOG_INFO("publish timeout.\n");
 			break;
 
 		case MQTT_EVENT_PUBLISH_NACK:
-			LOG_INFO("publish nack, packet-id=%u.\n", (unsigned int)packet_id);
+			LOG_INFO("publish nack.\n");
 			break;
 		default:
 			LOG_INFO("Should NOT arrive here.\n");
