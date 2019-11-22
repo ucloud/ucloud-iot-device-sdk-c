@@ -139,7 +139,7 @@ int HAL_AT_TCP_Disconnect(utils_network_pt pNetwork)
         ret = at_exec_cmd(resp, at_command, 0,  "AT+QICLOSE=%d\r\n",pNetwork->handle-1);
         if(SUCCESS_RET != ret)
         {
-            HAL_Printf("close TCP link fail!\n");
+            LOG_ERROR("close TCP link fail!\n");
         }
         else
         {
@@ -391,7 +391,7 @@ static int urc_qird_recv_func(const char *data, uint32_t size)
                 ret |= ring_buff_push_data(&(g_ring_tcp_buff[link_num]), &temp_char, 1);
                 if(SUCCESS_RET != ret)
                 {
-                    HAL_Printf("copy data to tcp buff fail\n");
+                    LOG_ERROR("copy data to tcp buff fail\n");
                 }
             }
         }
@@ -448,7 +448,7 @@ static int ec20_init()
     ret = at_exec_cmd(resp, at_command, 0, "ATE0\r\n");
     if(SUCCESS_RET != ret)
     {
-        HAL_Printf("ATE0 set fail!\n");
+        LOG_ERROR("ATE0 set fail!\n");
         goto end;
     }
 
@@ -464,7 +464,7 @@ static int ec20_init()
         ret |= at_exec_cmd(resp, at_command, 0,  "AT+CPIN?\r\n");  
         if(SUCCESS_RET != ret)
         {
-            HAL_Printf("please check SIM card status!\n");
+            LOG_ERROR("please check SIM card status!\n");
             continue;
         }
         
@@ -473,7 +473,7 @@ static int ec20_init()
         ret |= at_exec_cmd(resp, at_command, 0,  "AT+CSQ\r\n");  
         if(SUCCESS_RET != ret)
         {
-            HAL_Printf("bad signal!\n");
+            LOG_ERROR("bad signal!\n");
             continue;
         }
         
@@ -482,7 +482,7 @@ static int ec20_init()
         ret |= at_exec_cmd(resp, at_command, 0,  "AT+CREG?\r\n"); 
         if(SUCCESS_RET != ret)
         {
-            HAL_Printf("not network regist!\n");
+            LOG_ERROR("not network regist!\n");
             continue;
         }
 
@@ -491,7 +491,7 @@ static int ec20_init()
         ret |= at_exec_cmd(resp, at_command, 0,  "AT+CGREG?\r\n"); 
         if(SUCCESS_RET != ret)
         {
-            HAL_Printf("not Attach GPRS!\n");
+            LOG_ERROR("not Attach GPRS!\n");
             continue;
         }
 
@@ -500,7 +500,7 @@ static int ec20_init()
         ret = at_exec_cmd(resp, at_command, 0,  "AT+CEREG?\r\n");
         if(SUCCESS_RET != ret)
         {
-            HAL_Printf("check TCPIP mode fail!\n");
+            LOG_ERROR("check TCPIP mode fail!\n");
             goto end;
         }
 
@@ -509,7 +509,7 @@ static int ec20_init()
         ret = at_exec_cmd(resp, at_command, 0,  "AT+COPS?\r\n");
         if(SUCCESS_RET != ret)
         {
-            HAL_Printf("query current Network Operator fail!\n");
+            LOG_ERROR("query current Network Operator fail!\n");
             goto end;
         }
 
@@ -519,7 +519,7 @@ static int ec20_init()
             ret = at_exec_cmd(resp, at_command, 0, "AT+QICSGP=1,1,\"UNINET\",\"\",\"\",0\r\n");
             if(SUCCESS_RET != ret)
             {
-                HAL_Printf("AT+QICSGP CHN-UNICOM fail!\n");
+                LOG_ERROR("AT+QICSGP CHN-UNICOM fail!\n");
                 goto end;
             }
         }
@@ -529,7 +529,7 @@ static int ec20_init()
             ret = at_exec_cmd(resp, at_command, 0, "AT+QICSGP=1,1,\"CMNET\",\"\",\"\",0\r\n");
             if(SUCCESS_RET != ret)
             {
-                HAL_Printf("AT+QICSGP CHINA MOBILE fail!\n");
+                LOG_ERROR("AT+QICSGP CHINA MOBILE fail!\n");
                 goto end;
             }       
         }
@@ -539,7 +539,7 @@ static int ec20_init()
             ret = at_exec_cmd(resp, at_command, 0, "AT+QICSGP=1,1,\"CTNET\",\"\",\"\",0\r\n");
             if(SUCCESS_RET != ret)
             {
-                HAL_Printf("AT+QICSGP CHN-CT fail!\n");
+                LOG_ERROR("AT+QICSGP CHN-CT fail!\n");
                 goto end;
             }   
         }
@@ -559,7 +559,7 @@ static int ec20_init()
 
     if(retry_time == 10)
     {
-        HAL_Printf("sim800c init fail!\n");
+        LOG_ERROR("sim800c init fail!\n");
         goto end;
     }
 
@@ -568,7 +568,7 @@ static int ec20_init()
     ret = at_exec_cmd(resp, at_command, 0,  "AT+CTZU=3\r\n");
     if(SUCCESS_RET != ret)
     {
-        HAL_Printf("Enable automatic time zone update via NITZ and update LOCAL time to RTC fail!\n");
+        LOG_ERROR("Enable automatic time zone update via NITZ and update LOCAL time to RTC fail!\n");
         goto end;
     }
 
@@ -577,7 +577,7 @@ static int ec20_init()
     ret = at_exec_cmd(resp, at_command, 0,  "AT+QIDEACT=1\r\n");
     if(SUCCESS_RET != ret)
     {
-        HAL_Printf("Deactivate context profile fail!\n");
+        LOG_ERROR("Deactivate context profile fail!\n");
         goto end;
     }
 
@@ -586,7 +586,7 @@ static int ec20_init()
     ret = at_exec_cmd(resp, at_command, 0,  "AT+QIACT=1\r\n");
     if(SUCCESS_RET != ret)
     {
-        HAL_Printf("Activate context profile fail!\n");
+        LOG_ERROR("Activate context profile fail!\n");
         goto end;
     }
 
@@ -650,7 +650,7 @@ int HAL_AT_TCP_Connect(_IN_ void * pNetwork, _IN_ const char *host, _IN_ uint16_
     
     if(SUCCESS_RET != ret)
     {
-        HAL_Printf("build TCP link fail!\n");
+        LOG_ERROR("build TCP link fail!\n");
         goto end;
     }
     else
