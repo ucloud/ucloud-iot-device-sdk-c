@@ -12,6 +12,7 @@ mqtt_sample:
 	$(PLATFORM_CC) $(CFLAGS) $(SAMPLE_DIR)/mqtt/$@.c $(LDFLAGS) -o $@
 
 	mv $@ $(FINAL_DIR)/bin
+endif
 
 ifneq (,$(filter -DAUTH_MODE_DYNAMIC,$(CFLAGS)))
 dynamic_auth_sample:
@@ -62,7 +63,23 @@ dev_model_sample:
 	$(TOP_Q) \
 	mv $@ $(FINAL_DIR)/bin
 endif
+
+ifneq (,$(filter -DFILE_UPLOAD_ENABLED,$(CFLAGS)))
+download_file_sample:
+	$(TOP_Q) \
+	$(PLATFORM_CC) $(CFLAGS) $(SAMPLE_DIR)/upload_file/$@.c $(LDFLAGS) -o $@
+
+	$(TOP_Q) \
+	mv $@ $(FINAL_DIR)/bin
+
+upload_file_sample:
+	$(TOP_Q) \
+	$(PLATFORM_CC) $(CFLAGS) $(SAMPLE_DIR)/upload_file/$@.c $(LDFLAGS) -o $@
+
+	$(TOP_Q) \
+	mv $@ $(FINAL_DIR)/bin
 endif
+
 
 samples_final:
 	$(TOP_Q) \

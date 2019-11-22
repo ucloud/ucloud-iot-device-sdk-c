@@ -14,31 +14,19 @@
 */
 
 #include <stdio.h>
-#include <string.h>
-#include <gtest/gtest.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include <limits.h>
-#include <iostream>
+#include <stdbool.h>
+#include <string.h>
+#include <signal.h>
 
 #include "uiot_import.h"
 #include "ca.h"
 #include "utils_httpc.h"
 #include "uiot_export_file_upload.h"
-
-class HTTPClientTests : public testing::Test
-{
-protected:
-    virtual void SetUp()
-    {
-        std::cout << "HTTPClientTests Test Begin \n";
-    }
-    virtual void TearDown()
-    {
-        std::cout << "HTTPClientTests Test End \n";
-    }
-};
-    
-
-TEST_F(HTTPClientTests, HTTPDownload) {
+   
+int main(int argc, char **argv) {    
     http_client_t *http_client = (http_client_t *)HAL_Malloc(sizeof(http_client_t));
     http_client_data_t *http_data = (http_client_data_t *)HAL_Malloc(sizeof(http_client_data_t));
     memset(http_client, 0, sizeof(http_client_t));
@@ -54,7 +42,11 @@ TEST_F(HTTPClientTests, HTTPDownload) {
     FILE *fp;
     char *file_path = (char*)"download.txt";
     fp = fopen(file_path, "wb+");
-    ASSERT_TRUE(NULL != fp);
+    if(NULL == fp)
+    {
+        HAL_Printf("open file fp fail\r\n");
+        return FAILURE_RET;
+    }
 
     char *url = (char *)"https://uiot.cn-sh2.ufileos.com/test.txt";
 
@@ -75,7 +67,11 @@ TEST_F(HTTPClientTests, HTTPDownload) {
         int32_t len = http_data->response_content_len - http_data->retrieve_len - diff;
         if (len > 0) {
             rc = fwrite(http_data->response_buf, len, 1, fp);
-            ASSERT_TRUE(rc == 1);
+            if(rc != 1)                
+            {
+                HAL_Printf("fwrite fail\r\n");
+                return FAILURE_RET;
+            }
             total += len;
         }
     } while (http_data->retrieve_len != 0);
@@ -86,32 +82,13 @@ TEST_F(HTTPClientTests, HTTPDownload) {
     HAL_Free(http_data);
     HAL_Free(http_client);
 
-    ASSERT_TRUE(total == 11358);
-}
+    if(total != 11358)
+    {
+        HAL_Printf("download fail\r\n");
+        return FAILURE_RET;
+    }
 
-TEST_F(HTTPClientTests, HTTPUploadFile) {
-    char *file_path = (char*)"test.zip";    
-    char md5[100];    
-    char *authorization = (char *)malloc(1024);
-    memset(authorization, 0, 1024);
-    char *put_url = (char *)malloc(1024);
-    memset(put_url, 0, 1024);
-    int ret = SUCCESS_RET;
-
-    http_client_file_md5(file_path, md5);
-    HAL_Printf("MD5:%s\n", md5);
-
-    const char *ProductSN = "PRODUCT_SN";
-    const char *DeviceSN = "DEVICE_SN";
-    const char *DeviceSecret = "DEVICE_SECRET";
-    
-    ret = IOT_GET_URL_AND_AUTH(ProductSN, DeviceSN, DeviceSecret, file_path, md5, authorization, put_url);
-    ASSERT_TRUE(SUCCESS_RET == ret);
-
-    ret = IOT_UPLOAD_FILE(file_path, md5, authorization, put_url);
-    ASSERT_TRUE(SUCCESS_RET == ret);  
-    HAL_Free(authorization);
-    HAL_Free(put_url);
+    return SUCCESS_RET;
 }
 
 

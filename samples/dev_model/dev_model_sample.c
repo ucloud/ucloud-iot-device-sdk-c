@@ -13,22 +13,6 @@
 * permissions and limitations under the License.
 */
 
-// Based on qcloud-iot-sdk-embedded-c
-/*
- * Tencent is pleased to support the open source community by making IoT Hub available.
- * Copyright (C) 2016 THL A29 Limited, a Tencent company. All rights reserved.
-
- * Licensed under the MIT License (the "License"); you may not use this file except in
- * compliance with the License. You may obtain a copy of the License at
- * http://opensource.org/licenses/MIT
-
- * Unless required by applicable law or agreed to in writing, software distributed under the License is
- * distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
- * either express or implied. See the License for the specific language governing permissions and
- * limitations under the License.
- *
- */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -48,9 +32,6 @@
 
 static void event_handler(void *pClient, void *handle_context, MQTTEventMsg *msg)
 {
-    uintptr_t packet_id = 0;
-    packet_id = (uintptr_t)msg->msg;
-
 	switch(msg->event_type) {
 		case MQTT_EVENT_UNDEF:
 			LOG_INFO("undefined event occur.\n");
@@ -65,27 +46,27 @@ static void event_handler(void *pClient, void *handle_context, MQTTEventMsg *msg
 			break;
 
 		case MQTT_EVENT_SUBSCRIBE_SUCCESS:
-			LOG_INFO("subscribe success, packet-id=%u.\n", (unsigned int)packet_id);
+			LOG_INFO("subscribe success.\n");
 			break;
 
 		case MQTT_EVENT_SUBSCRIBE_TIMEOUT:
-			LOG_INFO("subscribe wait ack timeout, packet-id=%u.\n", (unsigned int)packet_id);
+			LOG_INFO("subscribe wait ack timeout.\n");
 			break;
 
 		case MQTT_EVENT_SUBSCRIBE_NACK:
-			LOG_INFO("subscribe nack, packet-id=%u.\n", (unsigned int)packet_id);
+			LOG_INFO("subscribe nack.\n");
 			break;
 
 		case MQTT_EVENT_PUBLISH_SUCCESS:
-			LOG_INFO("publish success, packet-id=%u.\n", (unsigned int)packet_id);
+			LOG_INFO("publish success.\n");
 			break;
 
 		case MQTT_EVENT_PUBLISH_TIMEOUT:
-			LOG_INFO("publish timeout, packet-id=%u.\n", (unsigned int)packet_id);
+			LOG_INFO("publish timeout.\n");
 			break;
 
 		case MQTT_EVENT_PUBLISH_NACK:
-			LOG_INFO("publish nack, packet-id=%u.\n", (unsigned int)packet_id);
+			LOG_INFO("publish nack.\n");
 			break;
 
 		default:

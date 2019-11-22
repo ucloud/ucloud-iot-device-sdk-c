@@ -26,9 +26,8 @@ extern "C" {
 #include <stdarg.h>
 #include <stddef.h>
 
-#include "uiot_export.h"
 #include "uiot_import.h"
-#include "uiot_export_shadow.h"
+#include "shadow_client.h"
 
 /* 回复消息中的消息字段 */
 #define METHOD_FIELD	         	        "Method"

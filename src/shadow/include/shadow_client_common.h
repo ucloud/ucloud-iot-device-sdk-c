@@ -22,7 +22,6 @@ extern "C" {
 #endif
 
 #include "shadow_client.h"
-#include "uiot_export_shadow.h"
 
 //设备影子相关topic
 #define SHADOW_PUBLISH_REQUEST_TEMPLATE                 "/$system/%s/%s/shadow/upstream"
