@@ -253,7 +253,7 @@ static void on_message_callback_get_device_secret(void *pClient, MQTTMessage *me
     HAL_Free(Password);    
     return;
 }
-extern char ringBuff[];
+
 int IOT_MQTT_Dynamic_Register(MQTTInitParams *pParams)
 {   
     POINTER_VALID_CHECK(pParams, ERR_PARAM_INVALID);

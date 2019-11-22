@@ -114,7 +114,7 @@ int shadow_common_update_property(UIoT_Shadow *pShadow, DeviceProperty *pPropert
         }
         else if((DELETE == method) || (REPLY_CONTROL_DELETE == method))
         {
-            HAL_Printf("delete property\n");
+            LOG_INFO("delete property\n");
             property_bak->data = NULL;
         }
         else

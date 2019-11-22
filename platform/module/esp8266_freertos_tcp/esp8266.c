@@ -129,7 +129,7 @@ int HAL_AT_TCP_Disconnect(utils_network_pt pNetwork)
         ret = at_exec_cmd(resp, at_command, 0,  "AT+CIPCLOSE=%d\r\n",pNetwork->handle-1);
         if(SUCCESS_RET != ret)
         {
-            HAL_Printf("close TCP link fail!\n");
+            LOG_ERROR("close TCP link fail!\n");
         }
         else
         {
@@ -256,43 +256,13 @@ static int urc_recvdata_recv_func(const char *data, uint32_t size)
             ret |= ring_buff_push_data(&(g_ring_tcp_buff[link_num]), &temp_char, 1);
             if(SUCCESS_RET != ret)
             {
-                HAL_Printf("copy data to tcp buff fail\n");
+                LOG_ERROR("copy data to tcp buff fail\n");
             }
         }
     }
     
     return SUCCESS_RET;
 }
-/*
-static int urc_recvlen_recv_judge(const char *data, uint32_t size)
-{
-    char temp[13] = {0};
-    if(size > 12)
-    {
-        memcpy(temp, &data[1],12);
-        temp[12] = '\0';
-        if(0 == strncmp(temp, "+CIPRECVLEN:", size))
-        {
-            return SUCCESS_RET;
-        }
-        else 
-        {
-            return FAILURE_RET;
-        }
-    }
-    else
-    {
-        if(0 == strncmp(data, "+CIPRECVLEN:", size))
-        {
-            return SUCCESS_RET;
-        }
-        else 
-        {
-            return FAILURE_RET;
-        }
-    }
-}
-*/
 
 static int urc_recvlen_recv_judge(const char *data, uint32_t size)
 {
@@ -368,7 +338,7 @@ static int esp8266_init()
         ret |= at_exec_cmd(resp, at_command, 0, "AT+RST\r\n");
         if(SUCCESS_RET != ret)
         {
-            HAL_Printf("AT rst fail!\n");
+            LOG_ERROR("AT rst fail!\n");
             goto end;
         }
         
@@ -380,7 +350,7 @@ static int esp8266_init()
         ret |= at_exec_cmd(resp, at_command, 0, "ATE0\r\n");
         if(SUCCESS_RET != ret)
         {
-            HAL_Printf("ATE0 set fail!\n");
+            LOG_ERROR("ATE0 set fail!\n");
             goto end;
         }
         
@@ -389,7 +359,7 @@ static int esp8266_init()
         ret |= at_exec_cmd(resp, at_command, 0,  "AT+CWMODE=1\r\n");  
         if(SUCCESS_RET != ret)
         {
-            HAL_Printf("set Wi-Fi mode to station fail!\n");
+            LOG_ERROR("set Wi-Fi mode to station fail!\n");
             continue;
         }
         
@@ -398,7 +368,7 @@ static int esp8266_init()
         ret |= at_exec_cmd(resp, at_command, 0,  "AT+CIPMUX=1\r\n");  
         if(SUCCESS_RET != ret)
         {
-            HAL_Printf("set mutil link fail!\n");
+            LOG_ERROR("set mutil link fail!\n");
             continue;
         }
         
@@ -407,7 +377,7 @@ static int esp8266_init()
         ret |= at_exec_cmd(resp, at_command, 0,  "AT+CWJAP=\"ucloud-guest\",\"ucloud.cn\"\r\n"); 
         if(SUCCESS_RET != ret)
         {
-            HAL_Printf("link Wi-Fi AP fail!\n");
+            LOG_ERROR("link Wi-Fi AP fail!\n");
             continue;
         }
 
@@ -416,7 +386,7 @@ static int esp8266_init()
         ret |= at_exec_cmd(resp, at_command, 0,  "AT+CIFSR\r\n"); 
         if(SUCCESS_RET != ret)
         {
-            HAL_Printf("get ip addr fail!\n");
+            LOG_ERROR("get ip addr fail!\n");
             continue;
         }
 
@@ -488,7 +458,7 @@ int HAL_AT_TCP_Connect(_IN_ void * pNetwork, _IN_ const char *host, _IN_ uint16_
     ret = at_exec_cmd(resp, at_command, 0,  "AT+CIPSTART=%d,\"TCP\",\"%s\",%d\r\n", link_num, pNet->pHostAddress, pNet->port);
     if(SUCCESS_RET != ret)
     {
-        HAL_Printf("build TCP link fail!\n");
+        LOG_ERROR("build TCP link fail!\n");
         goto end;
     }
     else
@@ -503,7 +473,7 @@ int HAL_AT_TCP_Connect(_IN_ void * pNetwork, _IN_ const char *host, _IN_ uint16_
     ret = at_exec_cmd(resp, at_command, 0,  "AT+CIPRECVMODE=1\r\n");
     if(SUCCESS_RET != ret)
     {
-        HAL_Printf("set tcp receive data mode fail!\n");
+        LOG_ERROR("set tcp receive data mode fail!\n");
         goto end;
     }
 

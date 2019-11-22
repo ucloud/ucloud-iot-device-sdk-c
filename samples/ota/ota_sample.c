@@ -29,7 +29,7 @@
 
 #define UIOT_MY_DEVICE_SECRET         "DEVICE_SECRET"
 
-#define OTA_BUF_LEN (5000)
+#define OTA_BUF_LEN (1024)
 
 static void event_handler(void *pClient, void *handle_context, MQTTEventMsg *msg)
 {

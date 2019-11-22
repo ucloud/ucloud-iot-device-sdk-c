@@ -27,6 +27,8 @@ extern "C" {
 #include "lite-utils.h"
 #include "shadow_client_common.h"
 
+int IOT_Shadow_Request_Add_Delta_Property(void *handle, RequestParams *pParams, DeviceProperty *pProperty);
+
 void* IOT_Shadow_Construct(const char *product_sn, const char *device_sn, void *ch_signal)
 {
     FUNC_ENTRY;

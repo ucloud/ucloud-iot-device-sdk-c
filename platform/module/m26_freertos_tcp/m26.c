@@ -92,7 +92,7 @@ int HAL_AT_Read(_IN_ utils_network_pt pNetwork, _OU_ unsigned char *buffer, _IN_
                     ret |= ring_buff_push_data(&(g_ring_tcp_buff[link_num]), &temp_char, 1);
                     if(SUCCESS_RET != ret)
                     {
-                        HAL_Printf("copy data to tcp buff fail\n");
+                        LOG_ERROR("copy data to tcp buff fail\n");
                     }
                 }
             }
@@ -176,7 +176,7 @@ int HAL_AT_TCP_Disconnect(utils_network_pt pNetwork)
         ret = at_exec_cmd(resp, at_command, 0,  "AT+QICLOSE=%d\r",pNetwork->handle-1);
         if(SUCCESS_RET != ret)
         {
-            HAL_Printf("close TCP link fail!\n");
+            LOG_ERROR("close TCP link fail!\n");
         }
         else
         {
@@ -452,7 +452,7 @@ static int m26_init()
     ret = at_exec_cmd(resp, at_command, 0, "ATE0\r\n");
     if(SUCCESS_RET != ret)
     {
-        HAL_Printf("ATE0 set fail!\n");
+        LOG_ERROR("ATE0 set fail!\n");
         goto end;
     }
 
@@ -468,7 +468,7 @@ static int m26_init()
         ret |= at_exec_cmd(resp, at_command, 0,  "AT+CPIN?\r\n");  
         if(SUCCESS_RET != ret)
         {
-            HAL_Printf("please check SIM card status!\n");
+            LOG_ERROR("please check SIM card status!\n");
             continue;
         }
         
@@ -477,7 +477,7 @@ static int m26_init()
         ret |= at_exec_cmd(resp, at_command, 0,  "AT+CSQ\r\n");  
         if(SUCCESS_RET != ret)
         {
-            HAL_Printf("bad signal!\n");
+            LOG_ERROR("bad signal!\n");
             continue;
         }
         
@@ -486,7 +486,7 @@ static int m26_init()
         ret |= at_exec_cmd(resp, at_command, 0,  "AT+CREG?\r\n"); 
         if(SUCCESS_RET != ret)
         {
-            HAL_Printf("not network regist!\n");
+            LOG_ERROR("not network regist!\n");
             continue;
         }
 
@@ -495,7 +495,7 @@ static int m26_init()
         ret |= at_exec_cmd(resp, at_command, 0,  "AT+CGREG?\r\n"); 
         if(SUCCESS_RET != ret)
         {
-            HAL_Printf("not Attach GPRS!\n");
+            LOG_ERROR("not Attach GPRS!\n");
             continue;
         }
 
@@ -504,7 +504,7 @@ static int m26_init()
         ret = at_exec_cmd(resp, at_command, 0,  "AT+QIMODE?\r\n");
         if(SUCCESS_RET != ret)
         {
-            HAL_Printf("check TCPIP mode fail!\n");
+            LOG_ERROR("check TCPIP mode fail!\n");
             goto end;
         }
 
@@ -517,7 +517,7 @@ static int m26_init()
 
     if(retry_time == 10)
     {
-        HAL_Printf("sim800c init fail!\n");
+        LOG_ERROR("sim800c init fail!\n");
         goto end;
     }
 
@@ -526,7 +526,7 @@ static int m26_init()
     ret = at_exec_cmd(resp, at_command, 0,  "AT+QIFGCNT=0\r\n");
     if(SUCCESS_RET != ret)
     {
-        HAL_Printf("set foreground fail!\n");
+        LOG_ERROR("set foreground fail!\n");
         goto end;
     }
     
@@ -535,7 +535,7 @@ static int m26_init()
     ret = at_exec_cmd(resp, at_command, 0,  "AT+QICSGP=1, \"CMNET\"\r\n");
     if(SUCCESS_RET != ret)
     {
-        HAL_Printf("set apn fail!\n");
+        LOG_ERROR("set apn fail!\n");
         goto end;
     }
 
@@ -544,7 +544,7 @@ static int m26_init()
     ret = at_exec_cmd(resp, at_command, 0,  "AT+QIDEACT\r\n");
     if(SUCCESS_RET != ret)
     {
-        HAL_Printf("shut down GPRS/CSD PDP fail!\n");
+        LOG_ERROR("shut down GPRS/CSD PDP fail!\n");
         goto end;
     }
 
@@ -553,7 +553,7 @@ static int m26_init()
     ret = at_exec_cmd(resp, at_command, 0,  "AT+QIMUX=1\r\n");
     if(SUCCESS_RET != ret)
     {
-        HAL_Printf("set multi link mode fail!\n");
+        LOG_ERROR("set multi link mode fail!\n");
         goto end;
     }
     
@@ -562,7 +562,7 @@ static int m26_init()
     ret = at_exec_cmd(resp, at_command, 0,  "AT+QIREGAPP\r\n");
     if(SUCCESS_RET != ret)
     {
-        HAL_Printf("set APN fail!\n");
+        LOG_ERROR("set APN fail!\n");
         goto end;
     }
     
@@ -571,7 +571,7 @@ static int m26_init()
     ret = at_exec_cmd(resp, at_command, 0,  "AT+QIACT\r\n");
     if(SUCCESS_RET != ret)
     {
-        HAL_Printf("build wireless link fail!\n");
+        LOG_ERROR("build wireless link fail!\n");
         goto end;
     }
     
@@ -580,7 +580,7 @@ static int m26_init()
     ret = at_exec_cmd(resp, at_command, 0,  "AT+QILOCIP\r\n");
     if(SUCCESS_RET != ret)
     {
-        HAL_Printf("fetch local IP address fail!\n");
+        LOG_ERROR("fetch local IP address fail!\n");
         goto end;
     }
 
@@ -642,7 +642,7 @@ int HAL_AT_TCP_Connect(_IN_ void * pNetwork, _IN_ const char *host, _IN_ uint16_
     ret = at_exec_cmd(resp, at_command, 0,  "AT+QIDNSGIP=\"%s\"\r", pNet->pHostAddress);
     if(SUCCESS_RET != ret)
     {
-        HAL_Printf("build TCP link fail!\n");
+        LOG_ERROR("build TCP link fail!\n");
         goto end;
     }
 
@@ -651,7 +651,7 @@ int HAL_AT_TCP_Connect(_IN_ void * pNetwork, _IN_ const char *host, _IN_ uint16_
     ret = at_exec_cmd(resp, at_command, 0,  "AT+QIOPEN=%d,\"TCP\",\"%s\",\"%d\"\r", link_num, domain_ip_addr, pNet->port);
     if(SUCCESS_RET != ret)
     {
-        HAL_Printf("build TCP link fail!\n");
+        LOG_ERROR("build TCP link fail!\n");
         goto end;
     }
     else
