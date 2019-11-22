@@ -32,9 +32,9 @@ if (ENABLE_FEATURE_AUTH_MODE_DYNAMIC)
 endif ()
 
 if (ENABLE_FEATURE_UPLOAD_FILE)
-    add_executable(http_download http/http_download.c)
-    add_dependencies(http_download iot_sdk iot_platform)
+    add_executable(download_file_sample upload_file/download_file_sample.c)
+    add_dependencies(download_file_sample iot_sdk iot_platform)
 	
-    add_executable(http_upload http/http_upload.c)
-    add_dependencies(http_upload iot_sdk iot_platform)	
+    add_executable(upload_file_sample upload_file/upload_file_sample.c)
+    add_dependencies(upload_file_sample iot_sdk iot_platform)	
 endif ()

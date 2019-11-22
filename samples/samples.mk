@@ -65,16 +65,16 @@ dev_model_sample:
 endif
 
 ifneq (,$(filter -DFILE_UPLOAD_ENABLED,$(CFLAGS)))
-http_download:
+download_file_sample:
 	$(TOP_Q) \
-	$(PLATFORM_CC) $(CFLAGS) $(SAMPLE_DIR)/http/$@.c $(LDFLAGS) -o $@
+	$(PLATFORM_CC) $(CFLAGS) $(SAMPLE_DIR)/upload_file/$@.c $(LDFLAGS) -o $@
 
 	$(TOP_Q) \
 	mv $@ $(FINAL_DIR)/bin
 
-http_upload:
+upload_file_sample:
 	$(TOP_Q) \
-	$(PLATFORM_CC) $(CFLAGS) $(SAMPLE_DIR)/http/$@.c $(LDFLAGS) -o $@
+	$(PLATFORM_CC) $(CFLAGS) $(SAMPLE_DIR)/upload_file/$@.c $(LDFLAGS) -o $@
 
 	$(TOP_Q) \
 	mv $@ $(FINAL_DIR)/bin
