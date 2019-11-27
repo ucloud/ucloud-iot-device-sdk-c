@@ -111,6 +111,10 @@ int IOT_UPLOAD_FILE(char *file_path, char *md5, char *authorization, char *url)
     memset(http_client_put, 0, sizeof(http_client_t));
     memset(http_data_put, 0, sizeof(http_client_data_t));
 
+    http_data_put->response_buf = (char *)HAL_Malloc(512);
+    memset(http_data_put->response_buf, 0, 512);
+    http_data_put->response_buf_len = 512;
+
     http_client_put->header = (char *)HAL_Malloc(2046);
     memset(http_client_put->header, 0, 2046);
     HAL_Snprintf(http_client_put->header, 2046, "Authorization:%s\r\nContent-Type:plain/text\r\nContent-MD5:%s\r\n",authorization,md5);
@@ -129,6 +133,14 @@ int IOT_UPLOAD_FILE(char *file_path, char *md5, char *authorization, char *url)
         return ERR_PARAM_INVALID;
     }
     http_data_put->post_buf = (unsigned char *)HAL_Malloc(file_len +1 );
+    if(NULL == http_data_put->post_buf)
+    {
+        LOG_ERROR("http_data_put->post_buf is null\n");        
+        HAL_Free(http_client_put->header);
+        HAL_Free(http_client_put);
+        HAL_Free(http_data_put);
+        return ERR_PARAM_INVALID;
+    }
     memset(http_data_put->post_buf, 0, file_len +1);
     
     FILE *fp;
@@ -145,6 +157,21 @@ int IOT_UPLOAD_FILE(char *file_path, char *md5, char *authorization, char *url)
     const char *ca_crt = iot_https_ca_get();
 
     ret = http_client_common(http_client_put, url, 443, ca_crt, HTTP_PUT, http_data_put);
+    if(SUCCESS_RET != ret)
+    {
+        LOG_ERROR("http_client_common error\n");
+        goto end;
+    }
+
+    ret = http_client_recv_data(http_client_put, 15000, http_data_put);
+    if(SUCCESS_RET != ret)
+    {
+        LOG_ERROR("http_client_recv_data error\n");
+        goto end;
+    }
+
+    LOG_DEBUG("content_len:%d response_received_len:%d\n",http_data_put->response_content_len, http_data_put->response_received_len);
+    LOG_DEBUG("response_buf:%s\n",http_data_put->response_buf);
 
     fclose(fp);
 end:
