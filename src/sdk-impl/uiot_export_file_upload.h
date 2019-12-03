@@ -22,7 +22,7 @@ extern "C" {
 
 int IOT_GET_URL_AND_AUTH(const char *product_sn, const char *device_sn, const char *device_sercret, char *file_path, char *md5, char *authorization, char *put_url);
 
-int IOT_UPLOAD_FILE(char *file_path, char *md5, char *authorization, char *url);
+int IOT_UPLOAD_FILE(char *file_path, char *md5, char *authorization, char *url, uint32_t timeout_ms);
 
 #if defined(__cplusplus)
 }

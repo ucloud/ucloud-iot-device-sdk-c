@@ -26,13 +26,13 @@
 #include "utils_httpc.h"
 #include "uiot_export_file_upload.h"
 
-#define UIOT_MY_PRODUCT_SN            "iwfrdgwhmwscqbmv"
+#define UIOT_MY_PRODUCT_SN            "PRODUCT_SN"
 
-#define UIOT_MY_DEVICE_SN             "mosjgqhqqx1aut0a"
+#define UIOT_MY_DEVICE_SN             "DEVICE_SN"
 
-#define UIOT_MY_DEVICE_SECRET         "zn9srzorb96kwat7"
+#define UIOT_MY_DEVICE_SECRET         "DEVICE_SECRET"
 
-#define FILE_PATH                     "test.zip"
+#define FILE_PATH                     "FILE_PATH"
 
 int main(int argc, char **argv) {    
     char md5[100];    
@@ -48,7 +48,7 @@ int main(int argc, char **argv) {
     ret = IOT_GET_URL_AND_AUTH(UIOT_MY_PRODUCT_SN, UIOT_MY_DEVICE_SN, UIOT_MY_DEVICE_SECRET, FILE_PATH, md5, authorization, put_url);
     if(SUCCESS_RET != ret)
     {
-        HAL_Printf("get url and auth fail\r\n");
+        HAL_Printf("get url and auth fail,ret:%d\r\n", ret);
         return FAILURE_RET;
     }
 
@@ -56,15 +56,15 @@ int main(int argc, char **argv) {
     HAL_Printf("get authorization:%s\n", authorization);
     HAL_Printf("get put_url:%s\n", put_url);
 
-    ret = IOT_UPLOAD_FILE(FILE_PATH, md5, authorization, put_url);
+    //上传文件超时时间与文件长度相关
+    ret = IOT_UPLOAD_FILE(FILE_PATH, md5, authorization, put_url, 40000);
     if(SUCCESS_RET != ret)
     {
-        HAL_Printf("upload file fail\r\n");
+        HAL_Printf("upload file fail,ret:%d\r\n", ret);
         return FAILURE_RET;
     }
     HAL_Printf("upload success\n");
     HAL_Free(authorization);
     HAL_Free(put_url);
 }
-
 
