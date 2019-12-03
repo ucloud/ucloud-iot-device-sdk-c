@@ -67,7 +67,7 @@ int32_t ofc_connect(void *handle)
     const char *ca_crt = NULL;
 #endif
 
-    int32_t rc = http_client_common(&h_ofc->http, h_ofc->url, port, ca_crt, HTTP_GET, &h_ofc->http_data);
+    int32_t rc = http_client_common(&h_ofc->http, h_ofc->url, port, ca_crt, HTTP_GET, &h_ofc->http_data, 5000);
 
     FUNC_EXIT_RC(rc);
 }

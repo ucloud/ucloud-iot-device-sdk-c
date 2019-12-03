@@ -63,9 +63,9 @@ TEST_F(HTTPClientTests, HTTPDownload) {
     int rc;
     int32_t total = 0;
 #ifdef SUPPORT_TLS
-    http_client_common(http_client, url, 443, ca_crt, HTTP_GET, http_data);
+    http_client_common(http_client, url, 443, ca_crt, HTTP_GET, http_data, 5000);
 #else
-    http_client_common(http_client, url, 80, ca_crt, HTTP_GET, http_data);
+    http_client_common(http_client, url, 80, ca_crt, HTTP_GET, http_data, 5000);
 #endif
     do {
         int diff = http_data->response_content_len - http_data->retrieve_len;
@@ -108,7 +108,7 @@ TEST_F(HTTPClientTests, HTTPUploadFile) {
     ret = IOT_GET_URL_AND_AUTH(ProductSN, DeviceSN, DeviceSecret, file_path, md5, authorization, put_url);
     ASSERT_TRUE(SUCCESS_RET == ret);
 
-    ret = IOT_UPLOAD_FILE(file_path, md5, authorization, put_url);
+    ret = IOT_UPLOAD_FILE(file_path, md5, authorization, put_url, 40000);
     ASSERT_TRUE(SUCCESS_RET == ret);  
     HAL_Free(authorization);
     HAL_Free(put_url);

@@ -157,11 +157,11 @@ static int _http_send_header(http_client_t *client, char *host, const char *path
     return SUCCESS_RET;
 }
 
-int _http_send_user_data(http_client_t *client, http_client_data_t *client_data) {
+int _http_send_user_data(http_client_t *client, http_client_data_t *client_data, uint32_t timeout_ms) {
     int ret = 0;
 
     if (client_data->post_buf && client_data->post_buf_len) {
-        ret = client->net.write(&client->net, (unsigned char *) client_data->post_buf, client_data->post_buf_len, 5000);
+        ret = client->net.write(&client->net, (unsigned char *) client_data->post_buf, client_data->post_buf_len, timeout_ms);
         LOG_DEBUG("client_data->post_buf: %s, ret is %d", client_data->post_buf, ret);
         if (ret <= 0) {
             return (ret == 0) ? ERR_HTTP_CLOSED : ERR_HTTP_CONN_ERROR; /* Connection was closed by server */
@@ -396,7 +396,7 @@ static int _http_connect(http_client_t *client) {
 }
 
 int _http_send_request(http_client_t *client, const char *url, HTTP_Request_Method method,
-                       http_client_data_t *client_data) {
+                       http_client_data_t *client_data, uint32_t timeout_ms) {
     int ret = ERR_HTTP_CONN_ERROR;
 
     if (0 == client->net.handle) {
@@ -418,7 +418,7 @@ int _http_send_request(http_client_t *client, const char *url, HTTP_Request_Meth
     }
 
     if (method == HTTP_POST || method == HTTP_PUT) {
-        ret = _http_send_user_data(client, client_data);
+        ret = _http_send_user_data(client, client_data,timeout_ms);
         if (ret < 0) {
             ret = -3;
         }
@@ -492,7 +492,7 @@ int http_client_connect(http_client_t *client, const char *url, int port, const 
 }
 
 int http_client_common(http_client_t *client, const char *url, int port, const char *ca_crt,
-                       HTTP_Request_Method method, http_client_data_t *client_data) {
+                       HTTP_Request_Method method, http_client_data_t *client_data, uint32_t timeout_ms) {
     int rc;
 
     if (client->net.handle == 0) {
@@ -502,7 +502,7 @@ int http_client_common(http_client_t *client, const char *url, int port, const c
         }
     }
 
-    rc = _http_send_request(client, url, method, client_data);
+    rc = _http_send_request(client, url, method, client_data, timeout_ms);
     if (rc != SUCCESS_RET) {
         LOG_ERROR("http_send_request error, rc = %d", rc);
         http_client_close(client);
