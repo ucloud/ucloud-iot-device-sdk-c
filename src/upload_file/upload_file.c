@@ -91,7 +91,7 @@ int IOT_GET_URL_AND_AUTH(const char *product_sn, const char *device_sn, const ch
         return ERR_PARAM_INVALID;
     }
     HAL_Snprintf((char *)http_data_post->post_buf, 1024, "{\"ProductSN\":\"%s\",\"DeviceSN\":\"%s\","   \
-                                                         "\"FileName\":\"%s\",\"FileSize\":%d,\"MD5\":\"%s\"}",product_sn, device_sn, file_path, file_len, md5);
+                                                         "\"FileName\":\"%s\",\"FileSize\":%d,\"MD5\":\"%s\",\"Content-Type\":\"plain/text\"}",product_sn, device_sn, file_path, file_len, md5);
     http_data_post->post_buf_len = strlen((char *)http_data_post->post_buf);
     char mac_output_hex[100] = {0};
     char mac_output_char[100] = {0};
@@ -241,7 +241,7 @@ int IOT_UPLOAD_FILE(char *file_path, char *md5, char *authorization, char *url, 
         goto end;
     }
 
-    ret = http_client_recv_data(http_client_put, 5000, http_data_put);
+    ret = http_client_recv_data(http_client_put, timeout_ms, http_data_put);
     if(SUCCESS_RET != ret)
     {
         LOG_ERROR("http_client_recv_data error\n");
@@ -252,6 +252,7 @@ int IOT_UPLOAD_FILE(char *file_path, char *md5, char *authorization, char *url, 
     LOG_DEBUG("content_len:%d response_received_len:%d\n",http_data_put->response_content_len, http_data_put->response_received_len);
     LOG_DEBUG("response_buf:%s\n",http_data_put->response_buf);
 
+    fclose(fp);
 end:
     HAL_Free(http_data_put->post_buf);
     HAL_Free(http_data_put->response_buf);
