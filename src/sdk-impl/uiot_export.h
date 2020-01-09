@@ -20,9 +20,6 @@
 extern "C" {
 #endif
 
-/* IoT C-SDK version info */
-#define UIOT_DEVICE_SDK_VERSION                                     "1.0.0"
-
 /* MQTT心跳消息发送周期, 单位:s */
 #define UIOT_MQTT_KEEP_ALIVE_INTERNAL                               (240)
 

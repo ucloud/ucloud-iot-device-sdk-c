@@ -29,7 +29,7 @@ bool HAL_Timer_Expired(Timer *timer) {
     return res.tv_sec < 0 || (res.tv_sec == 0 && res.tv_usec <= 0);
 }
 
-void HAL_Timer_Countdown_ms(Timer *timer, unsigned int timeout_ms) {
+void HAL_Timer_Countdown_ms(Timer *timer, uint32_t timeout_ms) {
     struct timeval now;
     gettimeofday(&now, NULL);
 #ifdef __cplusplus
@@ -40,7 +40,7 @@ void HAL_Timer_Countdown_ms(Timer *timer, unsigned int timeout_ms) {
     timeradd(&now, &interval, &timer->end_time);
 }
 
-void HAL_Timer_Countdown(Timer *timer, unsigned int timeout) {
+void HAL_Timer_Countdown(Timer *timer, uint32_t timeout) {
     struct timeval now;
     gettimeofday(&now, NULL);
     struct timeval interval = {timeout, 0};
