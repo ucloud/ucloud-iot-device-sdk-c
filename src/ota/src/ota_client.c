@@ -28,25 +28,24 @@
 
 
 typedef struct  {
-    uint32_t 				id;                		/* message id */
-    IOT_OTA_State 		    state;   				/* OTA state */
-    uint32_t 				size_last_fetched; 		/* size of last downloaded */
-    uint32_t 				size_fetched;      		/* size of already downloaded */
-    uint32_t 				size_file;         		/* size of file */
+    uint32_t                id;                      /* message id */
+    IOT_OTA_State           state;                   /* OTA state */
+    uint32_t                size_last_fetched;       /* size of last downloaded */
+    uint32_t                size_fetched;            /* size of already downloaded */
+    uint32_t                size_file;               /* size of file */
 
-    char 					*url;                 	/* point to URL */
-    char 					*version;              	/* point to version */
-    char 					*md5sum;            	/* MD5 string */
+    char                    *url;                    /* point to URL */
+    char                    *version;                /* point to version */
+    char                    *md5sum;                 /* MD5 string */
 
-    void 					*md5;                  	/* MD5 handle */
-    void 					*ch_signal;           	/* channel handle of signal exchanged with OTA server */
-    void 					*ch_fetch;             	/* channel handle of download */
+    void                    *md5;                    /* MD5 handle */
+    void                    *ch_signal;              /* channel handle of signal exchanged with OTA server */
+    void                    *ch_fetch;               /* channel handle of download */
 
-    int 					err;                    /* last error code */
+    int                     err;                     /* last error code */
 
     Timer                   report_timer;
 } OTA_Struct_t;
-
 
 static void _ota_callback(void *pContext, const char *msg, uint32_t msg_len) {
     char *msg_method = NULL;
@@ -225,8 +224,6 @@ void *IOT_OTA_Init(const char *product_sn, const char *device_sn, void *ch_signa
         LOG_ERROR("initialize signal channel failed");
         goto do_exit;
     }
-
-    IOT_MQTT_Yield(ch_signal, 200);
 
     h_ota->md5 = ota_lib_md5_init();
     if (NULL == h_ota->md5) {

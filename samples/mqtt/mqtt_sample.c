@@ -37,71 +37,71 @@ static int sg_count = 0;
 static int sg_sub_packet_id = -1;
 
 void event_handler(void *pClient, void *handle_context, MQTTEventMsg *msg) {
-	MQTTMessage* mqtt_message = (MQTTMessage*)msg->msg;
-	uintptr_t packet_id = (uintptr_t)msg->msg;
+    MQTTMessage* mqtt_message = (MQTTMessage*)msg->msg;
+    uintptr_t packet_id = (uintptr_t)msg->msg;
 
-	switch(msg->event_type) {
-		case MQTT_EVENT_UNDEF:
-			HAL_Printf("undefined event occur.\n");
-			break;
+    switch(msg->event_type) {
+        case MQTT_EVENT_UNDEF:
+            HAL_Printf("undefined event occur.\n");
+            break;
 
-		case MQTT_EVENT_DISCONNECT:
-			HAL_Printf("MQTT disconnect.\n");
-			break;
+        case MQTT_EVENT_DISCONNECT:
+            HAL_Printf("MQTT disconnect.\n");
+            break;
 
-		case MQTT_EVENT_RECONNECT:
-			HAL_Printf("MQTT reconnect.\n");
-			break;
+        case MQTT_EVENT_RECONNECT:
+            HAL_Printf("MQTT reconnect.\n");
+            break;
 
-		case MQTT_EVENT_PUBLISH_RECEIVED:
-			HAL_Printf("topic message arrived but without any related handle: topic=%.*s, topic_msg=%.*s\n",
-					  mqtt_message->topic_len,
-					  mqtt_message->topic,
-					  mqtt_message->payload_len,
-					  mqtt_message->payload);
-			break;
-		case MQTT_EVENT_SUBSCRIBE_SUCCESS:
-			HAL_Printf("subscribe success, packet-id=%u\n", (unsigned int)packet_id);
-			sg_sub_packet_id = packet_id;
-			break;
+        case MQTT_EVENT_PUBLISH_RECEIVED:
+            HAL_Printf("topic message arrived but without any related handle: topic=%.*s, topic_msg=%.*s\n",
+                      mqtt_message->topic_len,
+                      mqtt_message->topic,
+                      mqtt_message->payload_len,
+                      mqtt_message->payload);
+            break;
+        case MQTT_EVENT_SUBSCRIBE_SUCCESS:
+            HAL_Printf("subscribe success, packet-id=%u\n", (unsigned int)packet_id);
+            sg_sub_packet_id = packet_id;
+            break;
 
-		case MQTT_EVENT_SUBSCRIBE_TIMEOUT:
-			HAL_Printf("subscribe wait ack timeout, packet-id=%u\n", (unsigned int)packet_id);
-			sg_sub_packet_id = packet_id;
-			break;
+        case MQTT_EVENT_SUBSCRIBE_TIMEOUT:
+            HAL_Printf("subscribe wait ack timeout, packet-id=%u\n", (unsigned int)packet_id);
+            sg_sub_packet_id = packet_id;
+            break;
 
-		case MQTT_EVENT_SUBSCRIBE_NACK:
-			HAL_Printf("subscribe nack, packet-id=%u\n", (unsigned int)packet_id);
-			sg_sub_packet_id = packet_id;
-			break;
+        case MQTT_EVENT_SUBSCRIBE_NACK:
+            HAL_Printf("subscribe nack, packet-id=%u\n", (unsigned int)packet_id);
+            sg_sub_packet_id = packet_id;
+            break;
 
-		case MQTT_EVENT_UNSUBSCRIBE_SUCCESS:
-			HAL_Printf("unsubscribe success, packet-id=%u\n", (unsigned int)packet_id);
-			break;
+        case MQTT_EVENT_UNSUBSCRIBE_SUCCESS:
+            HAL_Printf("unsubscribe success, packet-id=%u\n", (unsigned int)packet_id);
+            break;
 
-		case MQTT_EVENT_UNSUBSCRIBE_TIMEOUT:
-			HAL_Printf("unsubscribe timeout, packet-id=%u\n", (unsigned int)packet_id);
-			break;
+        case MQTT_EVENT_UNSUBSCRIBE_TIMEOUT:
+            HAL_Printf("unsubscribe timeout, packet-id=%u\n", (unsigned int)packet_id);
+            break;
 
-		case MQTT_EVENT_UNSUBSCRIBE_NACK:
-			HAL_Printf("unsubscribe nack, packet-id=%u\n", (unsigned int)packet_id);
-			break;
+        case MQTT_EVENT_UNSUBSCRIBE_NACK:
+            HAL_Printf("unsubscribe nack, packet-id=%u\n", (unsigned int)packet_id);
+            break;
 
-		case MQTT_EVENT_PUBLISH_SUCCESS:
-			HAL_Printf("publish success, packet-id=%u\n", (unsigned int)packet_id);
-			break;
+        case MQTT_EVENT_PUBLISH_SUCCESS:
+            HAL_Printf("publish success, packet-id=%u\n", (unsigned int)packet_id);
+            break;
 
-		case MQTT_EVENT_PUBLISH_TIMEOUT:
-			HAL_Printf("publish timeout, packet-id=%u\n", (unsigned int)packet_id);
-			break;
+        case MQTT_EVENT_PUBLISH_TIMEOUT:
+            HAL_Printf("publish timeout, packet-id=%u\n", (unsigned int)packet_id);
+            break;
 
-		case MQTT_EVENT_PUBLISH_NACK:
-			HAL_Printf("publish nack, packet-id=%u\n", (unsigned int)packet_id);
-			break;
-		default:
-			HAL_Printf("Should NOT arrive here.\n");
-			break;
-	}
+        case MQTT_EVENT_PUBLISH_NACK:
+            HAL_Printf("publish nack, packet-id=%u\n", (unsigned int)packet_id);
+            break;
+        default:
+            HAL_Printf("Should NOT arrive here.\n");
+            break;
+    }
 }
 
 /**
@@ -113,12 +113,12 @@ void event_handler(void *pClient, void *handle_context, MQTTEventMsg *msg) {
  * @param userData         消息负载
  */
 static void on_message_callback(void *pClient, MQTTMessage *message, void *userData) {
-	if (message == NULL) {
-		return;
-	}
+    if (message == NULL) {
+        return;
+    }
 
-	HAL_Printf("Receive Message With topicName:%.*s, payload:%.*s\n",
-		  (int) message->topic_len, message->topic, (int) message->payload_len, (char *) message->payload);
+    HAL_Printf("Receive Message With topicName:%.*s, payload:%.*s\n",
+          (int) message->topic_len, message->topic, (int) message->payload_len, (char *) message->payload);
 }
 
 /**
@@ -130,16 +130,16 @@ static void on_message_callback(void *pClient, MQTTMessage *message, void *userD
  */
 static int _setup_connect_init_params(MQTTInitParams* initParams)
 {
-	initParams->device_sn = UIOT_MY_DEVICE_SN;
-	initParams->product_sn = UIOT_MY_PRODUCT_SN;
-	initParams->device_secret = UIOT_MY_DEVICE_SECRET;
+    initParams->device_sn = UIOT_MY_DEVICE_SN;
+    initParams->product_sn = UIOT_MY_PRODUCT_SN;
+    initParams->device_secret = UIOT_MY_DEVICE_SECRET;
 
-	initParams->command_timeout = UIOT_MQTT_COMMAND_TIMEOUT;
-	initParams->keep_alive_interval = UIOT_MQTT_KEEP_ALIVE_INTERNAL;
+    initParams->command_timeout = UIOT_MQTT_COMMAND_TIMEOUT;
+    initParams->keep_alive_interval = UIOT_MQTT_KEEP_ALIVE_INTERNAL;
 
-	initParams->auto_connect_enable = 1;
-	initParams->event_handler.h_fp = event_handler;
-	initParams->event_handler.context = NULL;
+    initParams->auto_connect_enable = 1;
+    initParams->event_handler.h_fp = event_handler;
+    initParams->event_handler.context = NULL;
 
     HAL_SetProductSN(initParams->product_sn);  
     HAL_SetDeviceSN(initParams->device_sn);
@@ -162,15 +162,15 @@ static int _publish_msg(void *client)
 
     char topic_content[MAX_SIZE_OF_TOPIC_CONTENT + 1] = {0};
 
-	int size = HAL_Snprintf(topic_content, sizeof(topic_content), "{\"test\": \"%d\"}", sg_count++);
-	if (size < 0 || size > sizeof(topic_content) - 1)
-	{
-		HAL_Printf("payload content length not enough! content size:%d  buf size:%d\n", size, (int)sizeof(topic_content));
-		return -3;
-	}
+    int size = HAL_Snprintf(topic_content, sizeof(topic_content), "{\"test\": \"%d\"}", sg_count++);
+    if (size < 0 || size > sizeof(topic_content) - 1)
+    {
+        HAL_Printf("payload content length not enough! content size:%d  buf size:%d\n", size, (int)sizeof(topic_content));
+        return -3;
+    }
 
-	pub_params.payload = topic_content;
-	pub_params.payload_len = strlen(topic_content);
+    pub_params.payload = topic_content;
+    pub_params.payload_len = strlen(topic_content);
 
     return IOT_MQTT_Publish(client, topicName, &pub_params);
 }
@@ -201,9 +201,9 @@ int main(int argc, char **argv) {
     //init connection
     MQTTInitParams init_params = DEFAULT_MQTT_INIT_PARAMS;
     rc = _setup_connect_init_params(&init_params);
-	if (rc != SUCCESS_RET) {
-		return rc;
-	}
+    if (rc != SUCCESS_RET) {
+        return rc;
+    }
     void *client = IOT_MQTT_Construct(&init_params);
     if (client != NULL) {
         HAL_Printf("Cloud Device Construct Success");
@@ -212,25 +212,25 @@ int main(int argc, char **argv) {
         return FAILURE_RET;
     }
 
-	//register subscribe topics here
+    //register subscribe topics here
     rc = _register_subscribe_topics(client);
     if (rc < 0) {
         HAL_Printf("Client Subscribe Topic Failed: %d", rc);
         return rc;
     }
 
-	rc = IOT_MQTT_Yield(client, 200);
+    rc = IOT_MQTT_Yield(client, 200);
 
     do {
-		// 等待订阅结果
-		if (sg_sub_packet_id > 0) {
-			rc = _publish_msg(client);
-			if (rc < 0) {
-				HAL_Printf("client publish topic failed :%d.", rc);
-			}
-		}
+        // 等待订阅结果
+        if (sg_sub_packet_id > 0) {
+            rc = _publish_msg(client);
+            if (rc < 0) {
+                HAL_Printf("client publish topic failed :%d.", rc);
+            }
+        }
 
-    	rc = IOT_MQTT_Yield(client, 200);
+        rc = IOT_MQTT_Yield(client, 200);
 
     } while (sg_sub_packet_id < 0);
 

@@ -43,31 +43,31 @@ static int s_uiot_port = 1883;
 
 void* IOT_MQTT_Construct(MQTTInitParams *pParams)
 {
-	POINTER_VALID_CHECK(pParams, NULL);
-	STRING_PTR_VALID_CHECK(pParams->product_sn, NULL);
-	STRING_PTR_VALID_CHECK(pParams->device_sn, NULL);
+    POINTER_VALID_CHECK(pParams, NULL);
+    STRING_PTR_VALID_CHECK(pParams->product_sn, NULL);
+    STRING_PTR_VALID_CHECK(pParams->device_sn, NULL);
 #ifndef AUTH_MODE_DYNAMIC
     STRING_PTR_VALID_CHECK(pParams->device_secret, NULL);
 #endif
 
-	UIoT_Client* mqtt_client = NULL;
+    UIoT_Client* mqtt_client = NULL;
 
-	// 初始化MQTTClient
-	if ((mqtt_client = (UIoT_Client*) HAL_Malloc (sizeof(UIoT_Client))) == NULL)
+    // 初始化MQTTClient
+    if ((mqtt_client = (UIoT_Client*) HAL_Malloc (sizeof(UIoT_Client))) == NULL)
     {
-		LOG_ERROR("malloc MQTTClient failed\n");
-		return NULL;
-	}
+        LOG_ERROR("malloc MQTTClient failed\n");
+        return NULL;
+    }
     
-	int ret = uiot_mqtt_init(mqtt_client, pParams);
-	if (ret != SUCCESS_RET) {
-		LOG_ERROR("mqtt init failed: %d\n", ret);
+    int ret = uiot_mqtt_init(mqtt_client, pParams);
+    if (ret != SUCCESS_RET) {
+        LOG_ERROR("mqtt init failed: %d\n", ret);
         goto end;
     }
 
     MQTTConnectParams connect_params = DEFAULT_MQTT_CONNECT_PARAMS;
     int client_id_len = strlen(pParams->product_sn) + strlen(pParams->device_sn)+ 2;
-	if((connect_params.client_id = (char*)HAL_Malloc(client_id_len)) == NULL)
+    if((connect_params.client_id = (char*)HAL_Malloc(client_id_len)) == NULL)
     {
         LOG_ERROR("client_id init failed: %d\n", ret);
         goto end;
@@ -115,40 +115,40 @@ void* IOT_MQTT_Construct(MQTTInitParams *pParams)
     HAL_Snprintf(connect_params.client_id, client_id_len, "%s.%s", pParams->product_sn, pParams->device_sn);
     HAL_Snprintf(connect_params.username, username_len, "%s|%s|%d", pParams->product_sn, pParams->device_sn, auth_mode);
     connect_params.keep_alive_interval = pParams->keep_alive_interval;
-	connect_params.clean_session = pParams->clean_session;
-	connect_params.auto_connect_enable = pParams->auto_connect_enable;
+    connect_params.clean_session = pParams->clean_session;
+    connect_params.auto_connect_enable = pParams->auto_connect_enable;
 
-	ret = uiot_mqtt_connect(mqtt_client, &connect_params);
-	if (ret != SUCCESS_RET) {
-		LOG_ERROR("mqtt connect failed: %d\n", ret);
+    ret = uiot_mqtt_connect(mqtt_client, &connect_params);
+    if (ret != SUCCESS_RET) {
+        LOG_ERROR("mqtt connect failed: %d\n", ret);
         HAL_Free(connect_params.username);
         HAL_Free(connect_params.client_id);
         HAL_Free(connect_params.password);
         goto end;
-	}
-	else {
-		LOG_INFO("mqtt connect success\n");
-	}
+    }
+    else {
+        LOG_INFO("mqtt connect success\n");
+    }
 
-	return mqtt_client;
+    return mqtt_client;
 end:
     HAL_Free(mqtt_client);
     return NULL;
 }
 
 int IOT_MQTT_Destroy(void **pClient) {
-	POINTER_VALID_CHECK(*pClient, ERR_PARAM_INVALID);
+    POINTER_VALID_CHECK(*pClient, ERR_PARAM_INVALID);
 
-	UIoT_Client *mqtt_client = (UIoT_Client *)(*pClient);
+    UIoT_Client *mqtt_client = (UIoT_Client *)(*pClient);
 
-	int ret = uiot_mqtt_disconnect(mqtt_client);
+    int ret = uiot_mqtt_disconnect(mqtt_client);
     int loop = 0;
 #ifdef MQTT_CHECK_REPEAT_MSG
     reset_repeat_packet_id_buffer();
 #endif
 
     HAL_MutexDestroy(mqtt_client->lock_generic);
-	HAL_MutexDestroy(mqtt_client->lock_write_buf);
+    HAL_MutexDestroy(mqtt_client->lock_write_buf);
 
     HAL_MutexDestroy(mqtt_client->lock_list_sub);
     HAL_MutexDestroy(mqtt_client->lock_list_pub);
@@ -168,36 +168,36 @@ int IOT_MQTT_Destroy(void **pClient) {
     HAL_Free(*pClient);
     *pClient = NULL;
 
-	return ret;
+    return ret;
 }
 
 int IOT_MQTT_Yield(void *pClient, uint32_t timeout_ms) {
 
-	UIoT_Client   *mqtt_client = (UIoT_Client *)pClient;
+    UIoT_Client   *mqtt_client = (UIoT_Client *)pClient;
     int ret = uiot_mqtt_yield(mqtt_client, timeout_ms);
 
-	return ret;
+    return ret;
 }
 
 int IOT_MQTT_Publish(void *pClient, char *topicName, PublishParams *pParams) {
 
-	UIoT_Client   *mqtt_client = (UIoT_Client *)pClient;
+    UIoT_Client   *mqtt_client = (UIoT_Client *)pClient;
 
-	return uiot_mqtt_publish(mqtt_client, topicName, pParams);
+    return uiot_mqtt_publish(mqtt_client, topicName, pParams);
 }
 
 int IOT_MQTT_Subscribe(void *pClient, char *topicFilter, SubscribeParams *pParams) {
 
-	UIoT_Client   *mqtt_client = (UIoT_Client *)pClient;
+    UIoT_Client   *mqtt_client = (UIoT_Client *)pClient;
 
-	return uiot_mqtt_subscribe(mqtt_client, topicFilter, pParams);
+    return uiot_mqtt_subscribe(mqtt_client, topicFilter, pParams);
 }
 
 int IOT_MQTT_Unsubscribe(void *pClient, char *topicFilter) {
 
-	UIoT_Client   *mqtt_client = (UIoT_Client *)pClient;
+    UIoT_Client   *mqtt_client = (UIoT_Client *)pClient;
 
-	return uiot_mqtt_unsubscribe(mqtt_client, topicFilter);
+    return uiot_mqtt_unsubscribe(mqtt_client, topicFilter);
 }
 
 bool IOT_MQTT_IsConnected(void *pClient) {
@@ -274,7 +274,7 @@ int IOT_MQTT_Dynamic_Register(MQTTInitParams *pParams)
         return FAILURE_RET;
     }
     memset(pub_name, 0x0, MAX_SIZE_OF_CLOUD_TOPIC);
-	HAL_Snprintf(pub_name, MAX_SIZE_OF_CLOUD_TOPIC, DYNAMIC_REGISTER_PUB_TEMPLATE, pParams->product_sn, pParams->device_sn);
+    HAL_Snprintf(pub_name, MAX_SIZE_OF_CLOUD_TOPIC, DYNAMIC_REGISTER_PUB_TEMPLATE, pParams->product_sn, pParams->device_sn);
 
     /* 订阅回复设备密钥的topic */
     char *sub_name = (char *)HAL_Malloc(MAX_SIZE_OF_CLOUD_TOPIC * sizeof(char));
@@ -286,7 +286,7 @@ int IOT_MQTT_Dynamic_Register(MQTTInitParams *pParams)
         return FAILURE_RET;
     }
     memset(sub_name, 0x0, MAX_SIZE_OF_CLOUD_TOPIC);
-	HAL_Snprintf(sub_name, MAX_SIZE_OF_CLOUD_TOPIC, DYNAMIC_REGISTER_SUB_TEMPLATE, pParams->product_sn, pParams->device_sn);
+    HAL_Snprintf(sub_name, MAX_SIZE_OF_CLOUD_TOPIC, DYNAMIC_REGISTER_SUB_TEMPLATE, pParams->product_sn, pParams->device_sn);
 
     SubscribeParams sub_params = DEFAULT_SUB_PARAMS;
     sub_params.qos = QOS1;
@@ -302,7 +302,7 @@ int IOT_MQTT_Dynamic_Register(MQTTInitParams *pParams)
     ret = IOT_MQTT_Yield(client,200);
 
     /* 向topic发送消息请求回复设备密钥 */
-	char auth_msg[UIOT_MQTT_TX_BUF_LEN];
+    char auth_msg[UIOT_MQTT_TX_BUF_LEN];
     HAL_Snprintf(auth_msg, UIOT_MQTT_TX_BUF_LEN, "{\"RequestID\":\"%d\"}", 1);
     PublishParams pub_params = DEFAULT_PUB_PARAMS;
 
@@ -338,17 +338,17 @@ int uiot_mqtt_init(UIoT_Client *pClient, MQTTInitParams *pParams) {
     POINTER_VALID_CHECK(pClient, ERR_PARAM_INVALID);
     POINTER_VALID_CHECK(pParams, ERR_PARAM_INVALID);
 
-	memset(pClient, 0x0, sizeof(UIoT_Client));
+    memset(pClient, 0x0, sizeof(UIoT_Client));
 
     int size = HAL_Snprintf(s_uiot_host, HOST_STR_LENGTH, "%s", UIOT_MQTT_DIRECT_DOMAIN);
     if (size < 0 || size > HOST_STR_LENGTH - 1) {
-		return FAILURE_RET;
-	}
+        return FAILURE_RET;
+    }
 
     if (pParams->command_timeout < MIN_COMMAND_TIMEOUT)
-    	pParams->command_timeout = MIN_COMMAND_TIMEOUT;
+        pParams->command_timeout = MIN_COMMAND_TIMEOUT;
     if (pParams->command_timeout > MAX_COMMAND_TIMEOUT)
-    	pParams->command_timeout = MAX_COMMAND_TIMEOUT;
+        pParams->command_timeout = MAX_COMMAND_TIMEOUT;
     pClient->command_timeout_ms = pParams->command_timeout;
 
     // packet id 初始化时取1
@@ -366,26 +366,26 @@ int uiot_mqtt_init(UIoT_Client *pClient, MQTTInitParams *pParams) {
     set_client_conn_state(pClient, DISCONNECTED);
 
     if ((pClient->lock_write_buf = HAL_MutexCreate()) == NULL) {
-    	LOG_ERROR("create write buf lock failed.");
-    	goto error;
+        LOG_ERROR("create write buf lock failed.");
+        goto error;
     }
     if ((pClient->lock_list_sub = HAL_MutexCreate()) == NULL) {
-    	LOG_ERROR("create sub list lock failed.");
-    	goto error;
+        LOG_ERROR("create sub list lock failed.");
+        goto error;
     }
     if ((pClient->lock_list_pub = HAL_MutexCreate()) == NULL) {
-    	LOG_ERROR("create pub list lock failed.");
-    	goto error;
+        LOG_ERROR("create pub list lock failed.");
+        goto error;
     }
 
     if ((pClient->list_pub_wait_ack = list_new()) == NULL) {
-    	LOG_ERROR("create pub wait list failed.");
-    	goto error;
+        LOG_ERROR("create pub wait list failed.");
+        goto error;
     }
     pClient->list_pub_wait_ack->free = HAL_Free;
 
     if ((pClient->list_sub_wait_ack = list_new()) == NULL) {
-    	LOG_ERROR("create sub wait list failed.");
+        LOG_ERROR("create sub wait list failed.");
         goto error;
     }
     pClient->list_sub_wait_ack->free = HAL_Free;
@@ -416,32 +416,32 @@ int uiot_mqtt_init(UIoT_Client *pClient, MQTTInitParams *pParams) {
     return SUCCESS_RET;
 
 error:
-	if (pClient->list_pub_wait_ack) {
-		pClient->list_pub_wait_ack->free(pClient->list_pub_wait_ack);
-		pClient->list_pub_wait_ack = NULL;
-	}
-	if (pClient->list_sub_wait_ack) {
-		pClient->list_sub_wait_ack->free(pClient->list_sub_wait_ack);
-		pClient->list_sub_wait_ack = NULL;
-	}
-	if (pClient->lock_generic) {
-		HAL_MutexDestroy(pClient->lock_generic);
-		pClient->lock_generic = NULL;
-	}
-	if (pClient->lock_list_sub) {
-		HAL_MutexDestroy(pClient->lock_list_sub);
-		pClient->lock_list_sub = NULL;
-	}
-	if (pClient->lock_list_pub) {
-		HAL_MutexDestroy(pClient->lock_list_pub);
-		pClient->lock_list_pub = NULL;
-	}
-	if (pClient->lock_write_buf) {
-		HAL_MutexDestroy(pClient->lock_write_buf);
-		pClient->lock_write_buf = NULL;
-	}
+    if (pClient->list_pub_wait_ack) {
+        pClient->list_pub_wait_ack->free(pClient->list_pub_wait_ack);
+        pClient->list_pub_wait_ack = NULL;
+    }
+    if (pClient->list_sub_wait_ack) {
+        pClient->list_sub_wait_ack->free(pClient->list_sub_wait_ack);
+        pClient->list_sub_wait_ack = NULL;
+    }
+    if (pClient->lock_generic) {
+        HAL_MutexDestroy(pClient->lock_generic);
+        pClient->lock_generic = NULL;
+    }
+    if (pClient->lock_list_sub) {
+        HAL_MutexDestroy(pClient->lock_list_sub);
+        pClient->lock_list_sub = NULL;
+    }
+    if (pClient->lock_list_pub) {
+        HAL_MutexDestroy(pClient->lock_list_pub);
+        pClient->lock_list_pub = NULL;
+    }
+    if (pClient->lock_write_buf) {
+        HAL_MutexDestroy(pClient->lock_write_buf);
+        pClient->lock_write_buf = NULL;
+    }
 
-	return FAILURE_RET;
+    return FAILURE_RET;
 }
 
 int uiot_mqtt_set_autoreconnect(UIoT_Client *pClient, bool value) {

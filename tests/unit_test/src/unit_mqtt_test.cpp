@@ -42,7 +42,7 @@ protected:
     {
         std::cout << "MqttTests Test End \n";
     } 
-	
+    
 };
 
 void event_handler(void *pClient, void *handle_context, MQTTEventMsg *msg) {
@@ -111,12 +111,12 @@ void event_handler(void *pClient, void *handle_context, MQTTEventMsg *msg) {
 }
 
 static void on_message_callback(void *pClient, MQTTMessage *message, void *userData) {
-	if (message == NULL) {
-		return;
-	}
+    if (message == NULL) {
+        return;
+    }
 
-	HAL_Printf("Receive Message With topicName:%.*s, payload:%.*s",
-		  (int) message->topic_len, message->topic, (int) message->payload_len, (char *) message->payload);
+    HAL_Printf("Receive Message With topicName:%.*s, payload:%.*s",
+          (int) message->topic_len, message->topic, (int) message->payload_len, (char *) message->payload);
 }
 
 static int _publish_msg(void *client)
@@ -129,10 +129,10 @@ static int _publish_msg(void *client)
     
     char topic_content[MAX_SIZE_OF_TOPIC_CONTENT + 1] = {0};
 
-	HAL_Snprintf(topic_content, MAX_SIZE_OF_TOPIC_CONTENT, "{\"test\": \"%d\"}", num);
+    HAL_Snprintf(topic_content, MAX_SIZE_OF_TOPIC_CONTENT, "{\"test\": \"%d\"}", num);
 
-	pub_params.payload = topic_content;
-	pub_params.payload_len = strlen(topic_content);
+    pub_params.payload = topic_content;
+    pub_params.payload_len = strlen(topic_content);
 
     return IOT_MQTT_Publish(client, topicName, &pub_params);
 }
@@ -159,13 +159,13 @@ static int _register_unsubscribe_topics(void *client)
 static int _setup_connect_init_params(MQTTInitParams* initParams)
 {
     int ret = 0;
-	initParams->device_sn = (char *)UIOT_MY_DEVICE_SN;
-	initParams->product_sn = (char *)UIOT_MY_PRODUCT_SN;
-	initParams->device_secret = (char *)UIOT_MY_DEVICE_SECRET;
+    initParams->device_sn = (char *)UIOT_MY_DEVICE_SN;
+    initParams->product_sn = (char *)UIOT_MY_PRODUCT_SN;
+    initParams->device_secret = (char *)UIOT_MY_DEVICE_SECRET;
 
-	initParams->command_timeout = UIOT_MQTT_COMMAND_TIMEOUT;
-	initParams->keep_alive_interval = UIOT_MQTT_KEEP_ALIVE_INTERNAL;
-	initParams->auto_connect_enable = 1;
+    initParams->command_timeout = UIOT_MQTT_COMMAND_TIMEOUT;
+    initParams->keep_alive_interval = UIOT_MQTT_KEEP_ALIVE_INTERNAL;
+    initParams->auto_connect_enable = 1;
     initParams->event_handler.h_fp = event_handler;
     initParams->event_handler.context = NULL;
 

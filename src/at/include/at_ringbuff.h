@@ -23,7 +23,7 @@
 
 #define RINGBUFF_OK            0    /* No error, everything OK. */
 #define RINGBUFF_ERR          -1    /* Out of memory error.     */
-#define RINGBUFF_EMPTY        -3    /* Timeout.                	    */
+#define RINGBUFF_EMPTY        -3    /* Timeout.                        */
 #define RINGBUFF_FULL         -4    /* Routing problem.          */
 #define RINGBUFF_TOO_SHORT    -5 
 
