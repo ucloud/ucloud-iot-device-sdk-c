@@ -155,7 +155,7 @@ static int _setup_connect_init_params(MQTTInitParams* initParams)
 static int _publish_msg(void *client)
 {
     char topicName[128] = {0};
-    HAL_Snprintf(topicName, 128, "/%s/%s/%s", UIOT_MY_PRODUCT_SN, UIOT_MY_DEVICE_SN, "set");
+    HAL_Snprintf(topicName, 128, "/%s/%s/upload/event", UIOT_MY_PRODUCT_SN, UIOT_MY_DEVICE_SN);
 
     PublishParams pub_params = DEFAULT_PUB_PARAMS;
     pub_params.qos = QOS1;
@@ -182,7 +182,7 @@ static int _publish_msg(void *client)
 static int _register_subscribe_topics(void *client)
 {
     static char topic_name[128] = {0};
-    int size = HAL_Snprintf(topic_name, sizeof(topic_name), "/%s/%s/%s", UIOT_MY_PRODUCT_SN, UIOT_MY_DEVICE_SN, "set");
+    int size = HAL_Snprintf(topic_name, sizeof(topic_name), "/%s/%s/upload/event", UIOT_MY_PRODUCT_SN, UIOT_MY_DEVICE_SN);
     if (size < 0 || size > sizeof(topic_name) - 1)
     {
         HAL_Printf("topic content length not enough! content size:%d  buf size:%d\n", size, (int)sizeof(topic_name));
