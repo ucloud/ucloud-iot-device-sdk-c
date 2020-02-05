@@ -175,14 +175,10 @@ int _http_send_user_data(http_client_t *client, http_client_data_t *client_data,
 static int _http_recv(http_client_t *client, unsigned char *buf, int max_len, int *p_read_len,
                       uint32_t timeout_ms) {
     int ret = 0;
-    Timer timer;
-
-    init_timer(&timer);
-    countdown_ms(&timer, timeout_ms);
 
     *p_read_len = 0;
 
-    ret = client->net.read(&client->net, buf, max_len, left_ms(&timer));
+    ret = client->net.read(&client->net, buf, max_len, timeout_ms);
 
     if (ret > 0) {
         *p_read_len = ret;
@@ -282,7 +278,7 @@ static int _http_get_response_body(http_client_t *client, unsigned char *data, i
                                              client_data->response_buf_len - 1 - written_response_buf_len);
                 max_len_to_receive = Min(max_len_to_receive, client_data->retrieve_len);
 
-                ret = _http_recv(client, data, max_len_to_receive, &data_len_actually_received, left_ms(&timer));
+                ret = _http_recv(client, data, max_len_to_receive, &data_len_actually_received, timeout_ms);
                 if (ret == ERR_HTTP_CONN_ERROR) {
                     return ret;
                 }
@@ -306,13 +302,9 @@ static int _http_get_response_body(http_client_t *client, unsigned char *data, i
 static int _http_parse_response_header(http_client_t *client, char *data, int len, uint32_t timeout_ms,
                                        http_client_data_t *client_data) {
     int crlf_pos;
-    Timer timer;
     char *tmp_ptr, *ptr_body_end;
     int new_trf_len, ret;
     char *crlf_ptr;
-
-    init_timer(&timer);
-    countdown_ms(&timer, timeout_ms);
 
     client_data->response_content_len = -1;
 
@@ -343,7 +335,7 @@ static int _http_parse_response_header(http_client_t *client, char *data, int le
     while (NULL == (ptr_body_end = strstr(data, "\r\n\r\n"))) {
         /* try to read more header */
         ret = _http_recv(client, (unsigned char *) (data + len), HTTP_CLIENT_READ_HEAD_SIZE, &new_trf_len,
-                         left_ms(&timer));
+                         timeout_ms);
         if (ret == ERR_HTTP_CONN_ERROR) {
             return ret;
         }
@@ -367,7 +359,7 @@ static int _http_parse_response_header(http_client_t *client, char *data, int le
     len = len - (ptr_body_end + 4 - data);
     memmove(data, ptr_body_end + 4, len + 1);
     client_data->response_received_len += len;
-    return _http_get_response_body(client, (unsigned char *) data, len, left_ms(&timer), client_data);
+    return _http_get_response_body(client, (unsigned char *) data, len, timeout_ms, client_data);
 }
 
 static int _http_connect(http_client_t *client) {
@@ -430,10 +422,6 @@ int _http_send_request(http_client_t *client, const char *url, HTTP_Request_Meth
 static int _http_client_recv_response(http_client_t *client, uint32_t timeout_ms, http_client_data_t *client_data) {
     int read_len = 0, ret = ERR_HTTP_CONN_ERROR;
     char buf[HTTP_CLIENT_READ_BUF_SIZE] = {0};
-    Timer timer;
-
-    init_timer(&timer);
-    countdown_ms(&timer, timeout_ms);
 
     if (0 == client->net.handle) {
         LOG_ERROR("no connection have been established");
@@ -442,11 +430,11 @@ static int _http_client_recv_response(http_client_t *client, uint32_t timeout_ms
 
     if (client_data->is_more) {
         client_data->response_buf[0] = '\0';
-        ret = _http_get_response_body(client, (unsigned char *) buf, read_len, left_ms(&timer), client_data);
+        ret = _http_get_response_body(client, (unsigned char *) buf, read_len, timeout_ms, client_data);
     } else {
         client_data->is_more = 1;
         /* try to read header */
-        ret = _http_recv(client, (unsigned char *) buf, HTTP_CLIENT_READ_HEAD_SIZE, &read_len, left_ms(&timer));
+        ret = _http_recv(client, (unsigned char *) buf, HTTP_CLIENT_READ_HEAD_SIZE, &read_len, timeout_ms);
         if (ret != 0) {
             return ret;
         }
@@ -454,7 +442,7 @@ static int _http_client_recv_response(http_client_t *client, uint32_t timeout_ms
         buf[read_len] = '\0';
 
         if (read_len) {
-            ret = _http_parse_response_header(client, buf, read_len, left_ms(&timer), client_data);
+            ret = _http_parse_response_header(client, buf, read_len, timeout_ms, client_data);
         }
     }
 
@@ -514,14 +502,10 @@ int http_client_common(http_client_t *client, const char *url, int port, const c
 
 int http_client_recv_data(http_client_t *client, uint32_t timeout_ms, http_client_data_t *client_data) {
     int rc;
-    Timer timer;
-
-    init_timer(&timer);
-    countdown_ms(&timer, (unsigned int) timeout_ms);
 
     if ((NULL != client_data->response_buf)
         && (0 != client_data->response_buf_len)) {
-        rc = _http_client_recv_response(client, left_ms(&timer), client_data);
+        rc = _http_client_recv_response(client, timeout_ms, client_data);
         if (rc < 0) {
             LOG_ERROR("_http_client_recv_response is error, rc = %d", rc);
             http_client_close(client);

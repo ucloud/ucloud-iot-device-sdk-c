@@ -281,6 +281,7 @@ TEST_F(ShadowTest, ShadowDocTest_update)
     HAL_Free(Property5);
     HAL_Free(Property6);
     IOT_Shadow_Destroy(sg_pshadow);
+    IOT_MQTT_Destroy(&mqtt_client);
 }
 
 #if 0

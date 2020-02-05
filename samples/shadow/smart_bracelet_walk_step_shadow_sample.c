@@ -172,7 +172,7 @@ int main()
 
     HAL_Free(property_walk_step);
     IOT_Shadow_Destroy(sg_pshadow);
-
+    IOT_MQTT_Destroy(&mqtt_client);
     return ret;
 }
 

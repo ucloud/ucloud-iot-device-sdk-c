@@ -244,7 +244,7 @@ int main()
     HAL_Free(property_heart_rate);
     HAL_Free(property_alarm);
     IOT_Shadow_Destroy(sg_pshadow);
-
+    IOT_MQTT_Destroy(&mqtt_client);
     return ret;
 }
 
