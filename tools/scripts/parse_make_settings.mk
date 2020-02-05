@@ -29,7 +29,7 @@ $(foreach v, \
 
 include $(CURDIR)/tools/scripts/settings.mk
 
-CFLAGS  += -DFORCE_SSL_VERIFY -DENABLE_LOG_ERROR -DENABLE_LOG_WARN -DENABLE_LOG_INFO -DENABLE_LOG_DEBUG -lrt
+CFLAGS  += -DFORCE_SSL_VERIFY -DENABLE_LOG_ERROR -lrt
 ifeq (debug,$(strip $(BUILD_TYPE)))
 CFLAGS  += -DENABLE_LOG_DEBUG -DENABLE_IOT_TRACE -lrt
 endif
