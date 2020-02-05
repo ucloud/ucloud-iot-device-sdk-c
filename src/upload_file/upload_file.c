@@ -132,11 +132,21 @@ int IOT_GET_URL_AND_AUTH(const char *product_sn, const char *device_sn, const ch
     LOG_DEBUG("response_buf:%s\n",http_data_post->response_buf);
 
     char *temp = LITE_json_value_of((char *)"Authorization", http_data_post->response_buf);
+    if(NULL == temp)
+    {
+        LOG_ERROR("parse Authorization error\n");
+        goto end;
+    }
     strncpy(authorization,temp,strlen(temp));
     authorization[strlen(temp)+1] = '\0';
     LOG_DEBUG("authorization:%s\n",authorization);
 
     temp = LITE_json_value_of((char *)"URL", http_data_post->response_buf);
+    if(NULL == temp)
+    {
+        LOG_ERROR("parse URL error\n");
+        goto end;
+    }
     strncpy(put_url,temp,strlen(temp));
     put_url[strlen(temp)+1] = '\0';
     LOG_DEBUG("put_url:%s\n",put_url);

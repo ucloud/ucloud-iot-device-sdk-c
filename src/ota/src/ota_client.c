@@ -537,3 +537,4 @@ int IOT_OTA_GetLastError(void *handle)
 
     return h_ota->err;
 }
+
