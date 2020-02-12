@@ -93,11 +93,11 @@ int IOT_GET_URL_AND_AUTH(const char *product_sn, const char *device_sn, const ch
     HAL_Snprintf((char *)http_data_post->post_buf, 1024, "{\"ProductSN\":\"%s\",\"DeviceSN\":\"%s\","   \
                                                          "\"FileName\":\"%s\",\"FileSize\":%d,\"MD5\":\"%s\",\"Content-Type\":\"plain/text\"}",product_sn, device_sn, file_path, file_len, md5);
     http_data_post->post_buf_len = strlen((char *)http_data_post->post_buf);
-    char mac_output_hex[100] = {0};
-    char mac_output_char[100] = {0};
+    uint8_t mac_output_hex[32] = {0};
+    char mac_output_char[65] = {0};
 
-    utils_hmac_sha256((const uint8_t *)http_data_post->post_buf, http_data_post->post_buf_len, (const uint8_t *)device_sercret, strlen(device_sercret), (uint8_t *)mac_output_hex);
-    LITE_hexbuf_convert((unsigned char *)mac_output_hex, mac_output_char, strlen(mac_output_hex), 0);
+    utils_hmac_sha256((const uint8_t *)http_data_post->post_buf, http_data_post->post_buf_len, (const uint8_t *)device_sercret, strlen(device_sercret), mac_output_hex); 
+    LITE_hexbuf_convert((unsigned char *)mac_output_hex, mac_output_char, 32, 0);
     LOG_DEBUG("hmac:%s\r\n",mac_output_char);
 
     http_client_post->header = (char *)HAL_Malloc(1024);
