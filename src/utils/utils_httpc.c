@@ -108,7 +108,7 @@ static int _utils_fill_tx_buffer(http_client_t *client, unsigned char *send_buf,
     return SUCCESS_RET;
 }
 
-static int _http_send_header(http_client_t *client, char *host, const char *path, int method,
+static int _http_send_header(http_client_t *client, char *host, const char *path, int method, uint32_t size_fetched, size_t range_len,
                              http_client_data_t *client_data) {
     int len;
     unsigned char send_buf[HTTP_CLIENT_SEND_BUF_SIZE] = {0};
@@ -122,8 +122,15 @@ static int _http_send_header(http_client_t *client, char *host, const char *path
     memset(send_buf, 0, HTTP_CLIENT_SEND_BUF_SIZE);
     len = 0; /* Reset send buffer */
 
-    HAL_Snprintf(buf, sizeof(buf), "%s %s HTTP/1.1\r\nHost: %s\r\n", pMethod, path, host); /* Write request */
-
+    if(size_fetched != 0)
+    {
+        HAL_Snprintf(buf, sizeof(buf), "%s %s HTTP/1.1\r\nHost: %s\r\nRange: bytes=%d-%d\r\n", pMethod, path, host, size_fetched, size_fetched + range_len); /* Write request */
+    }
+    else
+    {
+        HAL_Snprintf(buf, sizeof(buf), "%s %s HTTP/1.1\r\nHost: %s\r\n", pMethod, path, host); /* Write request */
+    }
+    
     ret = _utils_fill_tx_buffer(client, send_buf, &len, buf, strlen(buf));
     if (ret < 0) {
         /* LOG_ERROR("Could not write request"); */
@@ -387,7 +394,7 @@ static int _http_connect(http_client_t *client) {
     return SUCCESS_RET;
 }
 
-int _http_send_request(http_client_t *client, const char *url, HTTP_Request_Method method,
+int _http_send_request(http_client_t *client, const char *url, HTTP_Request_Method method, uint32_t size_fetched, size_t range_len,
                        http_client_data_t *client_data, uint32_t timeout_ms) {
     int ret = ERR_HTTP_CONN_ERROR;
 
@@ -404,7 +411,7 @@ int _http_send_request(http_client_t *client, const char *url, HTTP_Request_Meth
         return rc;
     }
 
-    ret = _http_send_header(client, host, path, method, client_data);
+    ret = _http_send_header(client, host, path, method, size_fetched, range_len, client_data);
     if (ret != 0) {
         return -2;
     }
@@ -490,7 +497,7 @@ int http_client_common(http_client_t *client, const char *url, int port, const c
         }
     }
 
-    rc = _http_send_request(client, url, method, client_data, timeout_ms);
+    rc = _http_send_request(client, url, method, 0, 0, client_data, timeout_ms);
     if (rc != SUCCESS_RET) {
         LOG_ERROR("http_send_request error, rc = %d", rc);
         http_client_close(client);

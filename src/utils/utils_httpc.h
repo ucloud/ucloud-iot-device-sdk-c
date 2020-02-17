@@ -70,6 +70,10 @@ int _http_send_user_data(http_client_t *client, http_client_data_t *client_data,
 
 void http_client_file_md5(char* file_path, char *output);
 
+int _http_send_request(http_client_t *client, const char *url, HTTP_Request_Method method, uint32_t size_fetched, size_t range_len, 
+                       http_client_data_t *client_data, uint32_t timeout_ms);
+
+
 #ifdef __cplusplus
 }
 #endif

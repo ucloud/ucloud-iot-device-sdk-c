@@ -26,6 +26,41 @@
 
 #include "utils_timer.h"
 
+#define HTTP_OTA_BUFF_LEN         4100
+
+/* http slice len config HTTP_OTA_BUFF_LEN > HTTP_OTA_RANGE_LEN*/
+#define HTTP_OTA_RANGE_LEN        4096
+
+static void print_progress(uint32_t percent)
+{
+    static unsigned char progress_sign[100 + 1];
+    uint8_t i;
+
+    if (percent > 100)
+    {
+        percent = 100;
+    }
+
+    for (i = 0; i < 100; i++)
+    {
+        if (i < percent)
+        {
+            progress_sign[i] = '=';
+        }
+        else if (percent == i)
+        {
+            progress_sign[i] = '>';
+        }
+        else
+        {
+            progress_sign[i] = ' ';
+        }
+    }
+
+    progress_sign[sizeof(progress_sign) - 1] = '\0';
+
+    HAL_Printf("Download: [%s] %d%%\r\n", progress_sign, percent);
+}
 
 typedef struct  {
     uint32_t                id;                      /* message id */
@@ -98,6 +133,8 @@ static void _ota_callback(void *pContext, const char *msg, uint32_t msg_len) {
     }
 
     h_ota->state = OTA_STATE_FETCHING;
+    
+    IOT_OTA_fw_download(h_ota);
 
 do_exit:
     HAL_Free(msg_str);
@@ -380,10 +417,11 @@ int IOT_OTA_IsFetchFinish(void *handle)
 }
 
 
-int IOT_OTA_FetchYield(void *handle, char *buf, size_t buf_len, uint32_t timeout_s)
+int IOT_OTA_FetchYield(void *handle, char *buf, size_t buf_len, size_t range_len, uint32_t timeout_s)
 {
     int ret;
     OTA_Struct_t *h_ota = (OTA_Struct_t *) handle;
+    int retry_time = 0;
 
     POINTER_VALID_CHECK(handle, ERR_OTA_INVALID_PARAM);
     POINTER_VALID_CHECK(buf, ERR_OTA_INVALID_PARAM);
@@ -394,38 +432,45 @@ int IOT_OTA_FetchYield(void *handle, char *buf, size_t buf_len, uint32_t timeout
         return ERR_OTA_INVALID_STATE;
     }
 
-    ret = ofc_fetch(h_ota->ch_fetch, buf, buf_len, timeout_s);
-    if (ret < 0) {
-        LOG_ERROR("Fetch firmware failed");
-        h_ota->state = OTA_STATE_FETCHED;
-        h_ota->err = ret;
-        if (NULL != h_ota->url) {
-            HAL_Free(h_ota->url);
-        }
-        h_ota->url = NULL;
+    for(retry_time = 0; retry_time < 5; retry_time++)
+    {
+        /* fetch fail,try again utill 5 time */
+        ret = ofc_fetch(h_ota->ch_fetch, h_ota->size_fetched ,buf, buf_len, range_len, timeout_s);
+        if (ret < 0) {
+            LOG_ERROR("Fetch firmware failed");
+            h_ota->state = OTA_STATE_FETCHED;
+            h_ota->err = ret;
 
-        if (ret == ERR_OTA_FETCH_AUTH_FAIL) { // 上报签名过期
-            IOT_OTA_ReportFail(h_ota, OTA_ERRCODE_SIGNATURE_EXPIRED);
-        } else if (ret == ERR_OTA_FILE_NOT_EXIST) { // 上报文件不存在
-            IOT_OTA_ReportFail(h_ota, OTA_ERRCODE_FIRMWARE_NOT_EXIST);
-        } else if (ret == ERR_OTA_FETCH_TIMEOUT) { // 上报下载超时
-            IOT_OTA_ReportFail(h_ota, OTA_ERRCODE_DOWNLOAD_TIMEOUT);
+            if (ret == ERR_OTA_FETCH_AUTH_FAIL) { // 上报签名过期
+                IOT_OTA_ReportFail(h_ota, OTA_ERRCODE_SIGNATURE_EXPIRED);
+            } else if (ret == ERR_OTA_FILE_NOT_EXIST) { // 上报文件不存在
+                IOT_OTA_ReportFail(h_ota, OTA_ERRCODE_FIRMWARE_NOT_EXIST);
+            } else if (ret == ERR_OTA_FETCH_TIMEOUT) { // 上报下载超时
+                IOT_OTA_ReportFail(h_ota, OTA_ERRCODE_DOWNLOAD_TIMEOUT);
+            } else {
+                h_ota->err = ERR_OTA_FETCH_FAILED;
+            }
+            HAL_SleepMs(1000);
+        } else if (0 == h_ota->size_fetched) {
+            /* force report status in the first */
+            IOT_OTA_ReportProgress(h_ota, 0, OTA_PROGRESS_DOWNLOADING);
+
+            init_timer(&h_ota->report_timer);
+            countdown(&h_ota->report_timer, OTA_REPORT_PROGRESS_INTERVAL);
+            break;
         } else {
-            h_ota->err = ERR_OTA_FETCH_FAILED;
+            break;
         }
-
-        return ret;
-    } else if (0 == h_ota->size_fetched) {
-        /* force report status in the first */
-        IOT_OTA_ReportProgress(h_ota, 0, OTA_PROGRESS_DOWNLOADING);
-
-        init_timer(&h_ota->report_timer);
-        countdown(&h_ota->report_timer, OTA_REPORT_PROGRESS_INTERVAL);
     }
-
-    ota_lib_md5_update(h_ota->md5, buf, ret);
-    h_ota->size_last_fetched = ret;
-    h_ota->size_fetched += ret;
+    if (ret > 0) {
+        ota_lib_md5_update(h_ota->md5, buf, ret);        
+        h_ota->size_last_fetched = ret;
+        h_ota->size_fetched += ret;
+    }
+    else
+    {
+        return ret;
+    }
 
     /* report percent every second. */
     uint32_t percent = (h_ota->size_fetched * 100) / h_ota->size_file;
@@ -434,14 +479,13 @@ int IOT_OTA_FetchYield(void *handle, char *buf, size_t buf_len, uint32_t timeout
     } else if (h_ota->size_last_fetched > 0 && has_expired(&h_ota->report_timer)) {
         IOT_OTA_ReportProgress(h_ota, percent, OTA_PROGRESS_DOWNLOADING);
         countdown(&h_ota->report_timer, OTA_REPORT_PROGRESS_INTERVAL);
+        HAL_SleepMs(100);
     }
+
+    print_progress(percent);
 
     if (h_ota->size_fetched >= h_ota->size_file) {
         h_ota->state = OTA_STATE_FETCHED;
-        if (NULL != h_ota->url) {
-            HAL_Free(h_ota->url);
-        }
-        h_ota->url = NULL;
     }
 
     return ret;
@@ -537,4 +581,78 @@ int IOT_OTA_GetLastError(void *handle)
 
     return h_ota->err;
 }
+
+int IOT_OTA_fw_download(void *handle)
+{
+    int ret = 0;
+    int file_size = 0, length, firmware_valid, total_length = 0;
+    char *buffer_read = NULL;
+    OTA_Struct_t * h_ota = (OTA_Struct_t *) handle;
+    // 用于存放云端下发的固件版本
+    char msg_version[33];
+    FILE *fp;
+
+    IOT_OTA_Ioctl(h_ota, OTA_IOCTL_FILE_SIZE, &file_size, 4);
+    
+    if (NULL == (fp = fopen("ota.bin", "wb+"))) {
+        LOG_ERROR("open file failed");
+        goto __exit;
+    }
+
+    buffer_read = (char *)HAL_Malloc(HTTP_OTA_BUFF_LEN);
+    if (buffer_read == NULL)
+    {
+        LOG_ERROR("No memory for http ota!");
+        ret = FAILURE_RET;
+        goto __exit;
+    }
+    memset(buffer_read, 0x00, HTTP_OTA_BUFF_LEN);
+
+    LOG_INFO("OTA file size is (%d)", file_size);
+    do
+    {
+        length = IOT_OTA_FetchYield(h_ota, buffer_read, HTTP_OTA_BUFF_LEN, HTTP_OTA_RANGE_LEN, 10);
+        if (length > 0)
+        {
+            /* Write the data to the corresponding partition address */
+            if (1 != fwrite(buffer_read, length, 1, fp)) {
+                LOG_ERROR("write data to file failed");
+                goto __exit;
+            }
+            total_length += length;
+        }
+        else
+        {
+            LOG_ERROR("Exit: server return err (%d)!", length);
+            ret = ERR_OTA_FETCH_FAILED;                
+            goto __exit;
+        }
+    } while (!IOT_OTA_IsFetchFinish(h_ota));
+
+    if (total_length == file_size)
+    {    
+        ret = SUCCESS_RET;
+        IOT_OTA_Ioctl(h_ota, OTA_IOCTL_CHECK_FIRMWARE, &firmware_valid, 4);
+        if (0 == firmware_valid) {
+            LOG_ERROR("The firmware is invalid"); 
+            ret = IOT_OTA_GetLastError(h_ota);
+            goto __exit;
+        } else {
+            LOG_INFO("The firmware is valid");            
+            IOT_OTA_Ioctl(h_ota, OTA_IOCTL_VERSION, msg_version, 33);
+            IOT_OTA_ReportSuccess(h_ota, msg_version);
+        }
+
+        LOG_INFO("Download firmware to flash success.");
+    }
+
+__exit:
+    if (buffer_read != NULL)
+        HAL_Free(buffer_read);
+
+    IOT_OTA_Destroy(h_ota);
+
+    return ret;
+}
+
 

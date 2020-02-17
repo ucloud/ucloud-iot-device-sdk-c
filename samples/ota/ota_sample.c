@@ -92,12 +92,6 @@ static int _setup_connect_init_params(MQTTInitParams* initParams)
 int main(int argc, char **argv)
 {
     int rc;
-    int ota_over = 0;
-    bool upgrade_fetch_success = true;
-    // 用于存放云端下发的固件版本
-    char msg_version[33];
-    FILE *fp;
-    char buf_ota[OTA_BUF_LEN];
 
     MQTTInitParams init_params = DEFAULT_MQTT_INIT_PARAMS;
     rc = _setup_connect_init_params(&init_params);
@@ -130,73 +124,7 @@ int main(int argc, char **argv)
         return FAILURE_RET;
     }
 
-    if (NULL == (fp = fopen("ota.bin", "wb+"))) {
-        LOG_ERROR("open file failed");
-        return FAILURE_RET;
-    }
-
-    do {
-        uint32_t firmware_valid;
-        LOG_INFO("wait for ota upgrade command...");
-
-        IOT_MQTT_Yield(client, 100);
-
-        if (IOT_OTA_IsFetching(h_ota)) {
-            char version[33], md5sum[33];
-            uint32_t size_downloaded, size_file;
-            do {
-                int len = IOT_OTA_FetchYield(h_ota, buf_ota, OTA_BUF_LEN, 1);
-                if (len > 0) {
-                    if (1 != fwrite(buf_ota, len, 1, fp)) {
-                        LOG_ERROR("write data to file failed");
-                        upgrade_fetch_success = false;
-                        break;
-                    }
-                } else if (len < 0) {
-                    LOG_ERROR("download fail rc=%d", len);
-                    upgrade_fetch_success = false;
-                    break;
-                }
-
-                /* get OTA information */
-                IOT_OTA_Ioctl(h_ota, OTA_IOCTL_FETCHED_SIZE, &size_downloaded, 4);
-                IOT_OTA_Ioctl(h_ota, OTA_IOCTL_FILE_SIZE, &size_file, 4);
-                IOT_OTA_Ioctl(h_ota, OTA_IOCTL_MD5SUM, md5sum, 33);
-                IOT_OTA_Ioctl(h_ota, OTA_IOCTL_VERSION, version, 33);
-                IOT_OTA_Ioctl(h_ota, OTA_IOCTL_VERSION, msg_version, 33);
-
-
-                IOT_MQTT_Yield(client, 100);
-            } while (!IOT_OTA_IsFetchFinish(h_ota));
-
-            /* Must check MD5 match or not */
-            if (upgrade_fetch_success) {
-                IOT_OTA_Ioctl(h_ota, OTA_IOCTL_CHECK_FIRMWARE, &firmware_valid, 4);
-                if (0 == firmware_valid) {
-                    LOG_ERROR("The firmware is invalid");
-                    upgrade_fetch_success = false;
-                } else {
-                    LOG_INFO("The firmware is valid");
-                    upgrade_fetch_success = true;
-                }
-            }
-            ota_over = 1;
-        }
-
-        HAL_SleepMs(2000);
-    } while(!ota_over);
-
-    if (upgrade_fetch_success)
-    {
-        HAL_SleepMs(1000);
-        IOT_OTA_ReportSuccess(h_ota, msg_version);
-    }
-
-    fclose(fp);
-
-    IOT_OTA_Destroy(h_ota);
-
-    IOT_MQTT_Destroy(&client);
+    IOT_MQTT_Yield(client, 5000);
 
     return 0;
 }
