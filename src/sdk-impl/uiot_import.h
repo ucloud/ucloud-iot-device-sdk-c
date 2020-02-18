@@ -315,18 +315,19 @@ int32_t HAL_TCP_Write(_IN_ uintptr_t fd, _IN_ unsigned char *buf, _IN_ size_t le
  * @return                  <0: TCP读取错误; =0: TCP读超时, 且没有读取任何数据; >0: TCP成功读取的字节数
  */
 int32_t HAL_TCP_Read(_IN_ uintptr_t fd, _OU_ unsigned char *buf, _IN_ size_t len, _IN_ uint32_t timeout_ms);
-
+#ifdef SUPPORT_AT_CMD
 int HAL_AT_Read(_IN_ utils_network_pt pNetwork, _OU_ unsigned char *buffer, _IN_ size_t len);
 
 int HAL_AT_Write(_IN_ unsigned char *buffer, _IN_ size_t len);
 
-int HAL_AT_TCP_Disconnect(void);
+int HAL_AT_TCP_Disconnect(utils_network_pt pNetwork);
 
-int HAL_AT_TCP_Connect(_IN_ void * pNetwork, _IN_ const char *host, _IN_ uint16_t port); 
+int HAL_AT_TCP_Connect(_IN_ utils_network_pt pNetwork, _IN_ const char *host, _IN_ uint16_t port); 
 
 int HAL_AT_Write_Tcp(_IN_ utils_network_pt pNetwork, _IN_ unsigned char *buffer, _IN_ size_t len);
 
 int HAL_AT_Read_Tcp(_IN_ utils_network_pt pNetwork, _IN_ unsigned char *buffer, _IN_ size_t len);
+#endif
 
 #if defined(__cplusplus)
 }

@@ -15,7 +15,6 @@
 
 #include <stdio.h>
 #include <string.h>
-#include "stm32f7xx_hal.h"
 #include "at_inf.h"
 #include "utils_net.h"
 #include "at_ringbuff.h"
@@ -25,34 +24,14 @@
 
 #define ESP8266_MAX_TCP_LINK        5
 
-extern UART_HandleTypeDef huart2;
-static UART_HandleTypeDef *pAtUart = &huart2;
 extern sRingbuff g_ring_buff;    
 extern sRingbuff g_ring_tcp_buff[3];    
 int esp8266_link[ESP8266_MAX_TCP_LINK] = {0};
 int esp8266_recv_len[ESP8266_MAX_TCP_LINK] = {0};
 extern int last_tcp_link;
 
-int HAL_AT_Read(_IN_ utils_network_pt pNetwork, _OU_ unsigned char *buffer, _IN_ size_t len)
-{
-    int ret = 0;
-
-    if(pAtUart->RxState == HAL_UART_STATE_BUSY_RX)
-    {
-        HAL_SleepMs(10);
-    }
-
-    return ring_buff_pop_data(&(g_ring_tcp_buff[pNetwork->handle-1]), buffer, len);
-}
-
-int HAL_AT_Write(_IN_ unsigned char *buffer, _IN_ size_t len)
-{   
-    return HAL_UART_Transmit_IT(pAtUart, buffer, len);
-}
-
 int HAL_AT_Read_Tcp(_IN_ utils_network_pt pNetwork, _IN_ unsigned char *buffer, _IN_ size_t len)
 {
-
     at_response_t resp = NULL;
     
     resp = at_create_resp(256, 0, CMD_TIMEOUT_MS);
@@ -87,8 +66,6 @@ int HAL_AT_Read_Tcp(_IN_ utils_network_pt pNetwork, _IN_ unsigned char *buffer, 
 
 int HAL_AT_Write_Tcp(_IN_ utils_network_pt pNetwork, _IN_ unsigned char *buffer, _IN_ size_t len)
 {
-    int ret = 0;
-
     at_response_t resp = NULL;
     
     resp = at_create_resp(256, 0, CMD_TIMEOUT_MS);
@@ -102,7 +79,7 @@ int HAL_AT_Write_Tcp(_IN_ utils_network_pt pNetwork, _IN_ unsigned char *buffer,
     at_exec_cmd(resp, at_command, 0, "AT+CIPSEND=%d,%d\r\n", pNetwork->handle-1, len);   
     HAL_SleepMs(10);
     resp->custom_flag = false;
-    at_exec_cmd(resp, at_data, len, buffer); 
+    at_exec_cmd(resp, at_data, len, (const char *)buffer); 
     HAL_SleepMs(10);
 
     at_delete_resp(resp);
@@ -253,7 +230,7 @@ static int urc_recvdata_recv_func(const char *data, uint32_t size)
         for(loop = recv_data_num; loop > 0; loop--)
         {
             ret = at_client_getchar(client, &temp_char, GET_RECEIVE_TIMEOUT_MS);
-            ret |= ring_buff_push_data(&(g_ring_tcp_buff[link_num]), &temp_char, 1);
+            ret |= ring_buff_push_data(&(g_ring_tcp_buff[link_num]), (uint8_t *)&temp_char, 1);
             if(SUCCESS_RET != ret)
             {
                 LOG_ERROR("copy data to tcp buff fail\n");
@@ -280,17 +257,11 @@ static int urc_recvlen_recv_func(const char *data, uint32_t size)
 {
     at_client_t client = at_client_get();
     char temp_string[30] = {0};
-    char temp_char = 0;
     int loop = 0;
-    int ret = 0;
-    int recv_data_num = 0;
-    int link_num = 0;
-    const char *cmd = NULL;
-    int cmdsize = 0;
     
     do
     {
-        ret = at_client_getchar(client, &temp_string[loop], GET_RECEIVE_TIMEOUT_MS);
+        at_client_getchar(client, &temp_string[loop], GET_RECEIVE_TIMEOUT_MS);
         loop++;
     }while(temp_string[loop-1] != '\n');
         
@@ -327,9 +298,6 @@ static int esp8266_init()
         LOG_ERROR("No memory for response object!");
         return FAILURE_RET;
     }
-
-    /* 配置串口接收buf的存储位置 */    
-    HAL_UART_Receive_IT(pAtUart, g_ring_buff.buffer, 1);
 
     for(retry_time = 0; retry_time < 5; retry_time++)
     {
@@ -403,10 +371,9 @@ end:
     return ret;
 }
 
-int HAL_AT_TCP_Connect(_IN_ void * pNetwork, _IN_ const char *host, _IN_ uint16_t port) 
+int HAL_AT_TCP_Connect(_IN_ utils_network_pt pNetwork, _IN_ const char *host, _IN_ uint16_t port) 
 {
     int ret = 0;
-    utils_network_pt pNet = (utils_network_pt)pNetwork;
     at_response_t resp = NULL;
     int link_num = 0;
     at_client_t p_client = at_client_get();
@@ -455,7 +422,7 @@ int HAL_AT_TCP_Connect(_IN_ void * pNetwork, _IN_ const char *host, _IN_ uint16_
 
     /* 建立TCP链接 */
     resp->custom_flag = true;
-    ret = at_exec_cmd(resp, at_command, 0,  "AT+CIPSTART=%d,\"TCP\",\"%s\",%d\r\n", link_num, pNet->pHostAddress, pNet->port);
+    ret = at_exec_cmd(resp, at_command, 0,  "AT+CIPSTART=%d,\"TCP\",\"%s\",%d\r\n", link_num, pNetwork->pHostAddress, pNetwork->port);
     if(SUCCESS_RET != ret)
     {
         LOG_ERROR("build TCP link fail!\n");
@@ -465,7 +432,7 @@ int HAL_AT_TCP_Connect(_IN_ void * pNetwork, _IN_ const char *host, _IN_ uint16_
     {
         esp8266_link[link_num] = eCONNECTED;
         /* handle can't be zero */
-        pNet->handle = link_num + 1;
+        pNetwork->handle = link_num + 1;
     }
 
     /* 设置TCP连接的数据接收方式为被动模式 */

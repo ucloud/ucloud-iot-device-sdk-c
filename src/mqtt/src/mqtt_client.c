@@ -400,14 +400,8 @@ int uiot_mqtt_init(UIoT_Client *pClient, MQTTInitParams *pParams) {
     pClient->network_stack.port = s_uiot_port;
 
     // 底层网络操作相关的数据结构初始化
-    #ifdef SUPPORT_AT_CMD
-    uiot_mqtt_network_init(&(pClient->network_stack), pClient->network_stack.pHostAddress,
-            pClient->network_stack.port, pClient->network_stack.authmode, NULL);
-    #else
     uiot_mqtt_network_init(&(pClient->network_stack), pClient->network_stack.pHostAddress,
             pClient->network_stack.port, pClient->network_stack.authmode, pClient->network_stack.ca_crt);
-    #endif
-
 
     // ping定时器以及重连延迟定时器相关初始化
     init_timer(&(pClient->ping_timer));

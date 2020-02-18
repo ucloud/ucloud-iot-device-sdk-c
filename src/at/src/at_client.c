@@ -88,145 +88,6 @@ void at_delete_resp(at_response_t resp)
     }
 }
 
-/**
- * Get one line AT response buffer by line number.
- *
- * @param resp response object
- * @param resp_line line number, start from '1'
- *
- * @return != NULL: response line buffer
- *            = NULL: input response line error
- */
-const char *at_resp_get_line(at_response_t resp, uint32_t resp_line)
-{
-    char *resp_buf = resp->buf;
-    char *resp_line_buf = NULL;
-    int line_num = 1;
-
-    POINTER_VALID_CHECK(resp, NULL);
-
-    if (resp_line > resp->line_counts || resp_line <= 0)
-    {
-        LOG_ERROR("AT response get line failed! Input response line(%d) error!", resp_line);
-        return NULL;
-    }
-
-    for (line_num = 1; line_num <= resp->line_counts; line_num++)
-    {
-        if (resp_line == line_num)
-        {
-            resp_line_buf = resp_buf;
-
-            return resp_line_buf;
-        }
-
-        resp_buf += strlen(resp_buf) + 1;
-    }
-
-    return NULL;
-}
-
-/**
- * Get one line AT response buffer by keyword
- *
- * @param resp response object
- * @param keyword query keyword
- *
- * @return != NULL: response line buffer
- *            = NULL: no matching data
- */
-const char *at_resp_get_line_by_kw(at_response_t resp, const char *keyword)
-{
-    char *resp_buf = resp->buf;
-    char *resp_line_buf = NULL;
-    int line_num = 1;
-
-    POINTER_VALID_CHECK(resp, NULL);
-    POINTER_VALID_CHECK(keyword, NULL);
-
-    for (line_num = 1; line_num <= resp->line_counts; line_num++)
-    {
-        if (strstr(resp_buf, keyword))
-        {
-            resp_line_buf = resp_buf;
-
-            return resp_line_buf;
-        }
-
-        resp_buf += strlen(resp_buf) + 1;
-    }
-
-    return NULL;
-}
-
-/**
- * Get and parse AT response buffer arguments by line number.
- *
- * @param resp response object
- * @param resp_line line number, start from '1'
- * @param resp_expr response buffer expression
- *
- * @return -1 : input response line number error or get line buffer error
- *          0 : parsed without match
- *         >0 : the number of arguments successfully parsed
- */
-int at_resp_parse_line_args(at_response_t resp, uint32_t resp_line, const char *resp_expr, ...)
-{
-    va_list args;
-    int resp_args_num = 0;
-    const char *resp_line_buf = NULL;
-
-
-    POINTER_VALID_CHECK(resp, -1);
-    POINTER_VALID_CHECK(resp_expr, -1);
-    if ((resp_line_buf = at_resp_get_line(resp, resp_line)) == NULL)
-    {
-        return -1;
-    }
-
-    va_start(args, resp_expr);
-
-    resp_args_num = vsscanf(resp_line_buf, resp_expr, args);
-
-    va_end(args);
-
-    return resp_args_num;
-}
-
-/**
- * Get and parse AT response buffer arguments by keyword.
- *
- * @param resp response object
- * @param keyword query keyword
- * @param resp_expr response buffer expression
- *
- * @return -1 : input keyword error or get line buffer error
- *          0 : parsed without match
- *         >0 : the number of arguments successfully parsed
- */
-int at_resp_parse_line_args_by_kw(at_response_t resp, const char *keyword, const char *resp_expr, ...)
-{
-    va_list args;
-    int resp_args_num = 0;
-    const char *resp_line_buf = NULL;
-
-
-    POINTER_VALID_CHECK(resp, -1); 
-    POINTER_VALID_CHECK(resp_expr, -1); 
-    if ((resp_line_buf = at_resp_get_line_by_kw(resp, keyword)) == NULL)
-    {
-        return -1;
-    }
-
-    va_start(args, resp_expr);
-
-    resp_args_num = vsscanf(resp_line_buf, resp_expr, args);
-
-    va_end(args);
-
-    return resp_args_num;
-}
-
 static const at_custom *get_urc_obj(at_client_t client)
 {
     int i;
@@ -289,10 +150,8 @@ static void client_parser(void *userContex)
                         client->resp_status = AT_RESP_ERROR;
                     }
                 }
-#ifdef SINGLE_TASK
                 client->resp_notice = true;
                 break;
-#endif                    
             }
             else if (client->resp != NULL)
             {
@@ -344,15 +203,11 @@ static void client_parser(void *userContex)
                 client->resp_notice = true;
                 resp_buf_len = 0;
                 line_counts = 0;
-#ifdef SINGLE_TASK
                 break;
-#endif;
             }
         }        
     }
-#ifdef SINGLE_TASK
     return;
-#endif;
 }
 
 /**
@@ -379,7 +234,6 @@ IoT_Error_t at_obj_exec_cmd(at_response_t resp, at_data_type data_type, size_t d
     Timer timer;
     IoT_Error_t result = SUCCESS_RET;
     const char *cmd = NULL;
-    int line_counts = 0;
     at_client_t client = at_client_get();
     
 
@@ -404,9 +258,8 @@ IoT_Error_t at_obj_exec_cmd(at_response_t resp, at_data_type data_type, size_t d
         HAL_Timer_Countdown_ms(&timer, resp->timeout);
         do
         {
-#ifdef SINGLE_TASK
             client_parser(NULL);
-#endif          
+         
             if(client->resp_notice)
             {
                 if (client->resp_status != AT_RESP_OK)
