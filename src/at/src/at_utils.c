@@ -18,7 +18,7 @@
 #include "at_utils.h"
 #include "at_client.h"
 #include "uiot_import.h"
-
+#include "uiot_internal.h"
 
 static char send_buf[AT_CMD_MAX_LEN];
 static int  last_cmd_len = 0;

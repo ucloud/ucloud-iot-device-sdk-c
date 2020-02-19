@@ -122,7 +122,7 @@ static int _http_send_header(http_client_t *client, char *host, const char *path
     memset(send_buf, 0, HTTP_CLIENT_SEND_BUF_SIZE);
     len = 0; /* Reset send buffer */
 
-    if(size_fetched != 0)
+    if(range_len != 0)
     {
         HAL_Snprintf(buf, sizeof(buf), "%s %s HTTP/1.1\r\nHost: %s\r\nRange: bytes=%d-%d\r\n", pMethod, path, host, size_fetched, size_fetched + range_len); /* Write request */
     }

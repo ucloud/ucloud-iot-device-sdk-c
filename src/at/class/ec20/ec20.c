@@ -12,114 +12,55 @@
 * express or implied. See the License for the specific language governing
 * permissions and limitations under the License.
 */
+
 #include <stdio.h>
 #include <string.h>
-#include "stm32f7xx_hal.h"
 #include "at_inf.h"
 #include "utils_net.h"
 #include "at_ringbuff.h"
 #include "at_client.h"
 #include "uiot_import.h"
+#include "at_utils.h"
 
-#define M26_MAX_TCP_LINK        3
+#define EC20_MAX_TCP_LINK        3
 
-extern UART_HandleTypeDef huart2;
-static UART_HandleTypeDef *pAtUart = &huart2;
 extern sRingbuff g_ring_buff;    
 extern sRingbuff g_ring_tcp_buff[3];    
-int m26_link[M26_MAX_TCP_LINK] = {0};
+int ec20_link[EC20_MAX_TCP_LINK] = {0};
+int ec20_recv_len[EC20_MAX_TCP_LINK] = {0};
+
 extern int last_tcp_link;
-int HAL_AT_Read(_IN_ utils_network_pt pNetwork, _OU_ unsigned char *buffer, _IN_ size_t len)
+int HAL_AT_Read_Tcp(_IN_ utils_network_pt pNetwork, _IN_ unsigned char *buffer, _IN_ size_t len)
 {
-    int ret = 0;
-    at_client_t client = at_client_get();
-    char last_char = 0;
-    char temp_char = 0;
-    int temp_read_point = client->pRingBuff->readpoint;
-    char temp_string[21] = {0};
-    //char temp_tcp = 0;
-    int rec_num = 0;
-    int link_num = 0;
-
-    if(pAtUart->RxState == HAL_UART_STATE_BUSY_RX)
+    at_response_t resp = NULL;
+    
+    resp = at_create_resp(256, 0, CMD_TIMEOUT_MS);
+    if (resp == NULL)
     {
-        HAL_SleepMs(10);
-    }
+        LOG_ERROR("No memory for response object!");
+        return FAILURE_RET;
+    }  
 
-    /* clear \r\n */
-    ret = at_client_getchar(client, &last_char, GET_RECEIVE_TIMEOUT_MS);
-    if(last_char == '\r')
+    /* 被动接收模式，查询缓存TCP数据的长度 */
+    resp->custom_flag = true;
+    HAL_SleepMs(10);
+    at_exec_cmd(resp, at_command, 0, "AT+QIRD=%d,0\r\n", pNetwork->handle-1); 
+
+    if(ec20_recv_len[pNetwork->handle-1] >= len)
     {
-        while(1)
-        {
-            ret = at_client_getchar(client, &temp_char, GET_RECEIVE_TIMEOUT_MS);
-            if(temp_char == '\n')
-            {
-                temp_read_point = client->pRingBuff->readpoint;
-                ret = at_client_getchar(client, &temp_char, GET_RECEIVE_TIMEOUT_MS);
-                break;
-            }
-            else
-            {   
-                break;
-            }
-
-        }
-        
-        if(temp_char == '+')
-        {
-            int loop = 0;
-            do
-            {
-                ret = at_client_getchar(client, &temp_string[loop], GET_RECEIVE_TIMEOUT_MS);
-                if(loop == 8)
-                {   
-                    /* divide multi tcp link */
-                    if(0 != strncmp(temp_string, "RECEIVE:", 8))
-                    {
-                        client->pRingBuff->readpoint = temp_read_point;
-                        break;
-                    }
-                }
-                loop++;
-            }while(temp_string[loop-1] != '\n');
-            temp_string[loop] = '\0';
-            if(2 == sscanf(temp_string,"RECEIVE: %d, %d:\r\n",&link_num,&rec_num))
-            {
-                for(loop = rec_num; loop > 0; loop--)
-                {
-                    ret = at_client_getchar(client, &temp_char, GET_RECEIVE_TIMEOUT_MS);
-                    ret |= ring_buff_push_data(&(g_ring_tcp_buff[link_num]), &temp_char, 1);
-                    if(SUCCESS_RET != ret)
-                    {
-                        LOG_ERROR("copy data to tcp buff fail\n");
-                    }
-                }
-            }
-        }
-
+        resp->custom_flag = true;
+        at_exec_cmd(resp, at_command, 0, "AT+QIRD=%d,%d\r\n", pNetwork->handle-1, len); 
+        at_delete_resp(resp);
+        return HAL_AT_Read(pNetwork, buffer, len);
     }
     else
     {
-        client->pRingBuff->readpoint = temp_read_point;
+        at_delete_resp(resp);
+        return 0;
     }
 
-
-    ret = ring_buff_pop_data(&(g_ring_tcp_buff[pNetwork->handle-1]), buffer, len);
-
-    return ret;
 }
 
-
-int HAL_AT_Write(_IN_ unsigned char *buffer, _IN_ size_t len)
-{   
-    return HAL_UART_Transmit_IT(pAtUart, buffer, len);
-}
-
-int HAL_AT_Read_Tcp(_IN_ utils_network_pt pNetwork, _IN_ unsigned char *buffer, _IN_ size_t len)
-{
-    return HAL_AT_Read(pNetwork, buffer, len);
-}
 
 int HAL_AT_Write_Tcp(_IN_ utils_network_pt pNetwork, _IN_ unsigned char *buffer, _IN_ size_t len)
 {
@@ -131,7 +72,7 @@ int HAL_AT_Write_Tcp(_IN_ utils_network_pt pNetwork, _IN_ unsigned char *buffer,
 
     at_response_t resp = NULL;
     
-    resp = at_create_resp(256, 0, CMD_TIMEOUT_MS);
+    resp = at_create_resp(2048, 0, CMD_TIMEOUT_MS);
     if (resp == NULL)
     {
         LOG_ERROR("No memory for response object!");
@@ -141,7 +82,7 @@ int HAL_AT_Write_Tcp(_IN_ utils_network_pt pNetwork, _IN_ unsigned char *buffer,
     resp->custom_flag = true;
     at_exec_cmd(resp, at_command, 0, "AT+QISEND=%d,%d\r\n", pNetwork->handle-1, len); 
     resp->custom_flag = false;
-    ret = at_exec_cmd(resp, at_data, len, buffer); 
+    ret = at_exec_cmd(resp, at_data, len, (const char *)buffer); 
     HAL_SleepMs(100);
 
     at_delete_resp(resp);
@@ -161,7 +102,7 @@ int HAL_AT_TCP_Disconnect(utils_network_pt pNetwork)
     int ret = SUCCESS_RET;
     
     /* 断开无线链接 */
-    if(m26_link[pNetwork->handle-1] == eCONNECTED)
+    if(ec20_link[pNetwork->handle-1] == eCONNECTED)
     {
         at_response_t resp = NULL;
         
@@ -173,14 +114,14 @@ int HAL_AT_TCP_Disconnect(utils_network_pt pNetwork)
         }
     
         resp->custom_flag = false;
-        ret = at_exec_cmd(resp, at_command, 0,  "AT+QICLOSE=%d\r",pNetwork->handle-1);
+        ret = at_exec_cmd(resp, at_command, 0,  "AT+QICLOSE=%d\r\n",pNetwork->handle-1);
         if(SUCCESS_RET != ret)
         {
             LOG_ERROR("close TCP link fail!\n");
         }
         else
         {
-            m26_link[pNetwork->handle-1] = eDISCONNECTED;
+            ec20_link[pNetwork->handle-1] = eDISCONNECTED;
         }
         at_delete_resp(resp);
     }
@@ -300,9 +241,9 @@ static int urc_common_recv_func(const char *data, uint32_t size)
     return SUCCESS_RET;
 }
 
-static int urc_qimode_recv_judge(const char *data, uint32_t size)
+static int urc_cereg_recv_judge(const char *data, uint32_t size)
 {
-    if(NULL != strstr(data, "+QIMODE:"))
+    if(NULL != strstr(data, "+CEREG:"))
     {
         return SUCCESS_RET;
     }
@@ -312,16 +253,14 @@ static int urc_qimode_recv_judge(const char *data, uint32_t size)
     }
 }
 
-static int urc_qimode_recv_func(const char *data, uint32_t size)
+static int urc_cereg_recv_func(const char *data, uint32_t size)
 {
-    at_client_t client = at_client_get();
     int n = 0;
-    if(1 == sscanf(data,"+QIMODE: %d\r\n",&n))
+    int stat = 0;
+    if(2 == sscanf(data,"+CEREG: %d,%d\r\n",&n,&stat))
     {
-        if(0 == n)
-        {        
-            at_recv_readline(client);    
-            at_recv_readline(client);
+        if((1 == stat) || (5 == stat))
+        {
             return SUCCESS_RET;
         }
     }
@@ -329,67 +268,56 @@ static int urc_qimode_recv_func(const char *data, uint32_t size)
     return FAILURE_RET;
 }
 
-static int urc_qideact_recv_judge(const char *data, uint32_t size)
+static char cops[20];
+static int urc_cops_recv_judge(const char *data, uint32_t size)
 {
-    if(NULL != strstr(data, "DEACT OK"))
-    {
+    at_client_t client = at_client_get();
+    int mode;
+    int format;
+    int act;
+    if((data[size-1] == '\n')&& (sscanf(data,"+COPS: %d,%d,%s,%d\r\n", &mode, &format, cops, &act)))
+    {   
+        at_recv_readline(client);   
+        at_recv_readline(client);   
         return SUCCESS_RET;
     }
     else
     {
         return FAILURE_RET;
     }
-}
-
-static int urc_ip_recv_judge(const char *data, uint32_t size)
-{
-    int num1,num2,num3,num4;
-    if((data[size-1] == '\n')
-        && (4 == sscanf(data,"%d.%d.%d.%d\r\n",&num1,&num2,&num3,&num4)))
-    {   
-        if(0<=num1 && num1<=255
-         && 0<=num2 && num2<=255
-         && 0<=num3 && num3<=255
-         && 0<=num4 && num4<=255) 
-        {
-            return SUCCESS_RET;
-        }
-    }
-    else
-    {
-        return FAILURE_RET;
-    }
-}
-
-char dev_ip_addr[20] = {0};
-static int urc_ip_recv_func(const char *data, uint32_t size)
-{
-    strncpy(dev_ip_addr, data, size-2);
-    return SUCCESS_RET;
-}
-
-char domain_ip_addr[20] = {0};
-static int urc_domain_ip_recv_func(const char *data, uint32_t size)
-{
-    strncpy(domain_ip_addr, data, size-2);
-    return SUCCESS_RET;
 }
 
 static int urc_tcp_start_judge(const char *data, uint32_t size)
 {
-    if(NULL != strstr(data, "CONNECT OK\r\n"))
+    int connect_id = 0;
+    int err = 0;
+    if(2 == sscanf(data,"+QIOPEN:%d,%d\r\n",&connect_id,&err))
     {
-        return SUCCESS_RET;
+        if(0 == err)
+        {
+            return SUCCESS_RET;
+        }
     }
-    else
-    {
-        return FAILURE_RET;
-    }
+    
+    return FAILURE_RET;
+
 }
 
 static int urc_send_recv_judge(const char *data, uint32_t size)
 {
     if(NULL != strstr(data, ">"))
+    { 
+        return SUCCESS_RET;
+    }
+    else 
+    {
+        return FAILURE_RET;
+    }
+}
+
+static int urc_qird_recv_judge(const char *data, uint32_t size)
+{
+    if(0 == strncmp(data, "+QIRD:", size))
     {
         return SUCCESS_RET;
     }
@@ -399,40 +327,88 @@ static int urc_send_recv_judge(const char *data, uint32_t size)
     }
 }
 
-static int urc_close_recv_judge(const char *data, uint32_t size)
+static int urc_qird_recv_func(const char *data, uint32_t size)
 {
-    if(NULL != strstr(data, "CLOSE OK"))
+    at_client_t client = at_client_get();
+    char temp_string[10] = {0};
+    char temp_char = 0;
+    int loop = 0;
+    int ret = 0;
+    int recv_data_num = 0;
+    int actual_len = 0;
+    int link_num = 0;
+    const char *cmd = NULL;
+    int cmdsize = 0;
+    int total_len = 0;
+    int read_len = 0;
+    int unread_len = 0;
+    
+    do
     {
-        return SUCCESS_RET;
-    }
-    else 
+        ret = at_client_getchar(client, &temp_string[loop], GET_RECEIVE_TIMEOUT_MS);
+        loop++;
+    }while(temp_string[loop-1] != '\n');
+    
+    cmd = (const char *)at_get_last_cmd(&cmdsize);
+
+    //读取收到的数据
+    if(2 == sscanf(cmd,"AT+QIRD=%d,%d\r\n",&link_num,&recv_data_num))
     {
-        return FAILURE_RET;
-    }
+        printf("read link:%d num:%d \r\n",link_num,recv_data_num);
+        if(recv_data_num > 0)
+        {
+            if(1 == sscanf(temp_string," %d\r\n",&actual_len))
+            {   
+                printf("actual num:%d \r\n",actual_len);
+                if(0 == actual_len)
+                    return SUCCESS_RET;
+            }
+            for(loop = recv_data_num; loop > 0; loop--)
+            {
+                ret = at_client_getchar(client, &temp_char, GET_RECEIVE_TIMEOUT_MS);
+                ret |= ring_buff_push_data(&(g_ring_tcp_buff[link_num]), (uint8_t *)&temp_char, 1);
+                if(SUCCESS_RET != ret)
+                {
+                    LOG_ERROR("copy data to tcp buff fail\n");
+                }
+            }
+        }
+        else            //查询收到的数据长度
+        {
+            if(3 == sscanf(temp_string," %d,%d,%d\r\n", &total_len, &read_len, &unread_len))
+            {   
+                printf("total_len:%d read_len:%d unread_len:%d\r\n",total_len, read_len, unread_len);
+                ec20_recv_len[link_num] = unread_len;
+            }
+        }
+    } 
+    
+    return SUCCESS_RET;
 }
+
+
 
 at_custom custom_table[] = {
     {"AT+CPIN?", 12, urc_cpin_recv_judge, urc_cpin_recv_func},
     {"AT+CSQ", 10, urc_csq_recv_judge, urc_csq_recv_func},
     {"AT+CREG?", 10, urc_creg_recv_judge, urc_creg_recv_func},
     {"AT+CGREG?", 11, urc_cgreg_recv_judge, urc_cgreg_recv_func},
-    {"AT+QIMODE?", 12, urc_qimode_recv_judge, urc_qimode_recv_func},
-    {"AT+QIDEACT?", 9, urc_qideact_recv_judge, urc_common_recv_func},
-    {"AT+QILOCIP", 13, urc_ip_recv_judge, urc_ip_recv_func},
-    {"AT+QIDNSGIP", 13, urc_ip_recv_judge, urc_domain_ip_recv_func},
-    {"AT+QIDEACT", 10, urc_qideact_recv_judge, urc_common_recv_func},
-    {"AT+QIOPEN", 14, urc_tcp_start_judge, urc_common_recv_func},
+    {"AT+CEREG?", 12, urc_cereg_recv_judge, urc_cereg_recv_func},
+    {"AT+COPS?", 20, urc_cops_recv_judge, urc_common_recv_func},
+    {"AT+QIOPEN", 12, urc_tcp_start_judge, urc_common_recv_func},
     {"AT+QISEND", 1, urc_send_recv_judge, urc_common_recv_func},
-    {"AT+QICLOSE", 12, urc_close_recv_judge, urc_common_recv_func},
+    {"AT+QIRD", 6, urc_qird_recv_judge, urc_qird_recv_func},
 };
 
 int custom_table_num = sizeof(custom_table) / sizeof(custom_table[0]);
 
-static int m26_init()
+static int ec20_init()
 {
     int ret = 0;
     at_response_t resp = NULL;
     int retry_time = 0;
+
+    HAL_AT_Init();
 
     resp = at_create_resp(256, 0, CMD_TIMEOUT_MS);
     if (resp == NULL)
@@ -440,9 +416,6 @@ static int m26_init()
         LOG_ERROR("No memory for response object!");
         return FAILURE_RET;
     }
-
-    /* 配置串口接收buf的存储位置 */    
-    HAL_UART_Receive_IT(pAtUart, g_ring_buff.buffer, 1);
 
     //延时等待模块启动
     HAL_SleepMs(5000);
@@ -501,12 +474,58 @@ static int m26_init()
 
         /* check TCPIP mode is set */
         resp->custom_flag = true;
-        ret = at_exec_cmd(resp, at_command, 0,  "AT+QIMODE?\r\n");
+        ret = at_exec_cmd(resp, at_command, 0,  "AT+CEREG?\r\n");
         if(SUCCESS_RET != ret)
         {
             LOG_ERROR("check TCPIP mode fail!\n");
             goto end;
         }
+
+        /* query current Network Operator */
+        resp->custom_flag = true;
+        ret = at_exec_cmd(resp, at_command, 0,  "AT+COPS?\r\n");
+        if(SUCCESS_RET != ret)
+        {
+            LOG_ERROR("query current Network Operator fail!\n");
+            goto end;
+        }
+
+        if(0 == strncmp(cops, "\"CHN-UNICOM\"", strlen("\"CHN-UNICOM\"")))
+        {
+            resp->custom_flag = false;
+            ret = at_exec_cmd(resp, at_command, 0, "AT+QICSGP=1,1,\"UNINET\",\"\",\"\",0\r\n");
+            if(SUCCESS_RET != ret)
+            {
+                LOG_ERROR("AT+QICSGP CHN-UNICOM fail!\n");
+                goto end;
+            }
+        }
+        else if(0 == strncmp(cops, "\"CHINA MOBILE\"", strlen("\"CHINA MOBILE\"")))
+        {
+            resp->custom_flag = false;
+            ret = at_exec_cmd(resp, at_command, 0, "AT+QICSGP=1,1,\"CMNET\",\"\",\"\",0\r\n");
+            if(SUCCESS_RET != ret)
+            {
+                LOG_ERROR("AT+QICSGP CHINA MOBILE fail!\n");
+                goto end;
+            }       
+        }
+        else if(0 == strncmp(cops, "\"CHN-CT\"", strlen("\"CHN-CT\"")))
+        {
+            resp->custom_flag = false;
+            ret = at_exec_cmd(resp, at_command, 0, "AT+QICSGP=1,1,\"CTNET\",\"\",\"\",0\r\n");
+            if(SUCCESS_RET != ret)
+            {
+                LOG_ERROR("AT+QICSGP CHN-CT fail!\n");
+                goto end;
+            }   
+        }
+        else
+        {
+            ret = ERR_PARAM_INVALID;
+            goto end;
+        }
+
 
         if(SUCCESS_RET == ret)
         {
@@ -521,66 +540,30 @@ static int m26_init()
         goto end;
     }
 
-    /* 设置前台配置 */
+    /* Enable automatic time zone update via NITZ and update LOCAL time to RTC */
     resp->custom_flag = false;
-    ret = at_exec_cmd(resp, at_command, 0,  "AT+QIFGCNT=0\r\n");
+    ret = at_exec_cmd(resp, at_command, 0,  "AT+CTZU=3\r\n");
     if(SUCCESS_RET != ret)
     {
-        LOG_ERROR("set foreground fail!\n");
-        goto end;
-    }
-    
-    /* set the apn */
-    resp->custom_flag = false;
-    ret = at_exec_cmd(resp, at_command, 0,  "AT+QICSGP=1, \"CMNET\"\r\n");
-    if(SUCCESS_RET != ret)
-    {
-        LOG_ERROR("set apn fail!\n");
+        LOG_ERROR("Enable automatic time zone update via NITZ and update LOCAL time to RTC fail!\n");
         goto end;
     }
 
-    /* 关闭 GPRS/CSD PDP 场景 */    
-    resp->custom_flag = true;
-    ret = at_exec_cmd(resp, at_command, 0,  "AT+QIDEACT\r\n");
+    /* Deactivate context profile */    
+    resp->custom_flag = false;
+    ret = at_exec_cmd(resp, at_command, 0,  "AT+QIDEACT=1\r\n");
     if(SUCCESS_RET != ret)
     {
-        LOG_ERROR("shut down GPRS/CSD PDP fail!\n");
+        LOG_ERROR("Deactivate context profile fail!\n");
         goto end;
     }
 
-    /* 设置多链路模式 */ 
+    /* Activate context profile */    
     resp->custom_flag = false;
-    ret = at_exec_cmd(resp, at_command, 0,  "AT+QIMUX=1\r\n");
+    ret = at_exec_cmd(resp, at_command, 0,  "AT+QIACT=1\r\n");
     if(SUCCESS_RET != ret)
     {
-        LOG_ERROR("set multi link mode fail!\n");
-        goto end;
-    }
-    
-    /* 启动任务 */    
-    resp->custom_flag = false;
-    ret = at_exec_cmd(resp, at_command, 0,  "AT+QIREGAPP\r\n");
-    if(SUCCESS_RET != ret)
-    {
-        LOG_ERROR("set APN fail!\n");
-        goto end;
-    }
-    
-    /* 设备默认响应超时时间为150s，设置为20s */ 
-    resp->custom_flag = false;
-    ret = at_exec_cmd(resp, at_command, 0,  "AT+QIACT\r\n");
-    if(SUCCESS_RET != ret)
-    {
-        LOG_ERROR("build wireless link fail!\n");
-        goto end;
-    }
-    
-    /* 获取本地IP地址 */  
-    resp->custom_flag = true;
-    ret = at_exec_cmd(resp, at_command, 0,  "AT+QILOCIP\r\n");
-    if(SUCCESS_RET != ret)
-    {
-        LOG_ERROR("fetch local IP address fail!\n");
+        LOG_ERROR("Activate context profile fail!\n");
         goto end;
     }
 
@@ -589,10 +572,9 @@ end:
     return ret;
 }
 
-int HAL_AT_TCP_Connect(_IN_ void * pNetwork, _IN_ const char *host, _IN_ uint16_t port) 
+int HAL_AT_TCP_Connect(_IN_ utils_network_pt pNetwork, _IN_ const char *host, _IN_ uint16_t port) 
 {
     int ret = 0;
-    utils_network_pt pNet = (utils_network_pt)pNetwork;
     at_response_t resp = NULL;
     int link_num = 0;
     at_client_t p_client = at_client_get();
@@ -604,9 +586,9 @@ int HAL_AT_TCP_Connect(_IN_ void * pNetwork, _IN_ const char *host, _IN_ uint16_
         goto end;
     }
 
-    for(link_num = 0; link_num < M26_MAX_TCP_LINK; link_num++)
+    for(link_num = 0; link_num < EC20_MAX_TCP_LINK; link_num++)
     {
-        if(m26_link[link_num] == eDISCONNECTED)
+        if(ec20_link[link_num] == eDISCONNECTED)
         {
             last_tcp_link = link_num;
             break;
@@ -622,7 +604,7 @@ int HAL_AT_TCP_Connect(_IN_ void * pNetwork, _IN_ const char *host, _IN_ uint16_
             goto end;
         }
         
-        ret = m26_init();
+        ret = ec20_init();
         if(ret != SUCCESS_RET)
         {
             LOG_ERROR("sim800c init fail!\n");
@@ -637,18 +619,10 @@ int HAL_AT_TCP_Connect(_IN_ void * pNetwork, _IN_ const char *host, _IN_ uint16_
         goto end;
     }
 
-    /* 解析domain address获取IP */
-    resp->custom_flag = true;
-    ret = at_exec_cmd(resp, at_command, 0,  "AT+QIDNSGIP=\"%s\"\r", pNet->pHostAddress);
-    if(SUCCESS_RET != ret)
-    {
-        LOG_ERROR("build TCP link fail!\n");
-        goto end;
-    }
-
     /* 建立TCP链接 */
     resp->custom_flag = true;
-    ret = at_exec_cmd(resp, at_command, 0,  "AT+QIOPEN=%d,\"TCP\",\"%s\",\"%d\"\r", link_num, domain_ip_addr, pNet->port);
+    ret = at_exec_cmd(resp, at_command, 0,  "AT+QIOPEN=1,%d,\"TCP\",\"%s\",%d,0,0\r\n", link_num, pNetwork->pHostAddress, pNetwork->port);
+    
     if(SUCCESS_RET != ret)
     {
         LOG_ERROR("build TCP link fail!\n");
@@ -656,9 +630,9 @@ int HAL_AT_TCP_Connect(_IN_ void * pNetwork, _IN_ const char *host, _IN_ uint16_
     }
     else
     {
-        m26_link[link_num] = eCONNECTED;
+        ec20_link[link_num] = eCONNECTED;
         /* handle can't be zero */
-        pNet->handle = link_num + 1;
+        pNetwork->handle = link_num + 1;
     }
 end:
     at_delete_resp(resp);

@@ -14,9 +14,8 @@
 */
 
 #include <stdio.h>
+#include <string.h>
 #include "at_ringbuff.h"
-#include "string.h "
-
 
 int ring_buff_init(sRingbuff* ring_buff, char* buff, uint32_t size )
 {

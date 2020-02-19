@@ -148,12 +148,6 @@ void at_delete_resp(at_response_t resp);
 int at_recv_readline(at_client_t client);
 IoT_Error_t at_client_getchar(at_client_t client, char *pch, uint32_t timeout);
 
-/* AT response line buffer get and parse response buffer arguments */
-const char *at_resp_get_line(at_response_t resp, uint32_t resp_line);
-const char *at_resp_get_line_by_kw(at_response_t resp, const char *keyword);
-int at_resp_parse_line_args(at_response_t resp, uint32_t resp_line, const char *resp_expr, ...);
-int at_resp_parse_line_args_by_kw(at_response_t resp, const char *keyword, const char *resp_expr, ...);
-
 /* ========================== single AT client function ============================ */
 #ifdef __cplusplus
 }
