@@ -87,6 +87,10 @@ int32_t ofc_fetch(void *handle, uint32_t size_fetched, char *buf, uint32_t buf_l
         FUNC_EXIT_RC(rc);
     }    
 
+#ifdef SUPPORT_AT_CMD
+    /* wait at module recv data */
+    HAL_SleepMs(5000);
+#endif
     h_ofc->http_data.response_buf = buf;
     h_ofc->http_data.response_buf_len = buf_len;
     h_ofc->http_data.response_content_len = 0;

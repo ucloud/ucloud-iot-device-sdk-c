@@ -23,7 +23,15 @@
 
 //extern UART_HandleTypeDef huart2;
 //static UART_HandleTypeDef *pAtUart = &huart2;
-extern sRingbuff g_ring_tcp_buff[];    
+//extern sRingbuff g_ring_tcp_buff[];    
+
+void HAL_AT_Init()
+{
+    /* 配置串口接收buf的存储位置 */    
+    //HAL_UART_Receive_IT(pAtUart, g_ring_buff.buffer, 1);
+    return;
+}
+
 
 int HAL_AT_Read(_IN_ utils_network_pt pNetwork, _OU_ unsigned char *buffer, _IN_ size_t len)
 {
