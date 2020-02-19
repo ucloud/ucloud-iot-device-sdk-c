@@ -292,6 +292,8 @@ static int esp8266_init()
     at_response_t resp = NULL;
     int retry_time = 0;
 
+    HAL_AT_Init();
+
     resp = at_create_resp(1024, 0, CMD_TIMEOUT_MS);
     if (resp == NULL)
     {

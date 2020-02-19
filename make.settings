@@ -5,7 +5,7 @@ PLATFORM_CC                     = gcc
 PLATFORM_AR                     = ar
 PLATFORM_OS                     = linux
 PLATFORM_SSL                    = mbedtls
-PLATFORM_MODULE		            = m26
+PLATFORM_MODULE                 = m26
 
 # Uncomment below and specify PATH to your toolchain when cross-compile SDK
 #
