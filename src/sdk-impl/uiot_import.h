@@ -316,6 +316,8 @@ int32_t HAL_TCP_Write(_IN_ uintptr_t fd, _IN_ unsigned char *buf, _IN_ size_t le
  */
 int32_t HAL_TCP_Read(_IN_ uintptr_t fd, _OU_ unsigned char *buf, _IN_ size_t len, _IN_ uint32_t timeout_ms);
 #ifdef SUPPORT_AT_CMD
+void HAL_AT_Init();
+
 int HAL_AT_Read(_IN_ utils_network_pt pNetwork, _OU_ unsigned char *buffer, _IN_ size_t len);
 
 int HAL_AT_Write(_IN_ unsigned char *buffer, _IN_ size_t len);
