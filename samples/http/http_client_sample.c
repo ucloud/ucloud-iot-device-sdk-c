@@ -24,7 +24,7 @@
 #include "uiot_import.h"
 #include "ca.h"
 #include "utils_httpc.h"
-#include "uiot_export_file_upload.h"
+#include "uiot_export_http.h"
 
 #define UIOT_MY_PRODUCT_SN            "PRODUCT_SN"
 
@@ -32,39 +32,35 @@
 
 #define UIOT_MY_DEVICE_SECRET         "DEVICE_SECRET"
 
-#define FILE_PATH                     "FILE_PATH"
+#define UIOT_PUBLISH_TOPIC            "%s/%s/topic"
 
 int main(int argc, char **argv) {    
-    char md5[100];    
-    char *authorization = (char *)malloc(1024);
-    memset(authorization, 0, 1024);
-    char *put_url = (char *)malloc(1024);
-    memset(put_url, 0, 1024);
+    char *token = (char *)malloc(1024);
+    memset(token, 0, 1024);
     int ret = SUCCESS_RET;
+    char *topic = (char *)malloc(256);
+    memset(topic, 0, 256);
+    HAL_Snprintf((char *)topic, 256, UIOT_PUBLISH_TOPIC,UIOT_MY_PRODUCT_SN, UIOT_MY_DEVICE_SN);
+    char *data = "{\"test\": \"18\"}";
 
-    http_client_file_md5(FILE_PATH, md5);
-    HAL_Printf("MD5:%s\n", md5);
-    
-    ret = IOT_GET_URL_AND_AUTH(UIOT_MY_PRODUCT_SN, UIOT_MY_DEVICE_SN, UIOT_MY_DEVICE_SECRET, FILE_PATH, md5, authorization, put_url);
+    ret = IOT_HTTP_Get_Token(UIOT_MY_PRODUCT_SN, UIOT_MY_DEVICE_SN, UIOT_MY_DEVICE_SECRET, token);
     if(SUCCESS_RET != ret)
     {
-        HAL_Printf("get url and auth fail,ret:%d\r\n", ret);
+        HAL_Printf("get Token fail,ret:%d\r\n", ret);
         return FAILURE_RET;
     }
 
-    HAL_Printf("get MD5:%s\n", md5);
-    HAL_Printf("get authorization:%s\n", authorization);
-    HAL_Printf("get put_url:%s\n", put_url);
-
-    //上传文件超时时间与文件长度相关
-    ret = IOT_UPLOAD_FILE(FILE_PATH, md5, authorization, put_url, 40000);
+    HAL_Printf("get token:%s\n", token);
+    HAL_Printf("topic:%s\n", topic);
+    ret = IOT_HTTP_Publish(token, topic, data, 5000);
     if(SUCCESS_RET != ret)
     {
-        HAL_Printf("upload file fail,ret:%d\r\n", ret);
+        HAL_Printf("Publish fail,ret:%d\r\n", ret);
         return FAILURE_RET;
     }
-    HAL_Printf("upload success\n");
-    HAL_Free(authorization);
-    HAL_Free(put_url);
+    HAL_Printf("Publish success\n");
+    HAL_Free(token);
+    HAL_Free(topic);
+    return ret;
 }
 

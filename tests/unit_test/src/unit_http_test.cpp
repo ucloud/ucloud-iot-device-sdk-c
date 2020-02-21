@@ -22,7 +22,7 @@
 #include "uiot_import.h"
 #include "ca.h"
 #include "utils_httpc.h"
-#include "uiot_export_file_upload.h"
+#include "uiot_export_http.h"
 
 class HTTPClientTests : public testing::Test
 {
@@ -108,7 +108,7 @@ TEST_F(HTTPClientTests, HTTPUploadFile) {
     ret = IOT_GET_URL_AND_AUTH(ProductSN, DeviceSN, DeviceSecret, file_path, md5, authorization, put_url);
     ASSERT_TRUE(SUCCESS_RET == ret);
 
-    ret = IOT_UPLOAD_FILE(file_path, md5, authorization, put_url, 40000);
+    ret = IOT_HTTP_UPLOAD_FILE(file_path, md5, authorization, put_url, 40000);
     ASSERT_TRUE(SUCCESS_RET == ret);  
     HAL_Free(authorization);
     HAL_Free(put_url);

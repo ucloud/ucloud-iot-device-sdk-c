@@ -31,10 +31,13 @@ if (ENABLE_FEATURE_AUTH_MODE_DYNAMIC)
     add_dependencies(dynamic_auth_sample iot_sdk iot_platform)
 endif ()
 
-if (ENABLE_FEATURE_UPLOAD_FILE)
-    add_executable(download_file_sample upload_file/download_file_sample.c)
+if (ENABLE_FEATURE_HTTP_CLIENT)
+    add_executable(download_file_sample http/download_file_sample.c)
     add_dependencies(download_file_sample iot_sdk iot_platform)
-	
-    add_executable(upload_file_sample upload_file/upload_file_sample.c)
-    add_dependencies(upload_file_sample iot_sdk iot_platform)	
+
+    add_executable(upload_file_sample http/upload_file_sample.c)
+    add_dependencies(upload_file_sample iot_sdk iot_platform)
+
+    add_executable(http_client_sample http/http_client_sample.c)
+    add_dependencies(http_client_sample iot_sdk iot_platform)
 endif ()
