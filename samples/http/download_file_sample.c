@@ -24,7 +24,7 @@
 #include "uiot_import.h"
 #include "ca.h"
 #include "utils_httpc.h"
-#include "uiot_export_file_upload.h"
+#include "uiot_export_http.h"
    
 int main(int argc, char **argv) {    
     http_client_t *http_client = (http_client_t *)HAL_Malloc(sizeof(http_client_t));

@@ -160,7 +160,7 @@ end:
     return ret;
 }
 
-int IOT_UPLOAD_FILE(char *file_path, char *md5, char *authorization, char *url, uint32_t timeout_ms)
+int IOT_HTTP_UPLOAD_FILE(char *file_path, char *md5, char *authorization, char *url, uint32_t timeout_ms)
 {
     int ret = SUCCESS_RET;
     http_client_t *http_client_put = (http_client_t *)HAL_Malloc(sizeof(http_client_t));

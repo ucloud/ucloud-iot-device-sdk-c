@@ -17,7 +17,7 @@ $(call CompLib_Map, OTA_ENABLED, src/ota/src)
 
 $(call CompLib_Map, DEVICE_MODEL_ENABLED, src/dev_model/src)
 
-$(call CompLib_Map, FILE_UPLOAD_ENABLED, src/upload_file)
+$(call CompLib_Map, HTTP_CLIENT_ENABLED, src/http)
 
 $(call CompLib_Map, SUPPORT_AT_CMD, src/at/src src/at/class/$(PLATFORM_MODULE) platform/module)
 IOTSDK_SRC_FILES := \

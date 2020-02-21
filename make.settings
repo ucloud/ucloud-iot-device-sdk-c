@@ -18,7 +18,7 @@ FEATURE_MQTT_COMM_ENABLED               = y     # 是否打开MQTT通道
 FEATURE_DEVICE_SHADOW_ENABLED           = y     # 是否打开设备影子
 FEATURE_OTA_ENABLED                     = y     # 是否打开OTA固件升级
 FEATURE_DEVICE_MODEL_ENABLED            = y     # 是否打开物模型
-FEATURE_FILE_UPLOAD_ENABLED             = y     # 是否打开文件上传
+FEATURE_HTTP_CLIENT_ENABLED             = y     # 是否打开http上云
 
 FEATURE_AUTH_MODE_DYNAMIC               = y     # 是否使能设备动态注册
 FEATURE_SUPPORT_TLS                     = y     # 是否打开TLS支持

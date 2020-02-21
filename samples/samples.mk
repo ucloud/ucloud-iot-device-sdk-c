@@ -64,22 +64,28 @@ dev_model_sample:
 	mv $@ $(FINAL_DIR)/bin
 endif
 
-ifneq (,$(filter -DFILE_UPLOAD_ENABLED,$(CFLAGS)))
+ifneq (,$(filter -DHTTP_CLIENT_ENABLED,$(CFLAGS)))
+http_client_sample:
+	$(TOP_Q) \
+	$(PLATFORM_CC) $(CFLAGS) $(SAMPLE_DIR)/http/$@.c $(LDFLAGS) -o $@
+
+	$(TOP_Q) \
+	mv $@ $(FINAL_DIR)/bin
+
 download_file_sample:
 	$(TOP_Q) \
-	$(PLATFORM_CC) $(CFLAGS) $(SAMPLE_DIR)/upload_file/$@.c $(LDFLAGS) -o $@
+	$(PLATFORM_CC) $(CFLAGS) $(SAMPLE_DIR)/http/$@.c $(LDFLAGS) -o $@
 
 	$(TOP_Q) \
 	mv $@ $(FINAL_DIR)/bin
 
 upload_file_sample:
 	$(TOP_Q) \
-	$(PLATFORM_CC) $(CFLAGS) $(SAMPLE_DIR)/upload_file/$@.c $(LDFLAGS) -o $@
+	$(PLATFORM_CC) $(CFLAGS) $(SAMPLE_DIR)/http/$@.c $(LDFLAGS) -o $@
 
 	$(TOP_Q) \
 	mv $@ $(FINAL_DIR)/bin
 endif
-
 
 samples_final:
 	$(TOP_Q) \
