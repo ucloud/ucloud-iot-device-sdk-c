@@ -131,7 +131,8 @@ int main(int argc, char **argv)
     IOT_MQTT_Yield(client, 50);
 
     void *h_dm = IOT_DM_Init(UIOT_MY_PRODUCT_SN, UIOT_MY_DEVICE_SN, client);
-    if (NULL == h_dm) {
+    if (NULL == h_dm) {        
+        IOT_MQTT_Destroy(&client);
         LOG_ERROR("initialize device model failed");
         return FAILURE_RET;
     }
@@ -141,6 +142,7 @@ int main(int argc, char **argv)
     IOT_DM_RegisterCallback(COMMAND , h_dm, command_cb);
     IOT_DM_RegisterCallback(PROPERTY_POST , h_dm, property_post_cb);
     IOT_DM_RegisterCallback(PROPERTY_SET , h_dm, property_set_cb);
+    IOT_DM_Yield(h_dm, 200);
 
     for (int i = 0; i < 20; i++) {
         IOT_DM_Property_Report(h_dm, PROPERTY_POST, i * 2, "{\"volume\": {\"Value\":50}}");

@@ -56,9 +56,9 @@ int IOT_HTTP_Get_Token(const char *product_sn, const char *device_sn, const char
     http_data_post->post_buf = (unsigned char *)HAL_Malloc(1024);
     if(NULL == http_data_post->post_buf)
     {
-        HAL_Free(http_client_post);
-        HAL_Free(http_data_post);
+        HAL_Free(http_client_post);        
         HAL_Free(http_data_post->response_buf);
+        HAL_Free(http_data_post);
         LOG_ERROR("http_data_post->post_buf malloc fail\n");
         return FAILURE_RET;
     }
@@ -76,10 +76,10 @@ int IOT_HTTP_Get_Token(const char *product_sn, const char *device_sn, const char
     http_client_post->header = (char *)HAL_Malloc(1024);
     if(NULL == http_client_post->header)
     {
-        HAL_Free(http_client_post);
-        HAL_Free(http_data_post);
+        HAL_Free(http_client_post);        
         HAL_Free(http_data_post->response_buf);
         HAL_Free(http_data_post->post_buf);
+        HAL_Free(http_data_post);
         LOG_ERROR("http_client_post->header malloc fail\n");
         return FAILURE_RET;
     }
@@ -107,20 +107,22 @@ int IOT_HTTP_Get_Token(const char *product_sn, const char *device_sn, const char
     char *temp = LITE_json_value_of((char *)"Token", http_data_post->response_buf);
     if(NULL == temp)
     {
+        LOG_ERROR("parse Token error\n");
         char *temp_message = LITE_json_value_of((char *)"Message", http_data_post->response_buf);
         LOG_ERROR("%s\n", temp_message);
-        LOG_ERROR("parse Token error\n");
+        HAL_Free(temp_message);
         goto end;
     }
     strncpy(token,temp,strlen(temp));
     token[strlen(temp)+1] = '\0';
     LOG_DEBUG("token:%s\n",token);
-
-end:
+    HAL_Free(temp);
+end:    
+    http_client_close(http_client_post);    
+    HAL_Free(http_client_post->header);    
     HAL_Free(http_client_post);
     HAL_Free(http_data_post->response_buf);
     HAL_Free(http_data_post->post_buf);
-    HAL_Free(http_client_post->header);
     HAL_Free(http_data_post);
     return ret;
 }
@@ -159,9 +161,9 @@ int IOT_HTTP_Publish(char *token, char *topic, char *data, uint32_t timeout_ms)
     http_data_post->post_buf = (unsigned char *)HAL_Malloc(1024);
     if(NULL == http_data_post->post_buf)
     {
-        HAL_Free(http_client_post);
-        HAL_Free(http_data_post);
+        HAL_Free(http_client_post);        
         HAL_Free(http_data_post->response_buf);
+        HAL_Free(http_data_post);
         LOG_ERROR("http_data_post->post_buf malloc fail\n");
         return FAILURE_RET;
     }
@@ -173,10 +175,10 @@ int IOT_HTTP_Publish(char *token, char *topic, char *data, uint32_t timeout_ms)
     http_client_post->header = (char *)HAL_Malloc(1024);
     if(NULL == http_client_post->header)
     {
-        HAL_Free(http_client_post);
-        HAL_Free(http_data_post);
+        HAL_Free(http_client_post);        
         HAL_Free(http_data_post->response_buf);
         HAL_Free(http_data_post->post_buf);
+        HAL_Free(http_data_post);
         LOG_ERROR("http_client_post->header malloc fail\n");
         return FAILURE_RET;
     }
@@ -185,6 +187,12 @@ int IOT_HTTP_Publish(char *token, char *topic, char *data, uint32_t timeout_ms)
 
     const char *ca_crt = iot_https_ca_get();
     char *url = (char *)HAL_Malloc(256);
+    if(NULL == url)
+    {
+        goto end;
+        LOG_ERROR("http_client_post->header malloc fail\n");
+        return FAILURE_RET;
+    }
     memset(url, 0, 256);
     HAL_Snprintf(url, 256, "https://http-cn-sh2.iot.ucloud.cn/topic/%s",topic);
 
@@ -195,6 +203,8 @@ int IOT_HTTP_Publish(char *token, char *topic, char *data, uint32_t timeout_ms)
         LOG_ERROR("HTTP_POST error\n");
         goto end;
     }
+
+    HAL_Free(url);
     
     ret = http_client_recv_data(http_client_post, 5000, http_data_post);
     if(SUCCESS_RET != ret)
@@ -205,14 +215,20 @@ int IOT_HTTP_Publish(char *token, char *topic, char *data, uint32_t timeout_ms)
     LOG_DEBUG("response_buf:%s\n",http_data_post->response_buf);
 
     char *temp_message = LITE_json_value_of((char *)"Message", http_data_post->response_buf);
-    LOG_DEBUG("%s\n", temp_message);
-    
-end:
+    if(NULL == temp_message)
+    {
+        LOG_ERROR("parse Message error\n");
+        goto end;
+    }
+    LOG_DEBUG("%s\n", temp_message);    
+    HAL_Free(temp_message);
+end:    
+    http_client_close(http_client_post);    
+    HAL_Free(http_client_post->header);
     HAL_Free(http_client_post);
     HAL_Free(http_data_post->response_buf);
     HAL_Free(http_data_post->post_buf);
-    HAL_Free(http_client_post->header);
-    HAL_Free(http_data_post);
+    HAL_Free(http_data_post);   
     return ret;
 }
 
