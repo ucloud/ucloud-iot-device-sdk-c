@@ -32,13 +32,13 @@
 
 #define UIOT_MY_DEVICE_SECRET         "DEVICE_SECRET"
 
-#define UIOT_PUBLISH_TOPIC            "%s/%s/topic"
+#define UIOT_PUBLISH_TOPIC            "%s/%s/upload/event"
 
 int main(int argc, char **argv) {    
-    char *token = (char *)malloc(1024);
+    char *token = (char *)HAL_Malloc(1024);
     memset(token, 0, 1024);
     int ret = SUCCESS_RET;
-    char *topic = (char *)malloc(256);
+    char *topic = (char *)HAL_Malloc(256);
     memset(topic, 0, 256);
     HAL_Snprintf((char *)topic, 256, UIOT_PUBLISH_TOPIC,UIOT_MY_PRODUCT_SN, UIOT_MY_DEVICE_SN);
     char *data = "{\"test\": \"18\"}";

@@ -109,6 +109,7 @@ int main(int argc, char **argv)
 
     void *h_ota = IOT_OTA_Init(UIOT_MY_PRODUCT_SN, UIOT_MY_DEVICE_SN, client);
     if (NULL == h_ota) {
+        IOT_MQTT_Destroy(&client);
         LOG_ERROR("init OTA failed");
         return FAILURE_RET;
     }

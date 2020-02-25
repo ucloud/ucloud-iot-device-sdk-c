@@ -72,9 +72,9 @@ int IOT_GET_URL_AND_AUTH(const char *product_sn, const char *device_sn, const ch
     http_data_post->post_buf = (unsigned char *)HAL_Malloc(1024);
     if(NULL == http_data_post->post_buf)
     {
-        HAL_Free(http_client_post);
-        HAL_Free(http_data_post);
+        HAL_Free(http_client_post);        
         HAL_Free(http_data_post->response_buf);
+        HAL_Free(http_data_post);
         LOG_ERROR("http_data_post->post_buf malloc fail\n");
         return FAILURE_RET;
     }
@@ -83,15 +83,16 @@ int IOT_GET_URL_AND_AUTH(const char *product_sn, const char *device_sn, const ch
     int file_len = calc_file_len(file_path);
     if(0 == file_len)
     {
-        HAL_Free(http_client_post);
-        HAL_Free(http_data_post);
+        HAL_Free(http_client_post);        
         HAL_Free(http_data_post->response_buf);
         HAL_Free(http_data_post->post_buf);
+        HAL_Free(http_data_post);
         LOG_ERROR("File not exist\n");
         return ERR_PARAM_INVALID;
     }
     HAL_Snprintf((char *)http_data_post->post_buf, 1024, "{\"ProductSN\":\"%s\",\"DeviceSN\":\"%s\","   \
-                                                         "\"FileName\":\"%s\",\"FileSize\":%d,\"MD5\":\"%s\",\"Content-Type\":\"plain/text\"}",product_sn, device_sn, file_path, file_len, md5);
+                                                         "\"FileName\":\"%s\",\"FileSize\":%d,\"MD5\":\"%s\",\"Content-Type\":\"plain/text\"}", \
+                                                         product_sn, device_sn, file_path, file_len, md5);
     http_data_post->post_buf_len = strlen((char *)http_data_post->post_buf);
     uint8_t mac_output_hex[32] = {0};
     char mac_output_char[65] = {0};
@@ -103,10 +104,10 @@ int IOT_GET_URL_AND_AUTH(const char *product_sn, const char *device_sn, const ch
     http_client_post->header = (char *)HAL_Malloc(1024);
     if(NULL == http_client_post->header)
     {
-        HAL_Free(http_client_post);
-        HAL_Free(http_data_post);
+        HAL_Free(http_client_post);        
         HAL_Free(http_data_post->response_buf);
         HAL_Free(http_data_post->post_buf);
+        HAL_Free(http_data_post);
         LOG_ERROR("http_client_post->header malloc fail\n");
         return FAILURE_RET;
     }
@@ -131,31 +132,34 @@ int IOT_GET_URL_AND_AUTH(const char *product_sn, const char *device_sn, const ch
     }
     LOG_DEBUG("response_buf:%s\n",http_data_post->response_buf);
 
-    char *temp = LITE_json_value_of((char *)"Authorization", http_data_post->response_buf);
-    if(NULL == temp)
+    char *temp_auth = LITE_json_value_of((char *)"Authorization", http_data_post->response_buf);
+    if(NULL == temp_auth)
     {
         LOG_ERROR("parse Authorization error\n");
         goto end;
     }
-    strncpy(authorization,temp,strlen(temp));
-    authorization[strlen(temp)+1] = '\0';
+    strncpy(authorization,temp_auth,strlen(temp_auth));
+    authorization[strlen(temp_auth)+1] = '\0';
     LOG_DEBUG("authorization:%s\n",authorization);
-
-    temp = LITE_json_value_of((char *)"URL", http_data_post->response_buf);
-    if(NULL == temp)
+    HAL_Free(temp_auth);
+    
+    char *temp_url = LITE_json_value_of((char *)"URL", http_data_post->response_buf);
+    if(NULL == temp_url)
     {
         LOG_ERROR("parse URL error\n");
         goto end;
     }
-    strncpy(put_url,temp,strlen(temp));
-    put_url[strlen(temp)+1] = '\0';
-    LOG_DEBUG("put_url:%s\n",put_url);
+    strncpy(put_url,temp_url,strlen(temp_url));
+    put_url[strlen(temp_url)+1] = '\0';
+    LOG_DEBUG("put_url:%s\n",put_url);    
+    HAL_Free(temp_url);
 
-end:
+end:    
+    http_client_close(http_client_post);    
+    HAL_Free(http_client_post->header);
     HAL_Free(http_client_post);
     HAL_Free(http_data_post->response_buf);
     HAL_Free(http_data_post->post_buf);
-    HAL_Free(http_client_post->header);
     HAL_Free(http_data_post);
     return ret;
 }
@@ -195,9 +199,9 @@ int IOT_HTTP_UPLOAD_FILE(char *file_path, char *md5, char *authorization, char *
     http_client_put->header = (char *)HAL_Malloc(1024);
     if(NULL == http_data_put)
     {
-        HAL_Free(http_client_put);
-        HAL_Free(http_data_put);
+        HAL_Free(http_client_put);        
         HAL_Free(http_data_put->response_buf);
+        HAL_Free(http_data_put);
         LOG_ERROR("http_client_put->header malloc fail\n");
         return FAILURE_RET;
     }
@@ -263,12 +267,13 @@ int IOT_HTTP_UPLOAD_FILE(char *file_path, char *md5, char *authorization, char *
     LOG_DEBUG("response_buf:%s\n",http_data_put->response_buf);
 
     fclose(fp);
-end:
+end:    
+    http_client_close(http_client_put);
     HAL_Free(http_data_put->post_buf);
     HAL_Free(http_data_put->response_buf);
+    HAL_Free(http_data_put);        
     HAL_Free(http_client_put->header);
     HAL_Free(http_client_put);
-    HAL_Free(http_data_put);
     return ret;
 }
 
