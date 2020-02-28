@@ -30,7 +30,7 @@ extern "C" {
 
 #define GET_CHAR_TIMEOUT_MS            100
 #define CMD_TIMEOUT_MS                 10000
-#define CMD_RESPONSE_INTERVAL_MS       100
+#define CMD_RESPONSE_INTERVAL_MS       1000
 #define GET_RECEIVE_TIMEOUT_MS         100
 
 
