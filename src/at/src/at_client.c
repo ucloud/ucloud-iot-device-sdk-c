@@ -124,8 +124,10 @@ static void client_parser(void *userContex)
     const at_custom *urc = NULL;
     int line_counts = 0;
     at_client_t client = at_client_get();
+    Timer timer;
+    HAL_Timer_Countdown_ms(&timer, CMD_RESPONSE_INTERVAL_MS);
 
-    while(1)
+    do
     {
         if (at_recv_readline(client) > 0)
         {
@@ -206,7 +208,7 @@ static void client_parser(void *userContex)
                 break;
             }
         }        
-    }
+    }while (!HAL_Timer_Expired(&timer));
     return;
 }
 
