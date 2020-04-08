@@ -125,18 +125,6 @@ int IOT_OTA_ReportSuccess(void *handle, const char *version);
  */
 int IOT_OTA_ReportFail(void *handle, IOT_OTA_ReportErrCode err_code);
 
-
-/**
- * @brief 检查是否处于下载固件的状态
- *
- * @param handle: 指定OTA模块
- *
- * @retval 1 : Yes.
- * @retval 0 : No.
- */
-int IOT_OTA_IsFetching(void *handle);
-
-
 /**
  * @brief 检查固件是否已经下载完成
  *
@@ -155,13 +143,14 @@ int IOT_OTA_IsFetchFinish(void *handle);
  * @param handle:       指定OTA模块
  * @param buf:          指定存储固件数据的空间
  * @param buf_len:      用字节指定“buf”的长度
+ * @param range_len:    用字节指定分片的长度
  * @param timeout_s:    超时时间
  *
  * @retval      < 0 : 对应的错误码
  * @retval        0 : 在“timeout_s”超时期间没有任何数据被下载
  * @retval (0, len] : 在“timeout_s”超时时间内以字节的方式下载数据的长度
  */
-int IOT_OTA_FetchYield(void *handle, char *buf, size_t buf_len, uint32_t timeout_s);
+int IOT_OTA_FetchYield(void *handle, char *buf, size_t buf_len, size_t range_len, uint32_t timeout_s);
 
 
 /**
@@ -196,7 +185,6 @@ int IOT_OTA_Ioctl(void *handle, IOT_OTA_CmdType type, void *buf, size_t buf_len)
  */
 int IOT_OTA_GetLastError(void *handle);
 
-
 /**
  * @brief 请求固件更新消息。设备离线时，不能接收服务端推送的升级消息。通过MQTT协议接入物联网平台的设备再次上线后，主动请求固件更新消息
  *
@@ -208,6 +196,14 @@ int IOT_OTA_GetLastError(void *handle);
  */
 int IOT_OTA_RequestFirmware(void *handle, const char *version);
 
+/**
+ * @brief 下载固件，下载结束后重启设备
+ *
+ * @param handle:   指定OTA模块
+ *
+ * @return 对应错误的错误码.
+ */
+int IOT_OTA_fw_download(void *handle);
 
 #ifdef __cplusplus
 }

@@ -59,7 +59,7 @@ void RegCallback_hold(void *pClient, RequestParams *pParams, char *pJsonValueBuf
 
 static void _update_ack_cb(void *pClient, Method method, RequestAck requestAck, const char *pReceivedJsonDocument, void *pUserdata) 
 {
-	LOG_DEBUG("requestAck=%d\n", requestAck);
+    LOG_DEBUG("requestAck=%d\n", requestAck);
 
     if (NULL != pReceivedJsonDocument) {
         LOG_DEBUG("Received Json Document=%s\n", pReceivedJsonDocument);
@@ -82,13 +82,13 @@ static void _update_ack_cb(void *pClient, Method method, RequestAck requestAck, 
 static int _setup_connect_init_params(MQTTInitParams* initParams)
 {
     int ret = SUCCESS_RET;
-	initParams->device_sn = (char *)UIOT_MY_DEVICE_SN;
-	initParams->product_sn = (char *)UIOT_MY_PRODUCT_SN;
-	initParams->device_secret = (char *)UIOT_MY_DEVICE_SECRET;
+    initParams->device_sn = (char *)UIOT_MY_DEVICE_SN;
+    initParams->product_sn = (char *)UIOT_MY_PRODUCT_SN;
+    initParams->device_secret = (char *)UIOT_MY_DEVICE_SECRET;
 
-	initParams->command_timeout = UIOT_MQTT_COMMAND_TIMEOUT;
-	initParams->keep_alive_interval = UIOT_MQTT_KEEP_ALIVE_INTERNAL;
-	initParams->auto_connect_enable = 1;
+    initParams->command_timeout = UIOT_MQTT_COMMAND_TIMEOUT;
+    initParams->keep_alive_interval = UIOT_MQTT_KEEP_ALIVE_INTERNAL;
+    initParams->auto_connect_enable = 1;
 
     return ret;
 }
@@ -112,7 +112,8 @@ int main()
     
     void *shadow_client = IOT_Shadow_Construct(UIOT_MY_PRODUCT_SN, UIOT_MY_DEVICE_SN, mqtt_client);
     if(shadow_client == NULL)
-    {
+    {    
+        IOT_MQTT_Destroy(&mqtt_client);
         HAL_Printf("IOT_Shadow_Construct fail\n");
         return ERR_PARAM_INVALID;
     }
@@ -120,13 +121,15 @@ int main()
     sg_pshadow = (UIoT_Shadow *)shadow_client;
     bool isConnected = IOT_MQTT_IsConnected(sg_pshadow->mqtt);
     if(isConnected != true)
-    {
+    {    
+        IOT_Shadow_Destroy(sg_pshadow);
+        IOT_MQTT_Destroy(&mqtt_client);
         HAL_Printf("IOT_MQTT_IsConnected fail\n");
         return ERR_PARAM_INVALID;
     }
     
     int time_sec = MAX_WAIT_TIME_SEC;
-	RequestAck ack_update = ACK_NONE;
+    RequestAck ack_update = ACK_NONE;
 
     DeviceProperty *Property1 = (DeviceProperty *)HAL_Malloc(sizeof(DeviceProperty));
     int32_t num1 = 18;
@@ -137,6 +140,9 @@ int main()
     ret = IOT_Shadow_Register_Property(sg_pshadow, Property1, RegCallback_hold); 
     if(SUCCESS_RET != ret)
     {
+        HAL_Free(Property1);
+        IOT_Shadow_Destroy(sg_pshadow);
+        IOT_MQTT_Destroy(&mqtt_client);
         HAL_Printf("Register Property1 fail:%d\n", ret);
         return ret;
     }
@@ -150,6 +156,10 @@ int main()
     ret = IOT_Shadow_Register_Property(sg_pshadow, Property2, RegCallback_update); 
     if(SUCCESS_RET != ret)
     {
+        HAL_Free(Property1);
+        HAL_Free(Property2);
+        IOT_Shadow_Destroy(sg_pshadow);
+        IOT_MQTT_Destroy(&mqtt_client);
         HAL_Printf("Register Property2 fail:%d\n", ret);
         return ret;
     }
@@ -163,6 +173,11 @@ int main()
     ret = IOT_Shadow_Register_Property(sg_pshadow, Property3, RegCallback_update); 
     if(SUCCESS_RET != ret)
     {
+        HAL_Free(Property1);
+        HAL_Free(Property2);
+        HAL_Free(Property3);
+        IOT_Shadow_Destroy(sg_pshadow);
+        IOT_MQTT_Destroy(&mqtt_client);
         HAL_Printf("Register Property3 fail:%d\n", ret);
         return ret;
     }
@@ -176,6 +191,12 @@ int main()
     ret = IOT_Shadow_Register_Property(sg_pshadow, Property4, RegCallback_update); 
     if(SUCCESS_RET != ret)
     {
+        HAL_Free(Property1);
+        HAL_Free(Property2);
+        HAL_Free(Property3);
+        HAL_Free(Property4);
+        IOT_Shadow_Destroy(sg_pshadow);
+        IOT_MQTT_Destroy(&mqtt_client);
         HAL_Printf("Register Property4 fail:%d\n", ret);
         return ret;
     }
@@ -189,6 +210,13 @@ int main()
     ret = IOT_Shadow_Register_Property(sg_pshadow, Property5, RegCallback_update); 
     if(SUCCESS_RET != ret)
     {
+        HAL_Free(Property1);
+        HAL_Free(Property2);
+        HAL_Free(Property3);
+        HAL_Free(Property4);
+        HAL_Free(Property5);
+        IOT_Shadow_Destroy(sg_pshadow);
+        IOT_MQTT_Destroy(&mqtt_client);
         HAL_Printf("Register Property5 fail:%d\n", ret);
         return ret;
     }
@@ -203,7 +231,7 @@ int main()
     if(SUCCESS_RET != ret)
     {
         HAL_Printf("Register Property6 fail:%d\n", ret);
-        return ret;
+        goto end;
     }
 
     /* 先同步一下版本号和设备掉电期间更新的属性 */
@@ -211,10 +239,10 @@ int main()
     if(SUCCESS_RET != ret)
     {
         HAL_Printf("Get Sync fail:%d\n", ret);
-        return ret;
+        goto end;
     }
 
-	while (ACK_NONE == ack_update) {
+    while (ACK_NONE == ack_update) {
         IOT_Shadow_Yield(sg_pshadow, MAX_WAIT_TIME_MS);
     }
    
@@ -224,17 +252,17 @@ int main()
     if(SUCCESS_RET != ret)
     {
         HAL_Printf("Update Property1 Property2 Property3 Property4 Property5 Property6 fail:%d\n", ret);
-        return ret;
+        goto end;
     }
     
-	while (ACK_NONE == ack_update) {
+    while (ACK_NONE == ack_update) {
         IOT_Shadow_Yield(sg_pshadow, MAX_WAIT_TIME_MS);
     }
 
     ack_update = ACK_NONE;
     ret = IOT_Shadow_Get_Sync(sg_pshadow, _update_ack_cb, time_sec, &ack_update);
 
-	while (ACK_NONE == ack_update) {
+    while (ACK_NONE == ack_update) {
         IOT_Shadow_Yield(sg_pshadow, MAX_WAIT_TIME_MS);
     }
 
@@ -250,10 +278,10 @@ int main()
     if(SUCCESS_RET != ret)
     {
         HAL_Printf("Update Property1 Property4 fail:%d\n", ret);
-        return ret;
+        goto end;
     }
     
-	while (ACK_NONE == ack_update) {
+    while (ACK_NONE == ack_update) {
         IOT_Shadow_Yield(sg_pshadow, MAX_WAIT_TIME_MS);
     }
 
@@ -263,10 +291,10 @@ int main()
     if(SUCCESS_RET != ret)
     {
         HAL_Printf("Delete Property1 Property2 fail:%d\n", ret);
-        return ret;
+        goto end;
     }
 
-	while (ACK_NONE == ack_update) {
+    while (ACK_NONE == ack_update) {
         IOT_Shadow_Yield(sg_pshadow, MAX_WAIT_TIME_MS);
     }
 
@@ -274,7 +302,7 @@ int main()
     ret = IOT_Shadow_Get_Sync(sg_pshadow, _update_ack_cb, time_sec, &ack_update);
 
 
-	while (ACK_NONE == ack_update) {
+    while (ACK_NONE == ack_update) {
         IOT_Shadow_Yield(sg_pshadow, MAX_WAIT_TIME_MS);
     }
 
@@ -284,11 +312,11 @@ int main()
     if(SUCCESS_RET != ret)
     {
         HAL_Printf("Delete All fail:%d\n", ret);
-        return ret;
+        goto end;
     }
 
 
-	while (ACK_NONE == ack_update) {
+    while (ACK_NONE == ack_update) {
         IOT_Shadow_Yield(sg_pshadow, MAX_WAIT_TIME_MS);
     }
 
@@ -296,7 +324,7 @@ int main()
     ret = IOT_Shadow_Get_Sync(sg_pshadow, _update_ack_cb, time_sec, &ack_update);
 
 
-	while (ACK_NONE == ack_update) {
+    while (ACK_NONE == ack_update) {
         IOT_Shadow_Yield(sg_pshadow, MAX_WAIT_TIME_MS);
     }
 
@@ -311,20 +339,21 @@ int main()
     if(SUCCESS_RET != ret)
     {
         HAL_Printf("Update and Reset Ver fail:%d\n", ret);
-        return ret;
+        goto end;
     }
     
-	while (ACK_NONE == ack_update) {
+    while (ACK_NONE == ack_update) {
         IOT_Shadow_Yield(sg_pshadow, MAX_WAIT_TIME_MS);
     }
 
     ack_update = ACK_NONE;
     ret = IOT_Shadow_Get_Sync(sg_pshadow, _update_ack_cb, time_sec, &ack_update);
 
-	while (ACK_NONE == ack_update) {
+    while (ACK_NONE == ack_update) {
         IOT_Shadow_Yield(sg_pshadow, MAX_WAIT_TIME_MS);
     }
 
+end:
     HAL_Free(Property1);
     HAL_Free(Property2);
     HAL_Free(Property3);
@@ -332,7 +361,7 @@ int main()
     HAL_Free(Property5);
     HAL_Free(Property6);
     IOT_Shadow_Destroy(sg_pshadow);
-
+    IOT_MQTT_Destroy(&mqtt_client);
     return ret;
 }
 

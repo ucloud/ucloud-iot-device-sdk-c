@@ -26,12 +26,12 @@ extern "C" {
 #endif
 
 #define AT_CMD_MAX_LEN                 1024
-#define RING_BUFF_LEN         		   6144	 
+#define RING_BUFF_LEN                  6144     
 
-#define GET_CHAR_TIMEOUT_MS			   100
-#define CMD_TIMEOUT_MS			   	   10000
-#define CMD_RESPONSE_INTERVAL_MS 	   100
-#define GET_RECEIVE_TIMEOUT_MS		   100
+#define GET_CHAR_TIMEOUT_MS            100
+#define CMD_TIMEOUT_MS                 10000
+#define CMD_RESPONSE_INTERVAL_MS       1000
+#define GET_RECEIVE_TIMEOUT_MS         100
 
 
 #define AT_RESP_END_OK                 "OK"
@@ -95,17 +95,17 @@ typedef struct _at_client_
 {
     at_status status;
     char end_sign;
-	
-	ring_buff_t pRingBuff;
+    
+    ring_buff_t pRingBuff;
     ring_buff_t pRingTcpBuff[3];
     char *recv_buffer;
     uint32_t recv_bufsz;
     uint32_t cur_recv_len;
-	void *lock;      //pre cmd take the lock wait for resp , another cmd need wait for unlock
-	
+    void *lock;      //pre cmd take the lock wait for resp , another cmd need wait for unlock
+    
     at_response_t resp;
     at_resp_status_t resp_status;
-	bool resp_notice;
+    bool resp_notice;
 
     const at_custom *urc_table;
     uint16_t urc_table_size;
@@ -147,12 +147,6 @@ void at_delete_resp(at_response_t resp);
 
 int at_recv_readline(at_client_t client);
 IoT_Error_t at_client_getchar(at_client_t client, char *pch, uint32_t timeout);
-
-/* AT response line buffer get and parse response buffer arguments */
-const char *at_resp_get_line(at_response_t resp, uint32_t resp_line);
-const char *at_resp_get_line_by_kw(at_response_t resp, const char *keyword);
-int at_resp_parse_line_args(at_response_t resp, uint32_t resp_line, const char *resp_expr, ...);
-int at_resp_parse_line_args_by_kw(at_response_t resp, const char *keyword, const char *resp_expr, ...);
 
 /* ========================== single AT client function ============================ */
 #ifdef __cplusplus

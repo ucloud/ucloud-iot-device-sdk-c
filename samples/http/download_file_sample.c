@@ -24,7 +24,7 @@
 #include "uiot_import.h"
 #include "ca.h"
 #include "utils_httpc.h"
-#include "uiot_export_file_upload.h"
+#include "uiot_export_http.h"
    
 int main(int argc, char **argv) {    
     http_client_t *http_client = (http_client_t *)HAL_Malloc(sizeof(http_client_t));
@@ -55,9 +55,9 @@ int main(int argc, char **argv) {
     int rc;
     int32_t total = 0;
 #ifdef SUPPORT_TLS
-    http_client_common(http_client, url, 443, ca_crt, HTTP_GET, http_data);
+    http_client_common(http_client, url, 443, ca_crt, HTTP_GET, http_data, 5000);
 #else
-    http_client_common(http_client, url, 80, ca_crt, HTTP_GET, http_data);
+    http_client_common(http_client, url, 80, ca_crt, HTTP_GET, http_data, 5000);
 #endif
     do {
         int diff = http_data->response_content_len - http_data->retrieve_len;

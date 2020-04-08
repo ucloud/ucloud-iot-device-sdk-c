@@ -67,7 +67,7 @@ void Alarm_RegCallback(void *pClient, RequestParams *pParams, char *pJsonValueBu
 
 static void _update_ack_cb(void *pClient, Method method, RequestAck requestAck, const char *pReceivedJsonDocument, void *pUserdata) 
 {
-	LOG_DEBUG("requestAck=%d\n", requestAck);
+    LOG_DEBUG("requestAck=%d\n", requestAck);
 
     if (NULL != pReceivedJsonDocument) {
         LOG_DEBUG("Received Json Document=%s\n", pReceivedJsonDocument);
@@ -90,13 +90,13 @@ static void _update_ack_cb(void *pClient, Method method, RequestAck requestAck, 
 static int _setup_connect_init_params(MQTTInitParams* initParams)
 {
     int ret = SUCCESS_RET;
-	initParams->device_sn = (char *)UIOT_MY_DEVICE_SN;
-	initParams->product_sn = (char *)UIOT_MY_PRODUCT_SN;
-	initParams->device_secret = (char *)UIOT_MY_DEVICE_SECRET;
+    initParams->device_sn = (char *)UIOT_MY_DEVICE_SN;
+    initParams->product_sn = (char *)UIOT_MY_PRODUCT_SN;
+    initParams->device_secret = (char *)UIOT_MY_DEVICE_SECRET;
 
-	initParams->command_timeout = UIOT_MQTT_COMMAND_TIMEOUT;
-	initParams->keep_alive_interval = UIOT_MQTT_KEEP_ALIVE_INTERNAL;
-	initParams->auto_connect_enable = 1;
+    initParams->command_timeout = UIOT_MQTT_COMMAND_TIMEOUT;
+    initParams->keep_alive_interval = UIOT_MQTT_KEEP_ALIVE_INTERNAL;
+    initParams->auto_connect_enable = 1;
 
     return ret;
 }
@@ -134,7 +134,7 @@ int main()
     }
     
     int time_sec = MAX_WAIT_TIME_SEC;
-	RequestAck ack_update = ACK_NONE;
+    RequestAck ack_update = ACK_NONE;
 
     /* 手环启动状态 */
     DeviceProperty *property_power = (DeviceProperty *)HAL_Malloc(sizeof(DeviceProperty));
@@ -186,7 +186,7 @@ int main()
         return ret;
     }
 
-	while (ACK_NONE == ack_update) {
+    while (ACK_NONE == ack_update) {
         IOT_Shadow_Yield(sg_pshadow, MAX_WAIT_TIME_MS);
     }
 
@@ -244,7 +244,7 @@ int main()
     HAL_Free(property_heart_rate);
     HAL_Free(property_alarm);
     IOT_Shadow_Destroy(sg_pshadow);
-
+    IOT_MQTT_Destroy(&mqtt_client);
     return ret;
 }
 

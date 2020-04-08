@@ -32,47 +32,47 @@
 
 static void event_handler(void *pClient, void *handle_context, MQTTEventMsg *msg)
 {
-	switch(msg->event_type) {
-		case MQTT_EVENT_UNDEF:
-			LOG_INFO("undefined event occur.\n");
-			break;
+    switch(msg->event_type) {
+        case MQTT_EVENT_UNDEF:
+            LOG_INFO("undefined event occur.\n");
+            break;
 
-		case MQTT_EVENT_DISCONNECT:
-			LOG_INFO("MQTT disconnect.\n");
-			break;
+        case MQTT_EVENT_DISCONNECT:
+            LOG_INFO("MQTT disconnect.\n");
+            break;
 
-		case MQTT_EVENT_RECONNECT:
-			LOG_INFO("MQTT reconnect.\n");
-			break;
+        case MQTT_EVENT_RECONNECT:
+            LOG_INFO("MQTT reconnect.\n");
+            break;
 
-		case MQTT_EVENT_SUBSCRIBE_SUCCESS:
-			LOG_INFO("subscribe success.\n");
-			break;
+        case MQTT_EVENT_SUBSCRIBE_SUCCESS:
+            LOG_INFO("subscribe success.\n");
+            break;
 
-		case MQTT_EVENT_SUBSCRIBE_TIMEOUT:
-			LOG_INFO("subscribe wait ack timeout.\n");
-			break;
+        case MQTT_EVENT_SUBSCRIBE_TIMEOUT:
+            LOG_INFO("subscribe wait ack timeout.\n");
+            break;
 
-		case MQTT_EVENT_SUBSCRIBE_NACK:
-			LOG_INFO("subscribe nack.\n");
-			break;
+        case MQTT_EVENT_SUBSCRIBE_NACK:
+            LOG_INFO("subscribe nack.\n");
+            break;
 
-		case MQTT_EVENT_PUBLISH_SUCCESS:
-			LOG_INFO("publish success.\n");
-			break;
+        case MQTT_EVENT_PUBLISH_SUCCESS:
+            LOG_INFO("publish success.\n");
+            break;
 
-		case MQTT_EVENT_PUBLISH_TIMEOUT:
-			LOG_INFO("publish timeout.\n");
-			break;
+        case MQTT_EVENT_PUBLISH_TIMEOUT:
+            LOG_INFO("publish timeout.\n");
+            break;
 
-		case MQTT_EVENT_PUBLISH_NACK:
-			LOG_INFO("publish nack.\n");
-			break;
+        case MQTT_EVENT_PUBLISH_NACK:
+            LOG_INFO("publish nack.\n");
+            break;
 
-		default:
-			LOG_INFO("Should NOT arrive here.\n");
-			break;
-	}
+        default:
+            LOG_INFO("Should NOT arrive here.\n");
+            break;
+    }
 }
 
 
@@ -100,12 +100,12 @@ int property_set_cb(const char *request_id, const char *property){
 
 static int _setup_connect_init_params(MQTTInitParams* initParams)
 {
-	initParams->device_sn = UIOT_MY_DEVICE_SN;
-	initParams->product_sn = UIOT_MY_PRODUCT_SN;
-	initParams->device_secret = UIOT_MY_DEVICE_SECRET;
-	initParams->command_timeout = UIOT_MQTT_COMMAND_TIMEOUT;
-	initParams->keep_alive_interval = UIOT_MQTT_KEEP_ALIVE_INTERNAL;
-	initParams->auto_connect_enable = 1;
+    initParams->device_sn = UIOT_MY_DEVICE_SN;
+    initParams->product_sn = UIOT_MY_PRODUCT_SN;
+    initParams->device_secret = UIOT_MY_DEVICE_SECRET;
+    initParams->command_timeout = UIOT_MQTT_COMMAND_TIMEOUT;
+    initParams->keep_alive_interval = UIOT_MQTT_KEEP_ALIVE_INTERNAL;
+    initParams->auto_connect_enable = 1;
     initParams->event_handler.h_fp = event_handler;
 
     return SUCCESS_RET;
@@ -117,9 +117,9 @@ int main(int argc, char **argv)
 
     MQTTInitParams init_params = DEFAULT_MQTT_INIT_PARAMS;
     rc = _setup_connect_init_params(&init_params);
-	if (rc != SUCCESS_RET) {
-		return rc;
-	}
+    if (rc != SUCCESS_RET) {
+        return rc;
+    }
 
     void *client = IOT_MQTT_Construct(&init_params);
     if (client != NULL) {
@@ -131,7 +131,8 @@ int main(int argc, char **argv)
     IOT_MQTT_Yield(client, 50);
 
     void *h_dm = IOT_DM_Init(UIOT_MY_PRODUCT_SN, UIOT_MY_DEVICE_SN, client);
-    if (NULL == h_dm) {
+    if (NULL == h_dm) {        
+        IOT_MQTT_Destroy(&client);
         LOG_ERROR("initialize device model failed");
         return FAILURE_RET;
     }
@@ -141,6 +142,7 @@ int main(int argc, char **argv)
     IOT_DM_RegisterCallback(COMMAND , h_dm, command_cb);
     IOT_DM_RegisterCallback(PROPERTY_POST , h_dm, property_post_cb);
     IOT_DM_RegisterCallback(PROPERTY_SET , h_dm, property_set_cb);
+    IOT_DM_Yield(h_dm, 200);
 
     for (int i = 0; i < 20; i++) {
         IOT_DM_Property_Report(h_dm, PROPERTY_POST, i * 2, "{\"volume\": {\"Value\":50}}");

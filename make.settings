@@ -5,6 +5,7 @@ PLATFORM_CC                     = gcc
 PLATFORM_AR                     = ar
 PLATFORM_OS                     = linux
 PLATFORM_SSL                    = mbedtls
+PLATFORM_MODULE                 = m26
 
 # Uncomment below and specify PATH to your toolchain when cross-compile SDK
 #
@@ -13,12 +14,14 @@ PLATFORM_SSL                    = mbedtls
 # PLATFORM_CC                   = armcc
 # PLATFORM_AR                   = armar
 
-FEATURE_MQTT_COMM_ENABLED               = y     # 是否打开MQTT通道
+FEATURE_MQTT_COMM_ENABLED               = y     # 是否打开MQTT连接云平台
 FEATURE_DEVICE_SHADOW_ENABLED           = y     # 是否打开设备影子
 FEATURE_OTA_ENABLED                     = y     # 是否打开OTA固件升级
 FEATURE_DEVICE_MODEL_ENABLED            = y     # 是否打开物模型
-FEATURE_FILE_UPLOAD_ENABLED             = y     # 是否打开文件上传
+FEATURE_HTTP_CLIENT_ENABLED             = y     # 是否打开http连接云平台
 
-FEATURE_AUTH_MODE_DYNAMIC               = y     # 是否使能设备动态注册
+FEATURE_AUTH_MODE_DYNAMIC               = y     # 是否打开设备动态注册
 FEATURE_SUPPORT_TLS                     = y     # 是否打开TLS支持
+FEATURE_SUPPORT_AT_CMD                  = n     # 是否打开AT命令支持
+
 FEATURE_SDK_TESTS_ENABLED               = n     # 是否打开SDK测试用例编译

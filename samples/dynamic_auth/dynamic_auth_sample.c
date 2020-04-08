@@ -34,32 +34,32 @@
 MQTTInitParams init_params = DEFAULT_MQTT_INIT_PARAMS;
 
 void event_handler(void *pclient, void *handle_context, MQTTEventMsg *msg) {
-	LOG_DEBUG("Enter event_handler!type:%d\n",msg->event_type);
+    LOG_DEBUG("Enter event_handler!type:%d\n",msg->event_type);
 }
 
 static void on_message_callback(void *pClient, MQTTMessage *message, void *userData) {
-	if (message == NULL) {
-		return;
-	}
+    if (message == NULL) {
+        return;
+    }
 
-	LOG_DEBUG("Receive Message With topicName:%.*s, payload:%.*s",
-		  (int) message->topic_len, message->topic, (int) message->payload_len, (char *) message->payload);
+    LOG_DEBUG("Receive Message With topicName:%.*s, payload:%.*s",
+          (int) message->topic_len, message->topic, (int) message->payload_len, (char *) message->payload);
 }
 
 static int _publish_msg(void *client)
 {
     char topicName[128] = {0};
     int num = 18;
-    HAL_Snprintf(topicName, 128, "/%s/%s/set", UIOT_MY_PRODUCT_SN, UIOT_MY_DEVICE_SN);
+    HAL_Snprintf(topicName, 128, "/%s/%s/upload/event", UIOT_MY_PRODUCT_SN, UIOT_MY_DEVICE_SN);
 
     PublishParams pub_params = DEFAULT_PUB_PARAMS;
     
     char topic_content[MAX_SIZE_OF_TOPIC_CONTENT + 1] = {0};
 
-	HAL_Snprintf(topic_content, MAX_SIZE_OF_TOPIC_CONTENT, "{\"test\": \"%d\"}", num);
+    HAL_Snprintf(topic_content, MAX_SIZE_OF_TOPIC_CONTENT, "{\"test\": \"%d\"}", num);
 
-	pub_params.payload = topic_content;
-	pub_params.payload_len = strlen(topic_content);
+    pub_params.payload = topic_content;
+    pub_params.payload_len = strlen(topic_content);
 
     return IOT_MQTT_Publish(client, topicName, &pub_params);
 }
@@ -67,7 +67,7 @@ static int _publish_msg(void *client)
 static int _register_subscribe_topics(void *client)
 {
     static char topic_name[128] = {0};
-    HAL_Snprintf(topic_name, 128, "/%s/%s/set", UIOT_MY_PRODUCT_SN, UIOT_MY_DEVICE_SN);
+    HAL_Snprintf(topic_name, 128, "/%s/%s/upload/event", UIOT_MY_PRODUCT_SN, UIOT_MY_DEVICE_SN);
 
     SubscribeParams sub_params = DEFAULT_SUB_PARAMS;
     sub_params.on_message_handler = on_message_callback;
@@ -83,16 +83,16 @@ static int _register_subscribe_topics(void *client)
  */
 static int _setup_connect_init_params(MQTTInitParams* initParams)
 {
-	initParams->device_sn = (char *)UIOT_MY_DEVICE_SN;
-	initParams->product_sn = (char *)UIOT_MY_PRODUCT_SN;
-	initParams->product_secret = (char *)UIOT_MY_PRODUCT_SECRET;
+    initParams->device_sn = (char *)UIOT_MY_DEVICE_SN;
+    initParams->product_sn = (char *)UIOT_MY_PRODUCT_SN;
+    initParams->product_secret = (char *)UIOT_MY_PRODUCT_SECRET;
 
-	initParams->command_timeout = UIOT_MQTT_COMMAND_TIMEOUT;
-	initParams->keep_alive_interval = UIOT_MQTT_KEEP_ALIVE_INTERNAL;
+    initParams->command_timeout = UIOT_MQTT_COMMAND_TIMEOUT;
+    initParams->keep_alive_interval = UIOT_MQTT_KEEP_ALIVE_INTERNAL;
 
-	initParams->auto_connect_enable = 1;
-	initParams->event_handler.h_fp = event_handler;
-	initParams->event_handler.context = NULL;
+    initParams->auto_connect_enable = 1;
+    initParams->event_handler.h_fp = event_handler;
+    initParams->event_handler.context = NULL;
 
     return SUCCESS_RET;
 }
@@ -102,14 +102,14 @@ int main()
     int ret = 0;
     char secret[IOT_DEVICE_SECRET_LEN+1];
     ret = _setup_connect_init_params(&init_params);
-	if (ret != SUCCESS_RET) {
-		return ret;
-	}
+    if (ret != SUCCESS_RET) {
+        return ret;
+    }
     
     ret = IOT_MQTT_Dynamic_Register(&init_params);
-	if (ret != SUCCESS_RET) {
-		return ret;
-	}
+    if (ret != SUCCESS_RET) {
+        return ret;
+    }
     
     ret = HAL_GetDeviceSecret(secret);
     if(ret != SUCCESS_RET)

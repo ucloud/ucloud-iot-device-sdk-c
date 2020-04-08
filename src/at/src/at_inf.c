@@ -25,29 +25,29 @@ extern int custom_table_num;
 
 IoT_Error_t module_init()
 {
-	IoT_Error_t ret;
-	at_client_t p_client;
+    IoT_Error_t ret;
+    at_client_t p_client;
 
-	p_client = at_client_get();
+    p_client = at_client_get();
 
-	if(NULL == p_client)
-	{
-		LOG_ERROR("no at client get");
-		ret = FAILURE_RET;
-		goto exit; 
-	}
-	
+    if(NULL == p_client)
+    {
+        LOG_ERROR("no at client get");
+        ret = FAILURE_RET;
+        goto exit; 
+    }
+    
     /* initialize AT client */
     ret = at_client_init(p_client);
-	if(SUCCESS_RET != ret)
- 	{
-		LOG_ERROR("at client init fail,ret:%d", ret);
-		goto exit;
-	}
-	else
-	{
-		LOG_DEBUG("at client init success");
-	}
+    if(SUCCESS_RET != ret)
+    {
+        LOG_ERROR("at client init fail,ret:%d", ret);
+        goto exit;
+    }
+    else
+    {
+        LOG_DEBUG("at client init success");
+    }
 
     /* register URC data execution function  */
     at_set_urc_table(p_client, custom_table, custom_table_num);

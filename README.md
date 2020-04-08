@@ -1,7 +1,7 @@
 # UIoT-Core设备端C-SDK
 UIoT-Core设备端C-SDK主要用于提供设备调用的API，实现设备与UIoT平台通信以及一些其它的辅助功能。
 
-C语言版SDK可在不同的操作系统上运行，如Linux、FreeRTOS等。SDK需要OS或硬件支持的操作被定义为一系列HAL函数。目前，C-SDK已经实现了linux环境的HAL，其他嵌入式RTOS及特定硬件平台需用户自行适配。
+C语言版SDK可在不同的操作系统上运行，如Linux、FreeRTOS等。SDK需要OS或硬件支持的操作被定义为一系列HAL函数。目前，C-SDK已经实现了Linux、Freertos环境的HAL，其他嵌入式RTOS及特定硬件平台需用户自行适配。
 
 ## SDK架构图
 ![](https://uiot.cn-sh2.ufileos.com/sdk%E6%9E%B6%E6%9E%84%E5%9B%BE.png)

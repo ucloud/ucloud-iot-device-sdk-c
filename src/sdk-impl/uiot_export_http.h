@@ -13,16 +13,20 @@
 * permissions and limitations under the License.
 */
 
-#ifndef C_SDK_UIOT_EXPORT_FILE_UPLOAD_
-#define C_SDK_UIOT_EXPORT_FILE_UPLOAD_
+#ifndef C_SDK_UIOT_EXPORT_HTTP_
+#define C_SDK_UIOT_EXPORT_HTTP_
 
 #if defined(__cplusplus)
 extern "C" {
 #endif
 
+int IOT_HTTP_Get_Token(const char *product_sn, const char *device_sn, const char *device_sercret, char *token);
+
+int IOT_HTTP_Publish(char *token, char *topic, char *data, uint32_t timeout_ms);
+
 int IOT_GET_URL_AND_AUTH(const char *product_sn, const char *device_sn, const char *device_sercret, char *file_path, char *md5, char *authorization, char *put_url);
 
-int IOT_UPLOAD_FILE(char *file_path, char *md5, char *authorization, char *url);
+int IOT_HTTP_UPLOAD_FILE(char *file_path, char *md5, char *authorization, char *url, uint32_t timeout_ms);
 
 #if defined(__cplusplus)
 }

@@ -17,8 +17,9 @@ $(call CompLib_Map, OTA_ENABLED, src/ota/src)
 
 $(call CompLib_Map, DEVICE_MODEL_ENABLED, src/dev_model/src)
 
-$(call CompLib_Map, FILE_UPLOAD_ENABLED, src/upload_file)
+$(call CompLib_Map, HTTP_CLIENT_ENABLED, src/http)
 
+$(call CompLib_Map, SUPPORT_AT_CMD, src/at/src src/at/class/$(PLATFORM_MODULE) platform/module)
 IOTSDK_SRC_FILES := \
 
 $(foreach v, \
@@ -38,7 +39,7 @@ ifneq (,$(filter -DSUPPORT_TLS,$(CFLAGS)))
 	PLATFORM_LIB_COMPONENTS += \
     platform/ssl/$(PLATFORM_SSL)
 endif
-    
+	
 IOTPLATFORM_SRC_FILES := \
 
 $(foreach v, \
@@ -76,6 +77,10 @@ $(call CompInc_Map, SUPPORT_TLS, \
 	external_libs/mbedtls/include \
 )
     
+$(call CompInc_Map, SUPPORT_AT_CMD, \
+	src/at/include \
+)
+	
 IOTSDK_INCLUDE_FILES := \
 
 $(foreach v, \

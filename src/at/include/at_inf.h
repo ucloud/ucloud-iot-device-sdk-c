@@ -19,8 +19,8 @@
 #include "uiot_defs.h"
 
 typedef enum{
-	eDISCONNECTED = 0,  //未连接
-	eCONNECTED = 1,		//已连接
+    eDISCONNECTED = 0,  //未连接
+    eCONNECTED = 1,     //已连接
 }eMqtt_State;
 
 IoT_Error_t module_init();

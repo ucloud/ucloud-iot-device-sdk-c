@@ -47,7 +47,7 @@ void RegCallback(void *pClient, RequestParams *pParams, char *pJsonValueBuffer, 
 
 static void _update_ack_cb(void *pClient, Method method, RequestAck requestAck, const char *pReceivedJsonDocument, void *pUserdata) 
 {
-	LOG_DEBUG("requestAck=%d\n", requestAck);
+    LOG_DEBUG("requestAck=%d\n", requestAck);
 
     if (NULL != pReceivedJsonDocument) {
         LOG_DEBUG("Received Json Document=%s\n", pReceivedJsonDocument);
@@ -82,13 +82,13 @@ protected:
 static int _setup_connect_init_params(MQTTInitParams* initParams)
 {
     int ret = 0;
-	initParams->device_sn = (char *)UIOT_MY_DEVICE_SN;
-	initParams->product_sn = (char *)UIOT_MY_PRODUCT_SN;
-	initParams->device_secret = (char *)UIOT_MY_DEVICE_SECRET;
+    initParams->device_sn = (char *)UIOT_MY_DEVICE_SN;
+    initParams->product_sn = (char *)UIOT_MY_PRODUCT_SN;
+    initParams->device_secret = (char *)UIOT_MY_DEVICE_SECRET;
 
-	initParams->command_timeout = UIOT_MQTT_COMMAND_TIMEOUT;
-	initParams->keep_alive_interval = UIOT_MQTT_KEEP_ALIVE_INTERNAL;
-	initParams->auto_connect_enable = 1;
+    initParams->command_timeout = UIOT_MQTT_COMMAND_TIMEOUT;
+    initParams->keep_alive_interval = UIOT_MQTT_KEEP_ALIVE_INTERNAL;
+    initParams->auto_connect_enable = 1;
 
     return ret;
 }
@@ -110,7 +110,7 @@ TEST_F(ShadowTest, ShadowDocTest_update)
     ASSERT_EQ(true, isConnected);
     
     int time_sec = MAX_WAIT_TIME_SEC;
-	RequestAck ack_update = ACK_NONE;
+    RequestAck ack_update = ACK_NONE;
 
     DeviceProperty *Property1 = (DeviceProperty *)HAL_Malloc(sizeof(DeviceProperty));
     int num1 = 18;
@@ -170,7 +170,7 @@ TEST_F(ShadowTest, ShadowDocTest_update)
     ret = IOT_Shadow_Get_Sync(sg_pshadow, _update_ack_cb, time_sec, &ack_update);
     ASSERT_TRUE(ret == SUCCESS_RET);
 
-	while (ACK_NONE == ack_update) {
+    while (ACK_NONE == ack_update) {
         IOT_Shadow_Yield(sg_pshadow, MAX_WAIT_TIME_MS);
     }
    
@@ -179,14 +179,14 @@ TEST_F(ShadowTest, ShadowDocTest_update)
     ret = IOT_Shadow_Update(sg_pshadow, _update_ack_cb, time_sec, &ack_update, 6, Property1, Property2, Property3, Property4, Property5, Property6);
     ASSERT_TRUE(ret == SUCCESS_RET);
     
-	while (ACK_NONE == ack_update) {
+    while (ACK_NONE == ack_update) {
         IOT_Shadow_Yield(sg_pshadow, MAX_WAIT_TIME_MS);
     }
 
     ack_update = ACK_NONE;
     ret = IOT_Shadow_Get_Sync(sg_pshadow, _update_ack_cb, time_sec, &ack_update);
 
-	while (ACK_NONE == ack_update) {
+    while (ACK_NONE == ack_update) {
         IOT_Shadow_Yield(sg_pshadow, MAX_WAIT_TIME_MS);
     }
 
@@ -201,7 +201,7 @@ TEST_F(ShadowTest, ShadowDocTest_update)
     ret = IOT_Shadow_Update(sg_pshadow, _update_ack_cb, time_sec, &ack_update, 2, Property1, Property4);
     ASSERT_TRUE(ret == SUCCESS_RET);
     
-	while (ACK_NONE == ack_update) {
+    while (ACK_NONE == ack_update) {
         IOT_Shadow_Yield(sg_pshadow, MAX_WAIT_TIME_MS);
     }
 
@@ -210,7 +210,7 @@ TEST_F(ShadowTest, ShadowDocTest_update)
     ret = IOT_Shadow_Delete(sg_pshadow, _update_ack_cb, time_sec, &ack_update, 2, Property1, Property2);
     ASSERT_TRUE(ret == SUCCESS_RET);
 
-	while (ACK_NONE == ack_update) {
+    while (ACK_NONE == ack_update) {
         IOT_Shadow_Yield(sg_pshadow, MAX_WAIT_TIME_MS);
     }
 
@@ -218,7 +218,7 @@ TEST_F(ShadowTest, ShadowDocTest_update)
     ret = IOT_Shadow_Get_Sync(sg_pshadow, _update_ack_cb, time_sec, &ack_update);
 
 
-	while (ACK_NONE == ack_update) {
+    while (ACK_NONE == ack_update) {
         IOT_Shadow_Yield(sg_pshadow, MAX_WAIT_TIME_MS);
     }
 
@@ -228,7 +228,7 @@ TEST_F(ShadowTest, ShadowDocTest_update)
     ASSERT_TRUE(ret == SUCCESS_RET);
 
 
-	while (ACK_NONE == ack_update) {
+    while (ACK_NONE == ack_update) {
         IOT_Shadow_Yield(sg_pshadow, MAX_WAIT_TIME_MS);
     }
 
@@ -236,7 +236,7 @@ TEST_F(ShadowTest, ShadowDocTest_update)
     ret = IOT_Shadow_Get_Sync(sg_pshadow, _update_ack_cb, time_sec, &ack_update);
 
 
-	while (ACK_NONE == ack_update) {
+    while (ACK_NONE == ack_update) {
         IOT_Shadow_Yield(sg_pshadow, MAX_WAIT_TIME_MS);
     }
 
@@ -248,7 +248,7 @@ TEST_F(ShadowTest, ShadowDocTest_update)
     ret = IOT_Shadow_Update(sg_pshadow, _update_ack_cb, time_sec, &ack_update, 1, Property2);
     ASSERT_TRUE(ret == SUCCESS_RET);
     
-	while (ACK_NONE == ack_update) {
+    while (ACK_NONE == ack_update) {
         IOT_Shadow_Yield(sg_pshadow, MAX_WAIT_TIME_MS);
     }
 
@@ -263,14 +263,14 @@ TEST_F(ShadowTest, ShadowDocTest_update)
     ASSERT_TRUE(ret == SUCCESS_RET);
 
     
-	while (ACK_NONE == ack_update) {
+    while (ACK_NONE == ack_update) {
         IOT_Shadow_Yield(sg_pshadow, MAX_WAIT_TIME_MS);
     }
 
     ack_update = ACK_NONE;
     ret = IOT_Shadow_Get_Sync(sg_pshadow, _update_ack_cb, time_sec, &ack_update);
 
-	while (ACK_NONE == ack_update) {
+    while (ACK_NONE == ack_update) {
         IOT_Shadow_Yield(sg_pshadow, MAX_WAIT_TIME_MS);
     }
 
@@ -281,6 +281,7 @@ TEST_F(ShadowTest, ShadowDocTest_update)
     HAL_Free(Property5);
     HAL_Free(Property6);
     IOT_Shadow_Destroy(sg_pshadow);
+    IOT_MQTT_Destroy(&mqtt_client);
 }
 
 #if 0
@@ -301,7 +302,7 @@ TEST_F(ShadowTest, ShadowDocTest_delete_control)
     ASSERT_EQ(true, isConnected);
     
     int time_sec = MAX_WAIT_TIME_SEC;
-	RequestAck ack_update = ACK_NONE;
+    RequestAck ack_update = ACK_NONE;
 
     DeviceProperty Property1;
     int num1 = 18;
@@ -356,14 +357,14 @@ TEST_F(ShadowTest, ShadowDocTest_delete_control)
     ack_update = ACK_NONE;
     IOT_Shadow_Update(sg_pshadow, _update_ack_cb, time_sec, &ack_update, 6, &Property1, &Property2, &Property3, &Property4, &Property5, &Property6);
     
-	while (ACK_NONE == ack_update) {
+    while (ACK_NONE == ack_update) {
         IOT_Shadow_Yield(sg_pshadow, MAX_WAIT_TIME_MS);
     }
 
     ack_update = ACK_NONE;
     IOT_Shadow_Get_Sync(sg_pshadow, _update_ack_cb, time_sec, &ack_update);
 
-	while (ACK_NONE == ack_update) {
+    while (ACK_NONE == ack_update) {
         IOT_Shadow_Yield(sg_pshadow, MAX_WAIT_TIME_MS);
     }
 
