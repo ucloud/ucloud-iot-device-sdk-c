@@ -146,11 +146,11 @@ int LITE_get_int16(int16_t *value, char *src) {
  */
 int LITE_get_int8(int8_t *value, char *src) {
     int16_t temp = 0;
-    if(1 != sscanf(src, "%" SCNi16, temp))
+    if(1 != sscanf(src, "%" SCNi16, &temp))
     {
         return FAILURE_RET;
     }
-    value = (int8_t)temp;
+    *value = (int8_t)temp;
     return SUCCESS_RET;
 }
 
@@ -164,11 +164,11 @@ int LITE_get_uint16(uint16_t *value, char *src) {
 
 int LITE_get_uint8(uint8_t *value, char *src) {
     uint16_t temp = 0;
-    if(1 != sscanf(src, "%" SCNu16, temp))
+    if(1 != sscanf(src, "%" SCNu16, &temp))
     {
         return FAILURE_RET;
     }
-    value = (uint8_t)temp;
+    *value = (uint8_t)temp;
     return SUCCESS_RET;
 }
 
