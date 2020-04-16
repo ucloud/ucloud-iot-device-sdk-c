@@ -504,7 +504,7 @@ IoT_Error_t at_client_tcp_init(at_client_t client, int link_num)
 /* initialize the client parameters */
 IoT_Error_t at_client_para_init(at_client_t client)
 {
-
+    int loop = 0;
     client->status = AT_STATUS_UNINITIALIZED;
 
     client->lock = HAL_MutexCreate();
@@ -536,7 +536,7 @@ IoT_Error_t at_client_para_init(at_client_t client)
 
     client->pRingBuff = &g_ring_buff;
 
-    for(int loop = 0; loop < 3; loop++)
+    for(loop = 0; loop < 3; loop++)
     {
         client->pRingTcpBuff[loop] = NULL;
     }

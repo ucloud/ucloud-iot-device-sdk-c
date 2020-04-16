@@ -114,6 +114,7 @@ static int _setup_connect_init_params(MQTTInitParams* initParams)
 int main(int argc, char **argv)
 {
     int rc;
+    int i = 0;
 
     MQTTInitParams init_params = DEFAULT_MQTT_INIT_PARAMS;
     rc = _setup_connect_init_params(&init_params);
@@ -144,7 +145,7 @@ int main(int argc, char **argv)
     IOT_DM_RegisterCallback(PROPERTY_SET , h_dm, property_set_cb);
     IOT_DM_Yield(h_dm, 200);
 
-    for (int i = 0; i < 20; i++) {
+    for (i = 0; i < 20; i++) {
         IOT_DM_Property_Report(h_dm, PROPERTY_POST, i * 2, "{\"volume\": {\"Value\":50}}");
         IOT_DM_TriggerEvent(h_dm, i * 2 + 1, "low_power_alert", "{\"power\": 5}");
 
