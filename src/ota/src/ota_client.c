@@ -134,7 +134,10 @@ static void _ota_callback(void *pContext, const char *msg, uint32_t msg_len) {
 
     h_ota->state = OTA_STATE_FETCHING;
     
-    IOT_OTA_fw_download(h_ota);
+    if(SUCCESS_RET != IOT_OTA_fw_download(h_ota)) {
+        LOG_ERROR("download file failed");
+        h_ota->state = OTA_STATE_DISCONNECTED;
+    }
 
 do_exit:
     HAL_Free(msg_str);
@@ -649,8 +652,6 @@ int IOT_OTA_fw_download(void *handle)
 __exit:
     if (buffer_read != NULL)
         HAL_Free(buffer_read);
-
-    IOT_OTA_Destroy(h_ota);
 
     return ret;
 }
