@@ -135,6 +135,24 @@ void HAL_SleepMs(_IN_ uint32_t ms) {
     usleep(1000 * ms);
 }
 
+void *HAL_FileOpen(char *file_path){
+    FILE *fp;
+    if((fp = fopen(file_path, "wb+")) == NULL)
+    {
+        return NULL;
+    }
+    return (void *)fp;
+    
+}
+
+int HAL_FileWrite(void *dest, uint32_t offset, void *src, uint32_t size){
+    if(1 == fwrite(src, size, 1, (FILE *)dest))
+        return SUCCESS_RET;
+    else
+        return FAILURE_RET;
+}
+
+
 IoT_Error_t HAL_GetProductSN(_OU_ char productSN[IOT_PRODUCT_SN_LEN + 1]) {
 #ifdef DEBUG_DEV_INFO_USED
     int len = strlen(sg_product_sn);

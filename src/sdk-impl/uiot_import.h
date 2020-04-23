@@ -127,6 +127,23 @@ uint64_t HAL_UptimeMs(void);
 void HAL_SleepMs(_IN_ uint32_t ms);
 
 /**
+ * @brief 打开要写的文件.
+ *
+ * @param file_path 文件路径.
+ */
+void *HAL_FileOpen(char *file_path);
+
+/**
+ * @brief 写文件.
+ *
+ * @param dest      目标文件指针.
+ * @param offset    目标文件指针已经写入的文件大小.
+ * @param src       存放文件内容的指针.
+ * @param size      要写入内容的字节数.
+ */
+int HAL_FileWrite(void *dest, uint32_t offset, void *src, uint32_t size);
+
+/**
  * @brief 获取产品序列号。从设备持久化存储（例如FLASH）中读取产品序列号。
  *
  * @param productSN  存放ProductSN的字符串缓冲区
