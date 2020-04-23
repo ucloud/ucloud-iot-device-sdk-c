@@ -593,11 +593,11 @@ int IOT_OTA_fw_download(void *handle)
     OTA_Struct_t * h_ota = (OTA_Struct_t *) handle;
     // 用于存放云端下发的固件版本
     char msg_version[33];
-    FILE *fp;
+    void *fp;
 
     IOT_OTA_Ioctl(h_ota, OTA_IOCTL_FILE_SIZE, &file_size, 4);
     
-    if (NULL == (fp = fopen("ota.bin", "wb+"))) {
+    if (NULL == (fp = HAL_FileOpen("ota.bin"))) {
         LOG_ERROR("open file failed");
         goto __exit;
     }
@@ -618,7 +618,7 @@ int IOT_OTA_fw_download(void *handle)
         if (length > 0)
         {
             /* Write the data to the corresponding partition address */
-            if (1 != fwrite(buffer_read, length, 1, fp)) {
+            if (SUCCESS_RET != HAL_FileWrite(fp, total_length, buffer_read, length)) {
                 LOG_ERROR("write data to file failed");
                 goto __exit;
             }
