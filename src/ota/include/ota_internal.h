@@ -24,34 +24,6 @@ extern "C" {
 
 #include "uiot_export_ota.h"
 
-typedef enum {
-
-    OTA_REPORT_UNDEFINED_ERROR = -6,
-    OTA_REPORT_FIRMWARE_BURN_FAILED = -5,
-    OTA_REPORT_MD5_MISMATCH = -4,
-    OTA_REPORT_DOWNLOAD_TIMEOUT = -3,
-    OTA_REPORT_SIGNATURE_EXPIRED = -2,
-    OTA_REPORT_FIRMWARE_NOT_EXIST = -1,
-    OTA_REPORT_NONE = 0,
-    OTA_REPORT_DOWNLOADING = 1,
-    OTA_REPORT_BURNING = 2,
-    OTA_REPORT_SUCCESS = 3,
-    OTA_REQUEST_FIRMWARE = 4,
-    OTA_REPORT_VERSION = 5,
-
-} IOT_OTA_UpstreamMsgType;
-
-/* OTA状态 */
-typedef enum {
-
-    OTA_STATE_UNINITED = 0,  /* 未初始化 */
-    OTA_STATE_INITED,        /* 初始化完成 */
-    OTA_STATE_FETCHING,      /* 正在下载固件 */
-    OTA_STATE_FETCHED,       /* 固件下载完成 */
-    OTA_STATE_DISCONNECTED   /* 连接已经断开 */
-
-} IOT_OTA_State;
-
 // OTA Signal Channel
 typedef void (*OnOTAMessageCallback)(void *pContext, const char *msg, uint32_t msgLen);
 
@@ -84,7 +56,7 @@ void ota_lib_md5_deinit(void *md5);
 
 int ota_lib_get_msg_type(char *json, char **type);
 
-int ota_lib_get_params(char *json, char **url, char **version, char **md5,
+int ota_lib_get_params(char *json, char **url, char **file_name, char **version, char **md5,
                        uint32_t *fileSize);
 
 int ota_lib_gen_upstream_msg(char *buf, size_t bufLen, const char *version, int progress,

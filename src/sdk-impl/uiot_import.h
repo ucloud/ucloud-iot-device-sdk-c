@@ -144,6 +144,13 @@ void *HAL_FileOpen(char *file_path);
 int HAL_FileWrite(void *dest, uint32_t offset, void *src, uint32_t size);
 
 /**
+ * @brief 关闭要写的文件.
+ *
+ * @param fp 文件指针.
+ */
+void HAL_FileClose(void *fp);
+
+/**
  * @brief 获取产品序列号。从设备持久化存储（例如FLASH）中读取产品序列号。
  *
  * @param productSN  存放ProductSN的字符串缓冲区

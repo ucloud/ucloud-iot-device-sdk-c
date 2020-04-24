@@ -143,6 +143,10 @@ int HAL_FileWrite(void *dest, uint32_t offset, void *src, uint32_t size){
     return 0;
 }
 
+void HAL_FileClose(void *fp){
+    ;
+}
+
 IoT_Error_t HAL_GetProductSN(_OU_ char productSN[IOT_PRODUCT_SN_LEN + 1]) {
 #ifdef DEBUG_DEV_INFO_USED
     int len = strlen(sg_product_sn);

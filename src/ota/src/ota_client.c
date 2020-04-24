@@ -62,26 +62,6 @@ static void print_progress(uint32_t percent)
     HAL_Printf("Download: [%s] %d%%\r\n", progress_sign, percent);
 }
 
-typedef struct  {
-    uint32_t                id;                      /* message id */
-    IOT_OTA_State           state;                   /* OTA state */
-    uint32_t                size_last_fetched;       /* size of last downloaded */
-    uint32_t                size_fetched;            /* size of already downloaded */
-    uint32_t                size_file;               /* size of file */
-
-    char                    *url;                    /* point to URL */
-    char                    *version;                /* point to version */
-    char                    *md5sum;                 /* MD5 string */
-
-    void                    *md5;                    /* MD5 handle */
-    void                    *ch_signal;              /* channel handle of signal exchanged with OTA server */
-    void                    *ch_fetch;               /* channel handle of download */
-
-    int                     err;                     /* last error code */
-
-    Timer                   report_timer;
-} OTA_Struct_t;
-
 static void _ota_callback(void *pContext, const char *msg, uint32_t msg_len) {
     char *msg_method = NULL;
     char *msg_str = NULL;
@@ -115,7 +95,7 @@ static void _ota_callback(void *pContext, const char *msg, uint32_t msg_len) {
         goto do_exit;
     }
 
-    if (SUCCESS_RET != ota_lib_get_params(msg_str, &h_ota->url, &h_ota->version,
+    if (SUCCESS_RET != ota_lib_get_params(msg_str, &h_ota->url, &h_ota->download_file_name, &h_ota->version,
                                 &h_ota->md5sum, &h_ota->size_file)) {
         LOG_ERROR("Get firmware parameter failed");
         goto do_exit;
@@ -243,8 +223,7 @@ do_exit:
     return ret;
 }
 
-
-void *IOT_OTA_Init(const char *product_sn, const char *device_sn, void *ch_signal)
+void *IOT_OTA_Init(const char *product_sn, const char *device_sn, void *ch_signal, IOT_OTA_FetchCallback fetch_callback_func)
 {
     POINTER_VALID_CHECK(product_sn, NULL);
     POINTER_VALID_CHECK(device_sn, NULL);
@@ -265,6 +244,8 @@ void *IOT_OTA_Init(const char *product_sn, const char *device_sn, void *ch_signa
         goto do_exit;
     }
 
+    h_ota->fetch_callback_func = fetch_callback_func;
+    
     h_ota->md5 = ota_lib_md5_init();
     if (NULL == h_ota->md5) {
         LOG_ERROR("initialize md5 failed");
@@ -303,7 +284,6 @@ int IOT_OTA_Destroy(void *handle)
     }
 
     osc_deinit(h_ota->ch_signal);
-    ofc_deinit(h_ota->ch_fetch);
     ota_lib_md5_deinit(h_ota->md5);
 
     if (NULL != h_ota->url) {
@@ -318,10 +298,29 @@ int IOT_OTA_Destroy(void *handle)
         HAL_Free(h_ota->md5sum);
     }
 
+    if (NULL != h_ota->download_file_name) {
+        HAL_Free(h_ota->download_file_name);
+    }
+
     HAL_Free(h_ota);
     return SUCCESS_RET;
 }
 
+void IOT_OTA_Clear(void *handle)
+{
+    OTA_Struct_t *h_ota = (OTA_Struct_t *)handle;
+    memset(h_ota->url, 0, strlen(h_ota->url));
+    memset(h_ota->download_file_name, 0, strlen(h_ota->download_file_name));
+    memset(h_ota->version, 0, strlen(h_ota->version));    
+    memset(h_ota->md5sum, 0, strlen(h_ota->md5sum));
+    h_ota->state = OTA_STATE_UNINITED;
+    h_ota->size_last_fetched = 0;
+    h_ota->size_fetched = 0;
+    h_ota->size_file = 0;    
+    ota_lib_md5_deinit(h_ota->md5);    
+    h_ota->md5 = ota_lib_md5_init();
+    return;
+}
 
 int IOT_OTA_ReportVersion(void *handle, const char *version)
 {
@@ -335,10 +334,15 @@ int IOT_OTA_RequestFirmware(void *handle, const char *version)
 }
 
 int IOT_OTA_ReportSuccess(void *handle, const char *version)
-{
+{   
+    OTA_Struct_t *h_ota = (OTA_Struct_t *)handle;
+    
+    if(h_ota->fetch_callback_func != NULL)
+    {
+        h_ota->fetch_callback_func(handle, OTA_REPORT_SUCCESS);
+    }
     return send_upstream_msg_with_version(handle, version, OTA_REPORT_SUCCESS);
 }
-
 
 int IOT_OTA_ReportFail(void *handle, IOT_OTA_ReportErrCode err_code)
 {
@@ -373,6 +377,9 @@ int IOT_OTA_ReportFail(void *handle, IOT_OTA_ReportErrCode err_code)
         h_ota->err = ret;
         goto do_exit;
     }
+
+    if(h_ota->fetch_callback_func != NULL)
+        h_ota->fetch_callback_func(handle, (IOT_OTA_UpstreamMsgType)err_code);
 
     do_exit:
     if (NULL != msg_upstream) {
@@ -597,9 +604,9 @@ int IOT_OTA_fw_download(void *handle)
 
     IOT_OTA_Ioctl(h_ota, OTA_IOCTL_FILE_SIZE, &file_size, 4);
     
-    if (NULL == (fp = HAL_FileOpen("ota.bin"))) {
-        LOG_ERROR("open file failed");
-        goto __exit;
+    if (NULL == (fp = HAL_FileOpen(h_ota->download_file_name))) {
+        LOG_ERROR("open file failed");        
+        return ERR_OTA_INVALID_PARAM;
     }
 
     buffer_read = (char *)HAL_Malloc(HTTP_OTA_BUFF_LEN);
@@ -651,8 +658,10 @@ int IOT_OTA_fw_download(void *handle)
 
 __exit:
     if (buffer_read != NULL)
-        HAL_Free(buffer_read);
-
+        HAL_Free(buffer_read);    
+    IOT_OTA_Clear(h_ota);
+    HAL_FileClose(fp);
+    
     return ret;
 }
 
