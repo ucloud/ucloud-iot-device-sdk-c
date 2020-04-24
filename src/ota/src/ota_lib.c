@@ -64,8 +64,36 @@ int ota_lib_get_msg_type(char *json, char **type) {
     FUNC_EXIT_RC(SUCCESS_RET);
 }
 
+static int _utils_parse_name(const char *url, char *name) {
+    char *host_ptr = (char *) strstr(url, "://");
+    uint32_t name_len = 0;
+    char *path_ptr;
+    char *name_ptr;
 
-int ota_lib_get_params(char *json, char **url, char **version, char **md5,
+    if (host_ptr == NULL) {
+        return -1; /* URL is invalid */
+    }
+    host_ptr += 3;
+
+    path_ptr = strchr(host_ptr, '/');
+    if (NULL == path_ptr) {
+        return -2;
+    }
+
+    name_ptr = strchr(path_ptr, '?');
+    if (NULL == name_ptr) {
+        return -2;
+    }
+
+    name_len = name_ptr - path_ptr;
+
+    memcpy(name, path_ptr + 1, name_len - 1);
+    name[name_len] = '\0';
+
+    return SUCCESS_RET;
+}
+
+int ota_lib_get_params(char *json, char **url, char **file_name, char **version, char **md5,
                        uint32_t *fileSize) {
     FUNC_ENTRY;
 
@@ -73,6 +101,7 @@ int ota_lib_get_params(char *json, char **url, char **version, char **md5,
     char *version_str;
     char *url_str;
     char *md5_str;
+    char *name_str;
 
     /* get version */
     if (NULL == (version_str = LITE_json_value_of(VERSION_FIELD, json))) {
@@ -94,6 +123,14 @@ int ota_lib_get_params(char *json, char **url, char **version, char **md5,
     }
     *url = url_str;
 
+    if(NULL == (name_str = HAL_Malloc(strlen(url_str))))
+    {
+        LOG_ERROR("malloc url_str failed");
+        FUNC_EXIT_RC(ERR_OTA_GENERAL_FAILURE);
+    }
+    _utils_parse_name(url_str, name_str);
+    *file_name = name_str;
+    
     /* get md5 */
     if (NULL == (md5_str = LITE_json_value_of(MD5_FIELD, json))) {
         LOG_ERROR("get value of md5 failed");

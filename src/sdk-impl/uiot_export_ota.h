@@ -50,18 +50,70 @@ typedef enum {
 
 } IOT_OTA_ReportErrCode;
 
+typedef enum {
+
+    OTA_REPORT_UNDEFINED_ERROR = -6,
+    OTA_REPORT_FIRMWARE_BURN_FAILED = -5,
+    OTA_REPORT_MD5_MISMATCH = -4,
+    OTA_REPORT_DOWNLOAD_TIMEOUT = -3,
+    OTA_REPORT_SIGNATURE_EXPIRED = -2,
+    OTA_REPORT_FIRMWARE_NOT_EXIST = -1,
+    OTA_REPORT_NONE = 0,
+    OTA_REPORT_DOWNLOADING = 1,
+    OTA_REPORT_BURNING = 2,
+    OTA_REPORT_SUCCESS = 3,
+    OTA_REQUEST_FIRMWARE = 4,
+    OTA_REPORT_VERSION = 5,
+
+} IOT_OTA_UpstreamMsgType;
+
+typedef int (*IOT_OTA_FetchCallback)(void *handle, IOT_OTA_UpstreamMsgType state);
+
+/* OTA状态 */
+typedef enum {
+
+    OTA_STATE_UNINITED = 0,  /* 未初始化 */
+    OTA_STATE_INITED,        /* 初始化完成 */
+    OTA_STATE_FETCHING,      /* 正在下载固件 */
+    OTA_STATE_FETCHED,       /* 固件下载完成 */
+    OTA_STATE_DISCONNECTED   /* 连接已经断开 */
+
+} IOT_OTA_State;
+
+typedef struct  {
+    uint32_t                id;                      /* message id */
+    IOT_OTA_State           state;                   /* OTA state */
+    uint32_t                size_last_fetched;       /* size of last downloaded */
+    uint32_t                size_fetched;            /* size of already downloaded */
+    uint32_t                size_file;               /* size of file */
+
+    char                    *url;                    /* point to URL */
+    char                    *download_file_name;     /* download file name */
+    char                    *version;                /* point to version */
+    char                    *md5sum;                 /* MD5 string */
+
+    void                    *md5;                    /* MD5 handle */
+    void                    *ch_signal;              /* channel handle of signal exchanged with OTA server */
+    void                    *ch_fetch;               /* channel handle of download */
+
+    int                     err;                     /* last error code */
+
+    Timer                   report_timer;
+    IOT_OTA_FetchCallback   fetch_callback_func;
+} OTA_Struct_t;
 
 /**
  * @brief 初始化OTA模块和返回句柄
  *        MQTT客户端必须在调用此接口之前进行初始化
  *
- * @param product_sn:   指定产品序列号
- * @param device_sn:    指定设备序列号
- * @param ch_signal:    指定的信号通道.
+ * @param product_sn:               指定产品序列号
+ * @param device_sn:                指定设备序列号
+ * @param ch_signal:                指定的信号通道.
+ * @param fetch_callback_func:      ota下载完成后的回调函数指针. 
  *
  * @retval : 成功则返回句柄，失败返回NULL
  */
-void *IOT_OTA_Init(const char *product_sn, const char *device_sn, void *ch_signal);
+void *IOT_OTA_Init(const char *product_sn, const char *device_sn, void *ch_signal, IOT_OTA_FetchCallback fetch_callback_func);
 
 
 /**
@@ -101,7 +153,6 @@ int IOT_OTA_ReportVersion(void *handle, const char *version);
  */
 int IOT_OTA_ReportProgress(void *handle, int progress, IOT_OTA_ProgressState state);
 
-
 /**
  * @brief 向OTA服务器上报升级成功
  *
@@ -112,7 +163,6 @@ int IOT_OTA_ReportProgress(void *handle, int progress, IOT_OTA_ProgressState sta
  * @retval < 0 : 失败，返回具体错误码
  */
 int IOT_OTA_ReportSuccess(void *handle, const char *version);
-
 
 /**
  * @brief 向OTA服务器上报失败信息
