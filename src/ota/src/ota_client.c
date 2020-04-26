@@ -446,6 +446,13 @@ int IOT_OTA_FetchYield(void *handle, char *buf, size_t buf_len, size_t range_len
     {
         /* fetch fail,try again utill 5 time */
         ret = ofc_fetch(h_ota->ch_fetch, h_ota->size_fetched ,buf, buf_len, range_len, timeout_s);
+        /* range download send request too often maybe cutdown by server, need reconnect and continue to download. */
+        if(ret == ERR_HTTP_CONN_ERROR) {
+            h_ota->ch_fetch = ofc_init(h_ota->url);
+            ofc_connect(h_ota->ch_fetch);            
+            h_ota->state = OTA_STATE_FETCHING;
+            continue;
+        } 
         if (ret < 0) {
             LOG_ERROR("Fetch firmware failed");
             h_ota->state = OTA_STATE_FETCHED;
