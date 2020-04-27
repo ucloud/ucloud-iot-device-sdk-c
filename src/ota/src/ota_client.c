@@ -283,7 +283,8 @@ int IOT_OTA_Destroy(void *handle)
         return FAILURE_RET;
     }
 
-    osc_deinit(h_ota->ch_signal);
+    osc_deinit(h_ota->ch_signal);    
+    ofc_deinit(h_ota->ch_fetch);
     ota_lib_md5_deinit(h_ota->md5);
 
     if (NULL != h_ota->url) {
@@ -313,12 +314,12 @@ void IOT_OTA_Clear(void *handle)
     memset(h_ota->download_file_name, 0, strlen(h_ota->download_file_name));
     memset(h_ota->version, 0, strlen(h_ota->version));    
     memset(h_ota->md5sum, 0, strlen(h_ota->md5sum));
-    h_ota->state = OTA_STATE_UNINITED;
     h_ota->size_last_fetched = 0;
     h_ota->size_fetched = 0;
     h_ota->size_file = 0;    
     ota_lib_md5_deinit(h_ota->md5);    
-    h_ota->md5 = ota_lib_md5_init();
+    h_ota->md5 = ota_lib_md5_init();    
+    h_ota->state = OTA_STATE_INITED;
     return;
 }
 
@@ -448,6 +449,7 @@ int IOT_OTA_FetchYield(void *handle, char *buf, size_t buf_len, size_t range_len
         ret = ofc_fetch(h_ota->ch_fetch, h_ota->size_fetched ,buf, buf_len, range_len, timeout_s);
         /* range download send request too often maybe cutdown by server, need reconnect and continue to download. */
         if(ret == ERR_HTTP_CONN_ERROR) {
+            ofc_deinit(h_ota->ch_fetch);
             h_ota->ch_fetch = ofc_init(h_ota->url);
             ofc_connect(h_ota->ch_fetch);            
             h_ota->state = OTA_STATE_FETCHING;
