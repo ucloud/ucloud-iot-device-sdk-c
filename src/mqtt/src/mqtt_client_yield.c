@@ -207,7 +207,7 @@ int uiot_mqtt_yield(UIoT_Client *pClient, uint32_t timeout_ms) {
         }        
 
         //防止任务独占CPU时间过长
-        HAL_SleepMs(100);
+        HAL_SleepMs(10);
 
         ret = cycle_for_read(pClient, &timer, &packet_type, 0);
 
