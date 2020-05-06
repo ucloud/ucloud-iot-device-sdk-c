@@ -28,7 +28,10 @@ extern sRingbuff g_ring_buff;
 extern sRingbuff g_ring_tcp_buff[3];    
 int esp8266_link[ESP8266_MAX_TCP_LINK] = {0};
 int esp8266_recv_len[ESP8266_MAX_TCP_LINK] = {0};
-extern int last_tcp_link;
+
+#define WIFI_SSID           "WIFI_SSID"
+
+#define WIFI_SECRET         "WIFI_SECRET"
 
 int HAL_AT_Read_Tcp(_IN_ utils_network_pt pNetwork, _IN_ unsigned char *buffer, _IN_ size_t len)
 {
@@ -276,7 +279,7 @@ static int urc_recvlen_recv_func(const char *data, uint32_t size)
 
 at_custom custom_table[] = {
     {"AT+RST", 7, urc_rst_recv_judge, urc_common_recv_func},
-    {"AT+CWJAP", 12, urc_cwjap_recv_judge, urc_common_recv_func},
+    //{"AT+CWJAP", 11, urc_cwjap_recv_judge, urc_common_recv_func},
     {"AT+CIPSEND", 4, urc_send_recv_judge, urc_common_recv_func},
     {"AT+CIPSTART", 11, urc_tcp_start_judge, urc_common_recv_func},
     {"AT+CIPCLOSE", 9, urc_close_recv_judge, urc_common_recv_func},
@@ -341,10 +344,10 @@ static int esp8266_init()
             LOG_ERROR("set mutil link fail!\n");
             continue;
         }
-        
+
         /* 连接Wi-Fi   AP */   
-        resp->custom_flag = true;   
-        ret |= at_exec_cmd(resp, at_command, 0,  "AT+CWJAP=\"ucloud-guest\",\"ucloud.cn\"\r\n"); 
+        resp->custom_flag = false;   
+        ret |= at_exec_cmd(resp, at_command, 0,  "AT+CWJAP=\"%s\",\"%s\"\r\n", WIFI_SSID, WIFI_SECRET); 
         if(SUCCESS_RET != ret)
         {
             LOG_ERROR("link Wi-Fi AP fail!\n");
@@ -391,7 +394,6 @@ int HAL_AT_TCP_Connect(_IN_ utils_network_pt pNetwork, _IN_ const char *host, _I
     {
         if(esp8266_link[link_num] == eDISCONNECTED)
         {
-            last_tcp_link = link_num;
             break;
         }
     }

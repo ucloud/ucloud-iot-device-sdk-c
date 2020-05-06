@@ -27,7 +27,6 @@
 sRingbuff g_ring_buff;    
 sRingbuff g_ring_tcp_buff[3];    
 static at_client sg_at_client;
-int last_tcp_link = 0;
 
 /**
  * Create response object.

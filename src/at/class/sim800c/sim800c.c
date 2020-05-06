@@ -25,7 +25,6 @@
 extern sRingbuff g_ring_buff;    
 extern sRingbuff g_ring_tcp_buff[3];    
 int sim800c_link[SIM800C_MAX_TCP_LINK] = {0};
-extern int last_tcp_link;
 int HAL_AT_Read_Tcp(_IN_ utils_network_pt pNetwork, _IN_ unsigned char *buffer, _IN_ size_t len)
 {
     int ret = 0;
@@ -511,7 +510,6 @@ int HAL_AT_TCP_Connect(_IN_ utils_network_pt pNetwork, _IN_ const char *host, _I
     {
         if(sim800c_link[link_num] == eDISCONNECTED)
         {
-            last_tcp_link = link_num;
             break;
         }
     }

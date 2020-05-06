@@ -29,7 +29,6 @@ extern sRingbuff g_ring_tcp_buff[3];
 int ec20_link[EC20_MAX_TCP_LINK] = {0};
 int ec20_recv_len[EC20_MAX_TCP_LINK] = {0};
 
-extern int last_tcp_link;
 int HAL_AT_Read_Tcp(_IN_ utils_network_pt pNetwork, _IN_ unsigned char *buffer, _IN_ size_t len)
 {
     at_response_t resp = NULL;
@@ -590,7 +589,6 @@ int HAL_AT_TCP_Connect(_IN_ utils_network_pt pNetwork, _IN_ const char *host, _I
     {
         if(ec20_link[link_num] == eDISCONNECTED)
         {
-            last_tcp_link = link_num;
             break;
         }
     }
