@@ -31,6 +31,8 @@
 
 #define OTA_BUF_LEN (1024)
 
+#define CURRENT_VER                   "1.0.0"
+
 static void event_handler(void *pClient, void *handle_context, MQTTEventMsg *msg)
 {
     switch(msg->event_type) {
@@ -122,13 +124,13 @@ int main(int argc, char **argv)
     }
 
     /* Must report current version first */
-    if (IOT_OTA_ReportVersion(h_ota, "1.0.0") < 0) {
+    if (IOT_OTA_ReportVersion(h_ota, CURRENT_VER) < 0) {
         LOG_ERROR("report OTA version failed");
         return FAILURE_RET;
     }
 
 	/* request new version, fill with current version */
-    if (IOT_OTA_RequestFirmware(h_ota, "1.0.0") < 0) {
+    if (IOT_OTA_RequestFirmware(h_ota, CURRENT_VER) < 0) {
         LOG_ERROR("Request firmware failed");
         return FAILURE_RET;
     }
