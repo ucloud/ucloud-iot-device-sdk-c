@@ -121,12 +121,13 @@ int main(int argc, char **argv)
         return FAILURE_RET;
     }
 
-    /* Must report version first */
+    /* Must report current version first */
     if (IOT_OTA_ReportVersion(h_ota, "1.0.0") < 0) {
         LOG_ERROR("report OTA version failed");
         return FAILURE_RET;
     }
 
+	/* request new version, fill with current version */
     if (IOT_OTA_RequestFirmware(h_ota, "1.0.0") < 0) {
         LOG_ERROR("Request firmware failed");
         return FAILURE_RET;
