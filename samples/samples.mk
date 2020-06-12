@@ -62,6 +62,13 @@ dev_model_sample:
 
 	$(TOP_Q) \
 	mv $@ $(FINAL_DIR)/bin
+	
+dev_model_sample_ex:
+	$(TOP_Q) \
+	$(PLATFORM_CC) $(CFLAGS) $(SAMPLE_DIR)/dev_model/$@.c $(LDFLAGS) -o $@
+
+	$(TOP_Q) \
+	mv $@ $(FINAL_DIR)/bin	
 endif
 
 ifneq (,$(filter -DHTTP_CLIENT_ENABLED,$(CFLAGS)))

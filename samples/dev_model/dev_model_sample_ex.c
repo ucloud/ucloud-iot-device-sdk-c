@@ -23,6 +23,71 @@
 #include "uiot_import.h"
 #include "uiot_export_dm.h"
 
+DM_Property_t property_humidity;
+DM_Node_t node_property_humidity;
+
+DM_Property_t property_temperature;
+DM_Node_t node_property_temperature;
+
+static void _init_data_template(){
+    node_property_humidity.base_type = TYPE_FLOAT;
+    node_property_humidity.key = "humidity";
+    node_property_humidity.value.float32_value = 0.0;
+    property_humidity.parse_type = TYPE_NODE;
+    property_humidity.value.dm_node = &node_property_humidity;
+
+    node_property_temperature.base_type = TYPE_FLOAT;
+    node_property_temperature.key = "temperature";
+    node_property_temperature.value.float32_value = 0.0;
+    property_temperature.parse_type = TYPE_NODE;
+    property_temperature.value.dm_node = &node_property_temperature;
+
+}
+
+DM_Property_t event_high_temp_temperature;
+DM_Node_t node_event_high_temp_temperature;
+
+static void _init_event_property_template(){
+    node_event_high_temp_temperature.base_type = TYPE_FLOAT;
+    node_event_high_temp_temperature.key = "temperature";
+    node_event_high_temp_temperature.value.float32_value = 0.0;
+    event_high_temp_temperature.parse_type = TYPE_NODE;
+    event_high_temp_temperature.value.dm_node = &node_event_high_temp_temperature;
+
+}
+DM_Event_t event_high_temp_warning;
+DM_Property_t high_temp[1];
+
+static void _init_event_template(){
+    _init_event_property_template();
+    high_temp[0] = event_high_temp_temperature;
+    event_high_temp_warning.event_identy = "high_temp";
+    event_high_temp_warning.dm_property = high_temp;
+    event_high_temp_warning.property_num = 1;
+
+}
+
+DM_Property_t cmd_output_temp_modify_modify_result;
+DM_Node_t node_cmd_output_temp_modify_modify_result;
+
+DM_Property_t cmd_output_temp_modify_effect_temp_modify;
+DM_Node_t node_cmd_output_temp_modify_effect_temp_modify;
+
+static void _init_command_output_template(){
+    node_cmd_output_temp_modify_modify_result.base_type = TYPE_BOOL;
+    node_cmd_output_temp_modify_modify_result.key = "modify_result";
+    node_cmd_output_temp_modify_modify_result.value.bool_value = 0;
+    cmd_output_temp_modify_modify_result.parse_type = TYPE_NODE;
+    cmd_output_temp_modify_modify_result.value.dm_node = &node_cmd_output_temp_modify_modify_result;
+
+    node_cmd_output_temp_modify_effect_temp_modify.base_type = TYPE_INT;
+    node_cmd_output_temp_modify_effect_temp_modify.key = "effect_temp_modify";
+    node_cmd_output_temp_modify_effect_temp_modify.value.int32_value = 0;
+    cmd_output_temp_modify_effect_temp_modify.parse_type = TYPE_NODE;
+    cmd_output_temp_modify_effect_temp_modify.value.dm_node = &node_cmd_output_temp_modify_effect_temp_modify;
+
+}
+
 //用实际设备四元组替换
 #define UIOT_MY_PRODUCT_SN            "PRODUCT_SN"
 
@@ -88,7 +153,16 @@ int property_post_cb(const char *request_id, const int ret_code){
 
 int command_cb(const char *request_id, const char *identifier, const char *input, char *output){
     LOG_INFO("command_cb; request_id: %s; identifier: %s; input: %s", request_id, identifier, input);
-    HAL_Snprintf(output, 1000, "{\"result\":%d}", 1);
+    char *temp_modify = NULL;
+    if (NULL == (temp_modify = LITE_json_value_of((char *) "temp_modify", (char *)input))) {
+        LOG_ERROR("allocate for input failed\r\n");
+        return FAILURE_RET;
+    }
+    
+    node_cmd_output_temp_modify_effect_temp_modify.value.int32_value = atoi(temp_modify);
+    node_cmd_output_temp_modify_modify_result.value.bool_value = 0;
+
+    IOT_DM_GenCommandOutput(output, 2, &cmd_output_temp_modify_effect_temp_modify, &cmd_output_temp_modify_modify_result);
     return SUCCESS_RET;
 }
 
@@ -115,6 +189,10 @@ int main(int argc, char **argv)
     int rc;
     int i = 0;
 
+    _init_data_template();
+    _init_event_template();
+    _init_command_output_template();
+
     MQTTInitParams init_params = DEFAULT_MQTT_INIT_PARAMS;
     rc = _setup_connect_init_params(&init_params);
     if (rc != SUCCESS_RET) {
@@ -128,6 +206,7 @@ int main(int argc, char **argv)
         LOG_ERROR("Cloud Device Construct Failed");
         return FAILURE_RET;
     }
+
     IOT_MQTT_Yield(client, 50);
 
     void *h_dm = IOT_DM_Init(UIOT_MY_PRODUCT_SN, UIOT_MY_DEVICE_SN, client);
@@ -145,11 +224,24 @@ int main(int argc, char **argv)
     IOT_DM_Yield(h_dm, 200);
 
     for (i = 0; i < 20; i++) {
-        IOT_DM_Property_Report(h_dm, PROPERTY_POST, i * 2, "\"volume\": {\"Value\":50}");
-        IOT_DM_TriggerEvent(h_dm, i * 2 + 1, "low_power_alert", "\"power\": 5");
-
+        node_property_humidity.value.float32_value = (float)(node_property_humidity.value.float32_value + i);
+        node_property_temperature.value.float32_value = (float)(node_property_temperature.value.float32_value + i \
+                                                              + node_cmd_output_temp_modify_modify_result.value.bool_value);
+        node_property_humidity.value.float32_value = node_property_humidity.value.float32_value > 100.0?100.0:node_property_humidity.value.float32_value;
+        node_property_temperature.value.float32_value = node_property_temperature.value.float32_value > 100.0?100.0:node_property_temperature.value.float32_value;
+        IOT_DM_Property_ReportEx(h_dm, PROPERTY_POST, i * 10 + 8, 2, &property_humidity, &property_temperature);     
+        
         IOT_DM_Yield(h_dm, 200);
-        HAL_SleepMs(2000);
+
+        //温度大于80度上报高温预警
+        if(node_property_temperature.value.float32_value > 80.0)
+        {
+            node_event_high_temp_temperature.value.float32_value = node_property_temperature.value.float32_value;
+            IOT_DM_TriggerEventEx(h_dm, i * 10 + 1, &event_high_temp_warning);
+        
+            IOT_DM_Yield(h_dm, 200);
+        }
+        HAL_SleepMs(200);
     }
 
     //等待属性设置及命令下发
