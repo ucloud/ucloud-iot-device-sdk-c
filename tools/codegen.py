@@ -249,6 +249,13 @@ class iot_json_parse:
 
             self.event_id += 1
 
+        for command_input in model["Command"]:
+            if TEMPLATE_CONSTANTS.NAME not in command_input:
+                raise ValueError("error: can,t find Name")
+            for input_item in command_input["Input"]:
+                self.input.append(iot_filed(input_item["Identifier"], self.input_id, input_item, "cmd_input_" + command_input["Identifier"]))
+                self.input_id += 1
+
         for command_output in model["Command"]:
             if TEMPLATE_CONSTANTS.NAME not in command_output:
                 raise ValueError("error: can,t find Name")
@@ -288,6 +295,14 @@ class iot_json_parse:
         return result
 
     def gen_command_config(self):
+        cmd_input_declar = ""
+        cmd_input_config = ""
+        cmd_input_config += "static void _init_command_input_template(){\n"
+        for command_input_property in self.input:
+            cmd_input_declar += "{}\n".format(command_input_property.get_property_declar_name())
+            cmd_input_config += "{}\n".format(command_input_property.get_property_config_member())
+        cmd_input_config += "}\n"
+
         cmd_output_declar = ""
         cmd_output_config = ""
         cmd_output_config += "static void _init_command_output_template(){\n"
@@ -295,7 +310,7 @@ class iot_json_parse:
             cmd_output_declar += "{}\n".format(command_output_property.get_property_declar_name())
             cmd_output_config += "{}\n".format(command_output_property.get_property_config_member())
         cmd_output_config += "}\n"
-        result = cmd_output_declar + cmd_output_config
+        result = cmd_input_declar + cmd_input_config + cmd_output_declar + cmd_output_config
         return result
 
 def main():

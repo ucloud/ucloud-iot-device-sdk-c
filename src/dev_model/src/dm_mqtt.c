@@ -645,7 +645,7 @@ static int dm_gen_struct_payload(DM_Type_Struct_t *dm_struct, bool value_key, ch
         }
         else
         {
-            write_size = HAL_Snprintf(struct_payload, DM_MSG_REPORT_BUF_LEN, value_key?"\"Value\": {%s}}":"{%s}", node_payload);
+            write_size = HAL_Snprintf(struct_payload, DM_MSG_REPORT_BUF_LEN, "{%s}", node_payload);
         }
     }
     else
