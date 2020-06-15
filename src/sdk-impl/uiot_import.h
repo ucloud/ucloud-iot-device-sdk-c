@@ -31,6 +31,7 @@ extern "C" {
 #include "HAL_Timer_Platform.h"
 #include "utils_net.h"
 #include "lite-utils.h"
+#include "json_parser.h"
 
 /**
  * @brief 创建互斥量
