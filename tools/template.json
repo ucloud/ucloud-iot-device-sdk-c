@@ -1,0 +1,106 @@
+{
+	"Property": [
+		{
+			"PropertyID": 1069,
+			"Identifier": "humidity",
+			"Name": "湿度",
+			"AccessMode": "r",
+			"Description": "",
+			"DataType": {
+				"Type": "float32",
+				"Spec": {
+					"Max": 100,
+					"Min": 0,
+					"Step": 0.1,
+					"UnitName": ""
+				}
+			}
+		},
+		{
+			"PropertyID": 1068,
+			"Identifier": "temperature",
+			"Name": "温度",
+			"AccessMode": "r",
+			"Description": "",
+			"DataType": {
+				"Type": "float32",
+				"Spec": {
+					"Max": 100,
+					"Min": -100,
+					"Step": 0.1,
+					"UnitName": ""
+				}
+			}
+		}
+	],
+	"Event": [
+		{
+			"EventID": 381,
+			"Identifier": "high_temp",
+			"Name": "高温预警",
+			"Description": "温度>80度上报高温预警",
+			"Type": "warning",
+			"Output": [
+				{
+					"Identifier": "temperature",
+					"Name": "温度",
+					"DataType": {
+						"Type": "float32",
+						"Spec": {
+							"Max": 100,
+							"Min": -100,
+							"Step": 0.1
+						}
+					}
+				}
+			]
+		}
+	],
+	"Command": [
+		{
+			"CommandID": 608,
+			"Name": "设置温度修正量",
+			"Identifier": "set_temp_correction",
+			"Description": "根据环境下发温度修正量",
+			"Output": [
+				{
+					"Identifier": "correction_result",
+					"Name": "修正结果",
+					"DataType": {
+						"Type": "bool",
+						"Spec": {
+							"0": "成功",
+							"1": "失败"
+						}
+					}
+				},
+				{
+					"Identifier": "effect_temp_correction",
+					"Name": "生效的温度修正值",
+					"DataType": {
+						"Type": "int32",
+						"Spec": {
+							"Max": 10,
+							"Min": -10,
+							"Step": 1
+						}
+					}
+				}
+			],
+			"Input": [
+				{
+					"Identifier": "temp_correction",
+					"Name": "温度修正量",
+					"DataType": {
+						"Type": "int32",
+						"Spec": {
+							"Max": 10,
+							"Min": -10,
+							"Step": 1
+						}
+					}
+				}
+			]
+		}
+	]
+}

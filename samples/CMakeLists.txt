@@ -24,6 +24,9 @@ endif ()
 if (ENABLE_FEATURE_DEVICE_MODEL)
     add_executable(dev_model_sample dev_model/dev_model_sample.c)
     add_dependencies(dev_model_sample iot_sdk iot_platform)
+
+    add_executable(dev_model_sample_ex dev_model/dev_model_sample_ex.c)
+    add_dependencies(dev_model_sample_ex iot_sdk iot_platform)	
 endif ()
 
 if (ENABLE_FEATURE_AUTH_MODE_DYNAMIC)

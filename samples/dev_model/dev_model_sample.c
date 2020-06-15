@@ -86,10 +86,9 @@ int property_post_cb(const char *request_id, const int ret_code){
     return SUCCESS_RET;
 }
 
-int command_cb(const char *request_id, const char *identifier, const char *input, char **output){
+int command_cb(const char *request_id, const char *identifier, const char *input, char *output){
     LOG_INFO("command_cb; request_id: %s; identifier: %s; input: %s", request_id, identifier, input);
-    *output = (char *)HAL_Malloc(100);
-    HAL_Snprintf(*output, 1000, "{\"result\":%d}", 1);
+    HAL_Snprintf(output, 1000, "{\"result\":%d}", 1);
     return SUCCESS_RET;
 }
 
@@ -146,8 +145,8 @@ int main(int argc, char **argv)
     IOT_DM_Yield(h_dm, 200);
 
     for (i = 0; i < 20; i++) {
-        IOT_DM_Property_Report(h_dm, PROPERTY_POST, i * 2, "{\"volume\": {\"Value\":50}}");
-        IOT_DM_TriggerEvent(h_dm, i * 2 + 1, "low_power_alert", "{\"power\": 5}");
+        IOT_DM_Property_Report(h_dm, PROPERTY_POST, i * 2, "\"volume\": {\"Value\":50}");
+        IOT_DM_TriggerEvent(h_dm, i * 2 + 1, "low_power_alert", "\"power\": 5");
 
         IOT_DM_Yield(h_dm, 200);
         HAL_SleepMs(2000);
