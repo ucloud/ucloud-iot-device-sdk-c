@@ -165,14 +165,23 @@ int property_post_cb(const char *request_id, const int ret_code){
 int command_cb(const char *request_id, const char *identifier, const char *input, char *output){
     LOG_INFO("command_cb; request_id: %s; identifier: %s; input: %s", request_id, identifier, input);
     char *temp_modify = NULL;
-    if (NULL == (temp_modify = LITE_json_value_of((char *) "temp_modify", (char *)input))) {
+    if (NULL == (temp_modify = LITE_json_value_of((char *) "temp_correction", (char *)input))) {
         LOG_ERROR("allocate for input failed\r\n");
         return FAILURE_RET;
     }
     node_cmd_input_set_temp_correction_temp_correction.value.int32_value = atoi(temp_modify);
-    
-    node_cmd_output_set_temp_correction_effect_temp_correction.value.int32_value = atoi(temp_modify);
-    node_cmd_output_set_temp_correction_correction_result.value.bool_value = 0;
+
+    if((node_cmd_input_set_temp_correction_temp_correction.value.int32_value <= 10)
+        && (node_cmd_input_set_temp_correction_temp_correction.value.int32_value >= -10))
+    {
+        node_cmd_output_set_temp_correction_effect_temp_correction.value.int32_value = node_cmd_input_set_temp_correction_temp_correction.value.int32_value;
+        node_cmd_output_set_temp_correction_correction_result.value.bool_value = 0;
+    }
+    else
+    {
+        node_cmd_output_set_temp_correction_effect_temp_correction.value.int32_value = 0;
+        node_cmd_output_set_temp_correction_correction_result.value.bool_value = 1;        
+    }
 
     IOT_DM_GenCommandOutput(output, 2, &cmd_output_set_temp_correction_effect_temp_correction, &cmd_output_set_temp_correction_correction_result);
     return SUCCESS_RET;
@@ -201,8 +210,10 @@ int main(int argc, char **argv)
     int rc;
     int i = 0;
 
+    // 生成的变量初始化
     _init_data_template();
     _init_event_template();
+    _init_command_input_template();
     _init_command_output_template();
 
     MQTTInitParams init_params = DEFAULT_MQTT_INIT_PARAMS;
@@ -238,12 +249,10 @@ int main(int argc, char **argv)
     for (i = 0; i < 20; i++) {
         node_property_humidity.value.float32_value = (float)(node_property_humidity.value.float32_value + i);
         node_property_temperature.value.float32_value = (float)(node_property_temperature.value.float32_value + i \
-                                                              + node_cmd_output_temp_modify_modify_result.value.bool_value);
+                                                              + node_cmd_output_set_temp_correction_correction_result.value.bool_value);
         node_property_humidity.value.float32_value = node_property_humidity.value.float32_value > 100.0?100.0:node_property_humidity.value.float32_value;
         node_property_temperature.value.float32_value = node_property_temperature.value.float32_value > 100.0?100.0:node_property_temperature.value.float32_value;
         IOT_DM_Property_ReportEx(h_dm, PROPERTY_POST, i * 10 + 8, 2, &property_humidity, &property_temperature);     
-
-        IOT_DM_Property_ReportEx(h_dm, PROPERTY_POST, i * 10 + 8, 2, &property_test_array_struct, &property_test_struct);     
         
         IOT_DM_Yield(h_dm, 200);
 
