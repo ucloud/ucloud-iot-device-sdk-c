@@ -170,6 +170,7 @@ int command_cb(const char *request_id, const char *identifier, const char *input
         return FAILURE_RET;
     }
     node_cmd_input_set_temp_correction_temp_correction.value.int32_value = atoi(temp_modify);
+    HAL_Free(temp_modify);
 
     if((node_cmd_input_set_temp_correction_temp_correction.value.int32_value <= 10)
         && (node_cmd_input_set_temp_correction_temp_correction.value.int32_value >= -10))
