@@ -279,11 +279,10 @@ class input_json_parse:
         elif self.type_name == "float32" or self.type_name == "float64":
             input_config += "        node_cmd_input_{}_{}.value.{} = atof({});\n".format(self.cmd_id, self.input["Identifier"], "{}_value".format(self.type_name), self.cmd_id + "_" + self.input["Identifier"])
         else:
-            input_config += "        node_cmd_input_{}_{}.value.{} = {};\n".format(self.cmd_id, self.input["Identifier"], "{}_value".format(self.type_name), self.cmd_id + "_" + self.input["Identifier"])
             input_config += "        if(NULL != node_cmd_input_{}_{}.value.{})\n".format(self.cmd_id, self.input["Identifier"], "{}_value".format(self.input["DataType"]["Type"]))
             input_config += "            HAL_Free(node_cmd_input_{}_{}.value.{});\n".format(self.cmd_id, self.input["Identifier"], "{}_value".format(self.input["DataType"]["Type"]))
             input_config += "        node_cmd_input_{}_{}.value.{} = HAL_Malloc(strlen({}) + 1);\n".format(self.cmd_id, self.input["Identifier"], "{}_value".format(self.input["DataType"]["Type"]), self.cmd_id + "_" + self.input["Identifier"])
-            input_config += "        strncpy(node_cmd_input_{}_{}[{}].value.{}, {}, strlen({}));\n".format(self.cmd_id, self.input["Identifier"], "{}_value".format(self.input["DataType"]["Type"]), self.cmd_id + "_" + self.input["Identifier"], self.cmd_id + "_" + self.input["Identifier"])
+            input_config += "        strncpy(node_cmd_input_{}_{}.value.{}, {}, strlen({}));\n".format(self.cmd_id, self.input["Identifier"], "{}_value".format(self.input["DataType"]["Type"]), self.cmd_id + "_" + self.input["Identifier"], self.cmd_id + "_" + self.input["Identifier"])
             input_config += "        node_cmd_input_{}_{}.value.{}[strlen({})] = \'\\0\';\n".format(self.cmd_id, self.input["Identifier"], "{}_value".format(self.input["DataType"]["Type"]), self.cmd_id + "_" + self.input["Identifier"])
         input_config += "        HAL_Free({});\n".format(self.cmd_id + "_" +  self.input["Identifier"])
         input_config += "        return;\n"
