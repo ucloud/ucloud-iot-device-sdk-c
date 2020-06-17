@@ -78,6 +78,17 @@ static void _init_command_input_template(){
     cmd_input_set_temp_correction_temp_correction.value.dm_node = &node_cmd_input_set_temp_correction_temp_correction;
 
 }
+static void _input_parse_config(const char *cmd_id, const char *input){
+    if(0 == strncmp(cmd_id, "set_temp_correction", strlen("set_temp_correction")))
+    {
+        char *set_temp_correction_temp_correction = NULL;
+        set_temp_correction_temp_correction = LITE_json_value_of((char *)"temp_correction", (char *)input);
+        node_cmd_input_set_temp_correction_temp_correction.value.int32_value = atoi(set_temp_correction_temp_correction);
+        HAL_Free(set_temp_correction_temp_correction);
+        return;
+    }
+
+}
 DM_Property_t cmd_output_set_temp_correction_correction_result;
 DM_Node_t node_cmd_output_set_temp_correction_correction_result;
 
@@ -164,23 +175,16 @@ int property_post_cb(const char *request_id, const int ret_code){
 
 int command_cb(const char *request_id, const char *identifier, const char *input, char *output){
     LOG_INFO("command_cb; request_id: %s; identifier: %s; input: %s", request_id, identifier, input);
-    char *temp_modify = NULL;
-    if (NULL == (temp_modify = LITE_json_value_of((char *) "temp_correction", (char *)input))) {
-        LOG_ERROR("allocate for input failed\r\n");
-        return FAILURE_RET;
-    }
-    node_cmd_input_set_temp_correction_temp_correction.value.int32_value = atoi(temp_modify);
-    HAL_Free(temp_modify);
+    _input_parse_config(identifier, input);
 
-    if((node_cmd_input_set_temp_correction_temp_correction.value.int32_value <= 10)
-        && (node_cmd_input_set_temp_correction_temp_correction.value.int32_value >= -10))
+    if((node_cmd_input_set_temp_correction_temp_correction.value.int32_value <= 5)
+        && (node_cmd_input_set_temp_correction_temp_correction.value.int32_value >= -5))
     {
         node_cmd_output_set_temp_correction_effect_temp_correction.value.int32_value = node_cmd_input_set_temp_correction_temp_correction.value.int32_value;
         node_cmd_output_set_temp_correction_correction_result.value.bool_value = 0;
     }
     else
     {
-        node_cmd_output_set_temp_correction_effect_temp_correction.value.int32_value = 0;
         node_cmd_output_set_temp_correction_correction_result.value.bool_value = 1;        
     }
 
@@ -250,7 +254,7 @@ int main(int argc, char **argv)
     for (i = 0; i < 20; i++) {
         node_property_humidity.value.float32_value = (float)(node_property_humidity.value.float32_value + i);
         node_property_temperature.value.float32_value = (float)(node_property_temperature.value.float32_value + i \
-                                                              + node_cmd_output_set_temp_correction_correction_result.value.bool_value);
+                                                              + node_cmd_output_set_temp_correction_effect_temp_correction.value.int32_value);
         node_property_humidity.value.float32_value = node_property_humidity.value.float32_value > 100.0?100.0:node_property_humidity.value.float32_value;
         node_property_temperature.value.float32_value = node_property_temperature.value.float32_value > 100.0?100.0:node_property_temperature.value.float32_value;
         IOT_DM_Property_ReportEx(h_dm, PROPERTY_POST, i * 10 + 8, 2, &property_humidity, &property_temperature);     

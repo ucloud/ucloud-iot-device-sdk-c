@@ -9,6 +9,17 @@ static void _init_command_input_template(){
     cmd_input_set_temp_correction_temp_correction.value.dm_node = &node_cmd_input_set_temp_correction_temp_correction;
 
 }
+static void _input_parse_config(const char *cmd_id, const char *input){
+    if(0 == strncmp(cmd_id, "set_temp_correction", strlen("set_temp_correction")))
+    {
+        char *set_temp_correction_temp_correction = NULL;
+        set_temp_correction_temp_correction = LITE_json_value_of((char *)"temp_correction", (char *)input);
+        node_cmd_input_set_temp_correction_temp_correction.value.int32_value = atoi(set_temp_correction_temp_correction);
+        HAL_Free(set_temp_correction_temp_correction);
+        return;
+    }
+
+}
 DM_Property_t cmd_output_set_temp_correction_correction_result;
 DM_Node_t node_cmd_output_set_temp_correction_correction_result;
 

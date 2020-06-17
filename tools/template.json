@@ -58,6 +58,153 @@
 	],
 	"Command": [
 		{
+			"CommandID": 613,
+			"Name": "cmd_array_struct",
+			"Identifier": "cmd_array_struct",
+			"Description": "",
+			"Output": [
+				{
+					"Identifier": "out_int",
+					"Name": "out_int",
+					"DataType": {
+						"Type": "int32",
+						"Spec": {
+							"Max": 100,
+							"Min": 0,
+							"Step": 1
+						}
+					}
+				}
+			],
+			"Input": [
+				{
+					"Identifier": "in_array",
+					"Name": "in_array",
+					"DataType": {
+						"Type": "array",
+						"Spec": {
+							"Item": {
+								"Spec": [
+									{
+										"DataType": {
+											"Spec": {
+												"Max": 100,
+												"Min": 0,
+												"Step": 1
+											},
+											"Type": "int32"
+										},
+										"Identifier": "struct_int",
+										"Name": "struct_int"
+									},
+									{
+										"DataType": {
+											"Spec": {
+												"Length": 100
+											},
+											"Type": "string"
+										},
+										"Identifier": "struct_string",
+										"Name": "struct_string"
+									}
+								],
+								"Type": "struct"
+							},
+							"Size": 3
+						}
+					}
+				}
+			]
+		},
+		{
+			"CommandID": 612,
+			"Name": "cmd_array",
+			"Identifier": "cmd_array",
+			"Description": "",
+			"Output": [
+				{
+					"Identifier": "out_int",
+					"Name": "out_int",
+					"DataType": {
+						"Type": "int32",
+						"Spec": {
+							"Max": 100,
+							"Min": 0,
+							"Step": 1
+						}
+					}
+				}
+			],
+			"Input": [
+				{
+					"Identifier": "in_array",
+					"Name": "in_array",
+					"DataType": {
+						"Type": "array",
+						"Spec": {
+							"Item": {
+								"Type": "string"
+							},
+							"Size": 10
+						}
+					}
+				}
+			]
+		},
+		{
+			"CommandID": 611,
+			"Name": "cmd_struct",
+			"Identifier": "cmd_struct",
+			"Description": "",
+			"Output": [
+				{
+					"Identifier": "out_int",
+					"Name": "out_int",
+					"DataType": {
+						"Type": "int32",
+						"Spec": {
+							"Max": 100,
+							"Min": 0,
+							"Step": 1
+						}
+					}
+				}
+			],
+			"Input": [
+				{
+					"Identifier": "in_struct",
+					"Name": "in_struct",
+					"DataType": {
+						"Type": "struct",
+						"Spec": [
+							{
+								"DataType": {
+									"Spec": {
+										"Max": 100,
+										"Min": 0,
+										"Step": 1
+									},
+									"Type": "int32"
+								},
+								"Identifier": "int",
+								"Name": "int"
+							},
+							{
+								"DataType": {
+									"Spec": {
+										"Length": 100
+									},
+									"Type": "string"
+								},
+								"Identifier": "string",
+								"Name": "string"
+							}
+						]
+					}
+				}
+			]
+		},
+		{
 			"CommandID": 608,
 			"Name": "设置温度修正量",
 			"Identifier": "set_temp_correction",
