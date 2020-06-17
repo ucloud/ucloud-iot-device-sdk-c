@@ -97,9 +97,6 @@ class iot_filed:
             declar_info += "DM_Node_t node_{};\n".format("{}_".format(self.prefix) + self.id)
             return declar_info
 
-    def get_id_default_value(self):
-        return "{}".format(self.default_value)
-
     def get_property_config_member(self):
         config_info = ""
         loop = 0
@@ -123,22 +120,12 @@ class iot_filed:
                         "date": 0
         }
 
-        base_value_enum = {
-                        "int32": "int32_value",
-                        "float32": "float32_value",
-                        "float64": "float64_value",
-                        "bool": "bool_value",
-                        "enum": "enum_value",
-                        "string": "string_value",
-                        "date": "date_value"
-        }
-
         if self.type_name == "struct":
             for struct_member in self.struct_member:
-                config_info += "    #define {} {}\n".format((self.prefix + struct_member["Identifier"] + "_index").upper(), loop)
-                config_info += "    node_{}[{}].base_type = {};\n".format("{}_".format(self.prefix) + self.id, (self.prefix + struct_member["Identifier"] + "_index").upper(), type_enum[struct_member["DataType"]["Type"]])
-                config_info += "    node_{}[{}].key = \"{}\";\n".format("{}_".format(self.prefix) + self.id, (self.prefix + struct_member["Identifier"] + "_index").upper(), struct_member["Identifier"])
-                config_info += "    node_{}[{}].value.{} = {};\n".format("{}_".format(self.prefix) + self.id, (self.prefix + struct_member["Identifier"] + "_index").upper(), base_value_enum[struct_member["DataType"]["Type"]], default_value_enum[struct_member["DataType"]["Type"]])
+                config_info += "    #define {} {}\n".format((self.prefix + "_" +struct_member["Identifier"] + "_index").upper(), loop)
+                config_info += "    node_{}[{}].base_type = {};\n".format("{}_".format(self.prefix) + self.id, (self.prefix + "_" +struct_member["Identifier"] + "_index").upper(), type_enum[struct_member["DataType"]["Type"]])
+                config_info += "    node_{}[{}].key = \"{}\";\n".format("{}_".format(self.prefix) + self.id, (self.prefix + "_" +struct_member["Identifier"] + "_index").upper(), struct_member["Identifier"])
+                config_info += "    node_{}[{}].value.{} = {};\n".format("{}_".format(self.prefix) + self.id, (self.prefix + "_" +struct_member["Identifier"] + "_index").upper(), "{}_value".format(struct_member["DataType"]["Type"]), default_value_enum[struct_member["DataType"]["Type"]])
                 loop += 1
 
             config_info += "    st_{}.key = \"{}\";\n".format("{}_".format(self.prefix) + self.id, self.id)
@@ -155,10 +142,10 @@ class iot_filed:
                     loop = 0
                     for item_member in self.array_item:
                         if loop_array == 0:
-                            config_info += "    #define {} {}\n".format((self.prefix + item_member["Identifier"] + "_index").upper(), loop)
-                        config_info += "    node_{}[{}][{}].base_type = {};\n".format("{}_".format(self.prefix) + self.id, loop_array, (self.prefix + item_member["Identifier"] + "_index").upper(), type_enum[item_member["DataType"]["Type"]])
-                        config_info += "    node_{}[{}][{}].key = \"{}\";\n".format("{}_".format(self.prefix) + self.id, loop_array, (self.prefix + item_member["Identifier"] + "_index").upper(), item_member["Identifier"])
-                        config_info += "    node_{}[{}][{}].value.{} = {};\n".format("{}_".format(self.prefix) + self.id, loop_array, (self.prefix + item_member["Identifier"] + "_index").upper(), base_value_enum[item_member["DataType"]["Type"]], default_value_enum[item_member["DataType"]["Type"]])
+                            config_info += "    #define {} {}\n".format((self.prefix + "_" +item_member["Identifier"] + "_index").upper(), loop)
+                        config_info += "    node_{}[{}][{}].base_type = {};\n".format("{}_".format(self.prefix) + self.id, loop_array, (self.prefix + "_" +item_member["Identifier"] + "_index").upper(), type_enum[item_member["DataType"]["Type"]])
+                        config_info += "    node_{}[{}][{}].key = \"{}\";\n".format("{}_".format(self.prefix) + self.id, loop_array, (self.prefix + "_" +item_member["Identifier"] + "_index").upper(), item_member["Identifier"])
+                        config_info += "    node_{}[{}][{}].value.{} = {};\n".format("{}_".format(self.prefix) + self.id, loop_array, (self.prefix + "_" +item_member["Identifier"] + "_index").upper(), "{}_value".format(item_member["DataType"]["Type"]), default_value_enum[item_member["DataType"]["Type"]])
                         loop += 1
 
                     config_info += "    st_{}[{}].value = node_{}[{}];\n".format("{}_".format(self.prefix) + self.id, loop_array, "{}_".format(self.prefix) + self.id, loop_array)
@@ -175,7 +162,7 @@ class iot_filed:
                 loop_array = 0
                 while loop_array < int(self.array_num):
                     config_info += "    node_{}[{}].base_type = {};\n".format("{}_".format(self.prefix) + self.id, loop_array, type_enum[self.item_type])
-                    config_info += "    node_{}[{}].value.{} = {};\n".format("{}_".format(self.prefix) + self.id, loop_array, base_value_enum[self.item_type], default_value_enum[self.item_type])
+                    config_info += "    node_{}[{}].value.{} = {};\n".format("{}_".format(self.prefix) + self.id, loop_array, "{}_value".format(self.item_type), default_value_enum[self.item_type])
                     loop_array += 1
 
                 config_info += "    arr_base_{}.key = \"{}\";\n".format("{}_".format(self.prefix) + self.id, self.id)
@@ -187,7 +174,7 @@ class iot_filed:
         else:
             config_info += "    node_{}.base_type = {};\n".format("{}_".format(self.prefix) + self.id, type_enum[self.type_name])
             config_info += "    node_{}.key = \"{}\";\n".format("{}_".format(self.prefix) + self.id, self.id)
-            config_info += "    node_{}.value.{} = {};\n".format("{}_".format(self.prefix) + self.id, base_value_enum[self.type_name], default_value_enum[self.type_name])
+            config_info += "    node_{}.value.{} = {};\n".format("{}_".format(self.prefix) + self.id, "{}_value".format(self.type_name), default_value_enum[self.type_name])
 
             config_info += "    {}.parse_type = TYPE_NODE;\n".format("{}_".format(self.prefix) + self.id)
             config_info += "    {}.value.dm_node = &node_{};\n".format("{}_".format(self.prefix) + self.id, "{}_".format(self.prefix) + self.id)
@@ -219,6 +206,89 @@ class iot_event:
 
         return config_info
 
+class input_json_parse:
+    def __init__(self, cmd_id, input):
+        self.cmd_id = cmd_id
+        self.input = input
+        self.type_name = input["DataType"]["Type"]
+
+    def get_input_config(self):
+        input_config = ""
+        input_config += "    if(0 == strncmp(cmd_id, \"{}\", strlen(\"{}\")))\n".format(self.cmd_id, self.cmd_id)
+        input_config += "    {\n"
+        input_config += "        char *{} = NULL;\n".format(self.cmd_id + "_" + self.input["Identifier"])
+        input_config += "        {} = LITE_json_value_of((char *)\"{}\", (char *)input);\n".format(self.cmd_id + "_" +  self.input["Identifier"], self.input["Identifier"])
+        if self.type_name == "struct":
+            for input_struct_item in self.input["DataType"]["Spec"]:
+                input_config += "        char *{} = NULL;\n".format(self.cmd_id + "_" +  input_struct_item["Identifier"])
+                input_config += "        {} = LITE_json_value_of((char *)\"{}\", (char *){});\n".format(self.cmd_id + "_" +  input_struct_item["Identifier"], input_struct_item["Identifier"], self.cmd_id + "_" + self.input["Identifier"])
+                if input_struct_item["DataType"]["Type"] == "int32" or input_struct_item["DataType"]["Type"] == "enum" or input_struct_item["DataType"]["Type"] == "bool" or input_struct_item["DataType"]["Type"] == "date":
+                    input_config += "        node_cmd_input_{}_{}[{}].value.{} = atoi({});\n".format(self.cmd_id, self.input["Identifier"], "CMD_INPUT_{}_{}_INDEX".format(self.cmd_id, input_struct_item["Identifier"]).upper(), "{}_value".format(input_struct_item["DataType"]["Type"]), self.cmd_id + "_" + input_struct_item["Identifier"])
+                elif input_struct_item["DataType"]["Type"] == "float32" or input_struct_item["DataType"]["Type"] == "float64":
+                    input_config += "        node_cmd_input_{}_{}[{}].value.{} = atof({});\n".format(self.cmd_id, self.input["Identifier"], "CMD_INPUT_{}_{}_INDEX".format(self.cmd_id, input_struct_item["Identifier"]).upper(), "{}_value".format(input_struct_item["DataType"]["Type"]), self.cmd_id + "_" + input_struct_item["Identifier"])
+                else:
+                    input_config += "        if(NULL != node_cmd_input_{}_{}[{}].value.{})\n".format(self.cmd_id, self.input["Identifier"], "CMD_INPUT_{}_{}_INDEX".format(self.cmd_id, input_struct_item["Identifier"]).upper(), "{}_value".format(input_struct_item["DataType"]["Type"]))
+                    input_config += "            HAL_Free(node_cmd_input_{}_{}[{}].value.{});\n".format( self.cmd_id, self.input["Identifier"], "CMD_INPUT_{}_{}_INDEX".format(self.cmd_id, input_struct_item["Identifier"]).upper(), "{}_value".format(input_struct_item["DataType"]["Type"]))
+                    input_config += "        node_cmd_input_{}_{}[{}].value.{} = HAL_Malloc(strlen({}) + 1);\n".format(self.cmd_id, self.input["Identifier"], "CMD_INPUT_{}_{}_INDEX".format(self.cmd_id, input_struct_item["Identifier"]).upper(), "{}_value".format(input_struct_item["DataType"]["Type"]), self.cmd_id + "_" + input_struct_item["Identifier"])
+                    input_config += "        strncpy(node_cmd_input_{}_{}[{}].value.{}, {}, strlen({}));\n".format(self.cmd_id, self.input["Identifier"], "CMD_INPUT_{}_{}_INDEX".format(self.cmd_id, input_struct_item["Identifier"]).upper(), "{}_value".format(input_struct_item["DataType"]["Type"]), self.cmd_id + "_" + input_struct_item["Identifier"], self.cmd_id + "_" + input_struct_item["Identifier"])
+                    input_config += "        node_cmd_input_{}_{}[{}].value.{}[strlen({})] = \'\\0\';\n".format(self.cmd_id, self.input["Identifier"], "CMD_INPUT_{}_{}_INDEX".format(self.cmd_id, input_struct_item["Identifier"]).upper(), "{}_value".format(input_struct_item["DataType"]["Type"]), self.cmd_id + "_" + input_struct_item["Identifier"])
+                input_config += "        HAL_Free({});\n".format(self.cmd_id + "_" + input_struct_item["Identifier"])
+        elif self.type_name == "array":
+            input_config += "        char *{} = NULL;\n".format(self.cmd_id + "_" + self.input["Identifier"] + "_pos")
+            input_config += "        char *{} = NULL;\n".format(self.cmd_id + "_" + self.input["Identifier"] + "_entry")
+            input_config += "        int {} = 0;\n".format(self.cmd_id + "_" + self.input["Identifier"] + "_len")
+            input_config += "        int {} = 0;\n".format(self.cmd_id + "_" + self.input["Identifier"] + "_type")
+            input_config += "        int {}_loop = 0;\n".format(self.cmd_id + "_" + self.input["Identifier"])
+            input_config += "        json_array_for_each_entry({}, {}, {}, {}, {})\n".format(self.cmd_id + "_" +  self.input["Identifier"],
+                                                                                            self.cmd_id + "_" + self.input["Identifier"] + "_pos",
+                                                                                            self.cmd_id + "_" + self.input["Identifier"] + "_entry",
+                                                                                            self.cmd_id + "_" + self.input["Identifier"] + "_len",
+                                                                                            self.cmd_id + "_" + self.input["Identifier"] + "_type")
+            input_config += "        {\n"
+            if self.input["DataType"]["Spec"]["Item"]["Type"] != "struct":
+                if self.input["DataType"]["Spec"]["Item"]["Type"] == "int32" or self.input["DataType"]["Spec"]["Item"]["Type"] == "enum" or self.input["DataType"]["Spec"]["Item"]["Type"] == "bool" or self.input["DataType"]["Spec"]["Item"]["Type"] == "date":
+                    input_config += "            node_cmd_input_{}_{}[{}_loop].value.{} = atoi({});\n".format(self.cmd_id, self.input["Identifier"], self.cmd_id + "_" + self.input["Identifier"], "{}_value".format(self.input["DataType"]["Spec"]["Item"]["Type"]), self.cmd_id + "_" + self.input["Identifier"] + "_entry")
+                elif self.input["DataType"]["Spec"]["Item"]["Type"] == "float32" or self.input["DataType"]["Spec"]["Item"]["Type"] == "float64":
+                    input_config += "            node_cmd_input_{}_{}[{}_loop].value.{} = atof({});\n".format(self.cmd_id, self.input["Identifier"], self.cmd_id + "_" + self.input["Identifier"], "{}_value".format(self.input["DataType"]["Spec"]["Item"]["Type"]), self.cmd_id + "_" + self.input["Identifier"] + "_entry")
+                else:
+                    input_config += "            if(NULL != node_cmd_input_{}_{}[{}_loop].value.{})\n".format(self.cmd_id, self.input["Identifier"], self.cmd_id + "_" + self.input["Identifier"], "{}_value".format(self.input["DataType"]["Spec"]["Item"]["Type"]))
+                    input_config += "                HAL_Free(node_cmd_input_{}_{}[{}_loop].value.{});\n".format( self.cmd_id, self.input["Identifier"], self.cmd_id + "_" + self.input["Identifier"], "{}_value".format(self.input["DataType"]["Spec"]["Item"]["Type"]))
+                    input_config += "            node_cmd_input_{}_{}[{}_loop].value.{} = HAL_Malloc({} + 1);\n".format(self.cmd_id, self.input["Identifier"], self.cmd_id + "_" + self.input["Identifier"], "{}_value".format(self.input["DataType"]["Spec"]["Item"]["Type"]), self.cmd_id + "_" + self.input["Identifier"] + "_len")
+                    input_config += "            strncpy(node_cmd_input_{}_{}[{}_loop].value.{}, {}, {});\n".format(self.cmd_id, self.input["Identifier"], self.cmd_id + "_" + self.input["Identifier"], "{}_value".format(self.input["DataType"]["Spec"]["Item"]["Type"]), self.cmd_id + "_" + self.input["Identifier"] + "_entry", self.cmd_id + "_" + self.input["Identifier"] + "_len")
+                    input_config += "            node_cmd_input_{}_{}[{}_loop].value.{}[{}] = \'\\0\';\n".format(self.cmd_id, self.input["Identifier"], self.cmd_id + "_" + self.input["Identifier"], "{}_value".format(self.input["DataType"]["Spec"]["Item"]["Type"]), self.cmd_id + "_" + self.input["Identifier"] + "_len")
+                input_config += "            {}_loop++;\n".format(self.cmd_id + "_" + self.input["Identifier"])
+            else:
+                for array_struct_item in self.input["DataType"]["Spec"]["Item"]["Spec"]:
+                    input_config += "            char *{} = NULL;\n".format(self.cmd_id + "_" + array_struct_item["Identifier"])
+                    input_config += "            {} = LITE_json_value_of((char *)\"{}\", (char *){});\n".format(self.cmd_id + "_" + array_struct_item["Identifier"], array_struct_item["Identifier"],self.cmd_id + "_" + self.input["Identifier"] + "_entry")
+                    if array_struct_item["DataType"]["Type"] == "int32" or array_struct_item["DataType"]["Type"] == "enum" or array_struct_item["DataType"]["Type"] == "bool" or array_struct_item["DataType"]["Type"] == "date":
+                        input_config += "            node_cmd_input_{}_{}[{}_loop][{}].value.{} = atoi({});\n".format(self.cmd_id, self.input["Identifier"], self.cmd_id + "_" + self.input["Identifier"], "CMD_INPUT_{}_{}_INDEX".format(self.cmd_id, array_struct_item["Identifier"]).upper(), "{}_value".format(array_struct_item["DataType"]["Type"]), self.cmd_id + "_" + array_struct_item["Identifier"])
+                    elif array_struct_item["DataType"]["Type"] == "float32" or array_struct_item["DataType"]["Type"] == "float64":
+                        input_config += "            node_cmd_input_{}_{}[{}_loop][{}].value.{} = atof({});\n".format(self.cmd_id, self.input["Identifier"], self.cmd_id + "_" + self.input["Identifier"], "CMD_INPUT_{}_{}_INDEX".format(self.cmd_id, array_struct_item["Identifier"]).upper(), "{}_value".format(array_struct_item["DataType"]["Type"]), self.cmd_id + "_" + array_struct_item["Identifier"])
+                    else:
+                        input_config += "            if(NULL != node_cmd_input_{}_{}[{}_loop][{}].value.{})\n".format(self.cmd_id, self.input["Identifier"], self.cmd_id + "_" + self.input["Identifier"], "CMD_INPUT_{}_{}_INDEX".format(self.cmd_id, array_struct_item["Identifier"]).upper(), "{}_value".format(array_struct_item["DataType"]["Type"]))
+                        input_config += "                HAL_Free(node_cmd_input_{}_{}[{}_loop][{}].value.{});\n".format( self.cmd_id, self.input["Identifier"], self.cmd_id + "_" + self.input["Identifier"], "CMD_INPUT_{}_{}_INDEX".format(self.cmd_id, array_struct_item["Identifier"]).upper(), "{}_value".format(array_struct_item["DataType"]["Type"]))
+                        input_config += "            node_cmd_input_{}_{}[{}_loop][{}].value.{} = HAL_Malloc(strlen({}) + 1);\n".format(self.cmd_id, self.input["Identifier"], self.cmd_id + "_" + self.input["Identifier"], "CMD_INPUT_{}_{}_INDEX".format(self.cmd_id, array_struct_item["Identifier"]).upper(), "{}_value".format(array_struct_item["DataType"]["Type"]), self.cmd_id + "_" + array_struct_item["Identifier"])
+                        input_config += "            strncpy(node_cmd_input_{}_{}[{}_loop][{}].value.{}, {}, strlen({}));\n".format(self.cmd_id, self.input["Identifier"], self.cmd_id + "_" + self.input["Identifier"], "CMD_INPUT_{}_{}_INDEX".format(self.cmd_id, array_struct_item["Identifier"]).upper(), "{}_value".format(array_struct_item["DataType"]["Type"]), self.cmd_id + "_" + array_struct_item["Identifier"], self.cmd_id + "_" + array_struct_item["Identifier"])
+                        input_config += "            node_cmd_input_{}_{}[{}_loop][{}].value.{}[strlen({})] = \'\\0\';\n".format(self.cmd_id, self.input["Identifier"], self.cmd_id + "_" + self.input["Identifier"], "CMD_INPUT_{}_{}_INDEX".format(self.cmd_id, array_struct_item["Identifier"]).upper(), "{}_value".format(array_struct_item["DataType"]["Type"]), self.cmd_id + "_" + array_struct_item["Identifier"])
+                    input_config += "            HAL_Free({});\n".format(self.cmd_id + "_" + array_struct_item["Identifier"])
+                input_config += "            {}_loop++;\n".format(self.cmd_id + "_" + self.input["Identifier"])
+            input_config += "        }\n"
+        elif self.type_name == "int32" or self.type_name == "enum" or self.type_name == "bool" or self.type_name == "date":
+            input_config += "        node_cmd_input_{}_{}.value.{} = atoi({});\n".format(self.cmd_id, self.input["Identifier"], "{}_value".format(self.type_name), self.cmd_id + "_" + self.input["Identifier"])
+        elif self.type_name == "float32" or self.type_name == "float64":
+            input_config += "        node_cmd_input_{}_{}.value.{} = atof({});\n".format(self.cmd_id, self.input["Identifier"], "{}_value".format(self.type_name), self.cmd_id + "_" + self.input["Identifier"])
+        else:
+            input_config += "        if(NULL != node_cmd_input_{}_{}.value.{})\n".format(self.cmd_id, self.input["Identifier"], "{}_value".format(self.input["DataType"]["Type"]))
+            input_config += "            HAL_Free(node_cmd_input_{}_{}.value.{});\n".format(self.cmd_id, self.input["Identifier"], "{}_value".format(self.input["DataType"]["Type"]))
+            input_config += "        node_cmd_input_{}_{}.value.{} = HAL_Malloc(strlen({}) + 1);\n".format(self.cmd_id, self.input["Identifier"], "{}_value".format(self.input["DataType"]["Type"]), self.cmd_id + "_" + self.input["Identifier"])
+            input_config += "        strncpy(node_cmd_input_{}_{}.value.{}, {}, strlen({}));\n".format(self.cmd_id, self.input["Identifier"], "{}_value".format(self.input["DataType"]["Type"]), self.cmd_id + "_" + self.input["Identifier"], self.cmd_id + "_" + self.input["Identifier"])
+            input_config += "        node_cmd_input_{}_{}.value.{}[strlen({})] = \'\\0\';\n".format(self.cmd_id, self.input["Identifier"], "{}_value".format(self.input["DataType"]["Type"]), self.cmd_id + "_" + self.input["Identifier"])
+        input_config += "        HAL_Free({});\n".format(self.cmd_id + "_" +  self.input["Identifier"])
+        input_config += "        return;\n"
+        input_config += "    }\n"
+        return input_config
+
 class iot_json_parse:
     def __init__(self, model):
         self.fields = []
@@ -228,6 +298,7 @@ class iot_json_parse:
         self.events_property_index = 0
         self.events = []
         self.event_id = 0
+        self.input_parse = []
         self.input = []
         self.input_id = 0
         self.output = []
@@ -254,6 +325,7 @@ class iot_json_parse:
                 raise ValueError("error: can,t find Name")
             for input_item in command_input["Input"]:
                 self.input.append(iot_filed(input_item["Identifier"], self.input_id, input_item, "cmd_input_" + command_input["Identifier"]))
+                self.input_parse.append(input_json_parse(command_input["Identifier"], input_item))
                 self.input_id += 1
 
         for command_output in model["Command"]:
@@ -303,6 +375,12 @@ class iot_json_parse:
             cmd_input_config += "{}\n".format(command_input_property.get_property_config_member())
         cmd_input_config += "}\n"
 
+        cmd_input_parse = ""
+        cmd_input_parse += "static void _input_parse_config(const char *cmd_id, const char *input){\n"
+        for cmd_input_parse_item in self.input_parse:
+            cmd_input_parse += "{}\n".format(cmd_input_parse_item.get_input_config())
+        cmd_input_parse += "}\n"
+
         cmd_output_declar = ""
         cmd_output_config = ""
         cmd_output_config += "static void _init_command_output_template(){\n"
@@ -310,7 +388,7 @@ class iot_json_parse:
             cmd_output_declar += "{}\n".format(command_output_property.get_property_declar_name())
             cmd_output_config += "{}\n".format(command_output_property.get_property_config_member())
         cmd_output_config += "}\n"
-        result = cmd_input_declar + cmd_input_config + cmd_output_declar + cmd_output_config
+        result = cmd_input_declar + cmd_input_config + cmd_input_parse + cmd_output_declar + cmd_output_config
         return result
 
 def main():
