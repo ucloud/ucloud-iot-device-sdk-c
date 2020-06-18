@@ -10,7 +10,7 @@ static void _init_command_input_template(){
 
 }
 static void _input_parse_config(const char *cmd_id, const char *input){
-    if(0 == strncmp(cmd_id, "set_temp_correction", strlen("set_temp_correction")))
+    if((strlen(cmd_id) == strlen("set_temp_correction")) && (0 == strncmp(cmd_id, "set_temp_correction", strlen("set_temp_correction"))))
     {
         char *set_temp_correction_temp_correction = NULL;
         set_temp_correction_temp_correction = LITE_json_value_of((char *)"temp_correction", (char *)input);
