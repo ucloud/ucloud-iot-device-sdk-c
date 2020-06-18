@@ -214,7 +214,7 @@ class input_json_parse:
 
     def get_input_config(self):
         input_config = ""
-        input_config += "    if(0 == strncmp(cmd_id, \"{}\", strlen(\"{}\")))\n".format(self.cmd_id, self.cmd_id)
+        input_config += "    if((strlen(cmd_id) == strlen(\"{}\")) && (0 == strncmp(cmd_id, \"{}\", strlen(\"{}\"))))\n".format(self.cmd_id, self.cmd_id, self.cmd_id)
         input_config += "    {\n"
         input_config += "        char *{} = NULL;\n".format(self.cmd_id + "_" + self.input["Identifier"])
         input_config += "        {} = LITE_json_value_of((char *)\"{}\", (char *)input);\n".format(self.cmd_id + "_" +  self.input["Identifier"], self.input["Identifier"])
