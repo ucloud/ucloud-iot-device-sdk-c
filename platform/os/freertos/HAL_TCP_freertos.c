@@ -18,6 +18,7 @@
 
 #include "netdb.h"
 #include "sockets.h"
+#include "uiot_import.h"
 
 uintptr_t HAL_TCP_Connect(_IN_ const char *host, _IN_ uint16_t port) {
     struct addrinfo hints;
