@@ -1,10 +1,11 @@
+#include "dm_property.h"
 DM_Property_t property_humidity;
 DM_Node_t node_property_humidity;
 
 DM_Property_t property_temperature;
 DM_Node_t node_property_temperature;
 
-static void _init_data_template(){
+void _init_data_template(){
     node_property_humidity.base_type = TYPE_FLOAT;
     node_property_humidity.key = "humidity";
     node_property_humidity.value.float32_value = 0.0;
