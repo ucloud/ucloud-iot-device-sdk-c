@@ -1,0 +1,15 @@
+#include "uiot_internal.h"
+#include "dm_internal.h"
+
+extern DM_Property_t cmd_input_set_temp_correction_temp_correction;
+extern DM_Node_t node_cmd_input_set_temp_correction_temp_correction;
+
+void _init_command_input_template();
+extern DM_Property_t cmd_output_set_temp_correction_correction_result;
+extern DM_Node_t node_cmd_output_set_temp_correction_correction_result;
+
+extern DM_Property_t cmd_output_set_temp_correction_effect_temp_correction;
+extern DM_Node_t node_cmd_output_set_temp_correction_effect_temp_correction;
+
+void _init_command_output_template();
+void _input_parse_config(const char *cmd_id, const char *input);

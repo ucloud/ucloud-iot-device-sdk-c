@@ -97,6 +97,30 @@ class iot_filed:
             declar_info += "DM_Node_t node_{};\n".format("{}_".format(self.prefix) + self.id)
             return declar_info
 
+    def get_property_extern_declar_name(self):
+        extern_declar_info = ""
+        if self.type_name == "struct":
+            extern_declar_info += "extern DM_Property_t {};\n".format("{}_".format(self.prefix) + self.id)
+            extern_declar_info += "extern DM_Type_Struct_t st_{};\n".format("{}_".format(self.prefix) + self.id)
+            extern_declar_info += "extern DM_Node_t node_{}[{}];\n".format("{}_".format(self.prefix) + self.id, self.struct_member_num)
+            return extern_declar_info
+        elif self.type_name == "array":
+            if self.item_type == "struct":
+                extern_declar_info += "extern DM_Property_t {};\n".format("{}_".format(self.prefix) + self.id)
+                extern_declar_info += "extern DM_Array_Struct_t arr_st_{};\n".format("{}_".format(self.prefix) + self.id)
+                extern_declar_info += "extern DM_Type_Struct_t st_{}[{}];\n".format("{}_".format(self.prefix) + self.id, self.array_num)
+                extern_declar_info += "extern DM_Node_t node_{}[{}][{}];\n".format("{}_".format(self.prefix) + self.id, self.array_num, self.item_member_num)
+                return extern_declar_info
+            else:
+                extern_declar_info += "extern DM_Property_t {};\n".format("{}_".format(self.prefix) + self.id)
+                extern_declar_info += "extern DM_Array_Base_t arr_base_{};\n".format("{}_".format(self.prefix) + self.id)
+                extern_declar_info += "extern DM_Node_t node_{}[{}];\n".format("{}_".format(self.prefix) + self.id, self.array_num)
+                return extern_declar_info
+        else:
+            extern_declar_info += "extern DM_Property_t {};\n".format("{}_".format(self.prefix) + self.id)
+            extern_declar_info += "extern DM_Node_t node_{};\n".format("{}_".format(self.prefix) + self.id)
+            return extern_declar_info
+
     def get_property_config_member(self):
         config_info = ""
         loop = 0
@@ -205,6 +229,12 @@ class iot_event:
         declar_info += "DM_Event_t event_{}_{};\n".format(self.id, self.type_name)
         declar_info += "DM_Property_t {}[{}];\n".format(self.id, self.output_num)
         return declar_info
+
+    def get_event_extern_declar_name(self):
+        extern_declar_info = ""
+        extern_declar_info += "extern DM_Event_t event_{}_{};\n".format(self.id, self.type_name)
+        extern_declar_info += "extern DM_Property_t {}[{}];\n".format(self.id, self.output_num)
+        return extern_declar_info
 
     def get_event_config_member(self):
         config_info = ""
@@ -349,8 +379,9 @@ class iot_json_parse:
 
     def gen_data_config(self):
         declar = ""
+        declar += "#include \"dm_property.h\"\n"
         config = ""
-        config += "static void _init_data_template(){\n"
+        config += "void _init_data_template(){\n"
         for field in self.fields:
             declar += "{}\n".format(field.get_property_declar_name())
             config += "{}\n".format(field.get_property_config_member())
@@ -358,10 +389,20 @@ class iot_json_parse:
         result = declar + config
         return result
 
+    def gen_data_inc(self):
+        extern_data_inc = ""
+        extern_data_inc += "#include \"uiot_internal.h\"\n"
+        extern_data_inc += "#include \"dm_internal.h\"\n\n"
+        for field in self.fields:
+            extern_data_inc += "{}\n".format(field.get_property_extern_declar_name())
+        extern_data_inc += "void _init_data_template();\n"
+        return extern_data_inc
+
     def gen_event_config(self):
         properties_declar = ""
+        properties_declar += "#include \"dm_event.h\"\n"
         properties_config = ""
-        properties_config += "static void _init_event_property_template(){\n"
+        properties_config += "void _init_event_property_template(){\n"
         for event_properties in self.events_properties:
             properties_declar += "{}\n".format(event_properties.get_property_declar_name())
             properties_config += "{}\n".format(event_properties.get_property_config_member())
@@ -369,7 +410,7 @@ class iot_json_parse:
 
         event_declar = ""
         event_config = ""
-        event_config += "static void _init_event_template(){\n"
+        event_config += "void _init_event_template(){\n"
         event_config += "    _init_event_property_template();\n"
         for event_obj in self.events:
             event_declar += "{}\n".format(event_obj.get_event_declar_name())
@@ -378,29 +419,61 @@ class iot_json_parse:
         result = properties_declar + properties_config + event_declar + event_config
         return result
 
+    def gen_event_inc(self):
+        properties_extern_inc = ""
+        properties_extern_inc += "#include \"uiot_internal.h\"\n"
+        properties_extern_inc += "#include \"dm_internal.h\"\n\n"
+        for event_properties in self.events_properties:
+            properties_extern_inc += "{}\n".format(event_properties.get_property_extern_declar_name())
+        properties_extern_inc += "void _init_event_property_template();\n"
+
+        event_extern_inc = ""
+        for event_obj in self.events:
+            event_extern_inc += "{}\n".format(event_obj.get_event_extern_declar_name())
+        event_extern_inc += "void _init_event_template();\n"
+        result = properties_extern_inc + event_extern_inc
+        return result
+
     def gen_command_config(self):
         cmd_input_declar = ""
+        cmd_input_declar += "#include \"dm_command.h\"\n"
         cmd_input_config = ""
-        cmd_input_config += "static void _init_command_input_template(){\n"
+        cmd_input_config += "void _init_command_input_template(){\n"
         for command_input_property in self.input:
             cmd_input_declar += "{}\n".format(command_input_property.get_property_declar_name())
             cmd_input_config += "{}\n".format(command_input_property.get_property_config_member())
         cmd_input_config += "}\n"
 
         cmd_input_parse = ""
-        cmd_input_parse += "static void _input_parse_config(const char *cmd_id, const char *input){\n"
+        cmd_input_parse += "void _input_parse_config(const char *cmd_id, const char *input){\n"
         for cmd_input_parse_item in self.input_parse:
             cmd_input_parse += "{}\n".format(cmd_input_parse_item.get_input_config())
         cmd_input_parse += "}\n"
 
         cmd_output_declar = ""
         cmd_output_config = ""
-        cmd_output_config += "static void _init_command_output_template(){\n"
+        cmd_output_config += "void _init_command_output_template(){\n"
         for command_output_property in self.output:
             cmd_output_declar += "{}\n".format(command_output_property.get_property_declar_name())
             cmd_output_config += "{}\n".format(command_output_property.get_property_config_member())
         cmd_output_config += "}\n"
         result = cmd_input_declar + cmd_input_config + cmd_input_parse + cmd_output_declar + cmd_output_config
+        return result
+
+    def gen_command_inc(self):
+        cmd_input_extern_inc = ""
+        cmd_input_extern_inc += "#include \"uiot_internal.h\"\n"
+        cmd_input_extern_inc += "#include \"dm_internal.h\"\n\n"
+        for command_input_property in self.input:
+            cmd_input_extern_inc += "{}\n".format(command_input_property.get_property_extern_declar_name())
+        cmd_input_extern_inc += "void _init_command_input_template();\n"
+
+        cmd_output_extern_inc = ""
+        for command_output_property in self.output:
+            cmd_output_extern_inc += "{}\n".format(command_output_property.get_property_extern_declar_name())
+        cmd_output_extern_inc += "void _init_command_output_template();\n"
+        cmd_output_extern_inc += "void _input_parse_config(const char *cmd_id, const char *input);\n"
+        result = cmd_input_extern_inc + cmd_output_extern_inc
         return result
 
 def main():
@@ -441,25 +514,42 @@ def main():
     try:
         snippet = iot_json_parse(thingmodel)
 
-        output_data_config_file_name = args.dest + "/property_config.c"
+        output_data_config_file_name = args.dest + "/dm_property_config.c"
         output_file = open(output_data_config_file_name, "w")
         output_file.write("{}".format(snippet.gen_data_config()))
         output_file.close()
 
-        output_event_config_file_name = args.dest + "/event_config.c"
+        output_data_inc_file_name = args.dest + "/dm_property.h"
+        output_file = open(output_data_inc_file_name, "w")
+        output_file.write("{}".format(snippet.gen_data_inc()))
+        output_file.close()
+
+        output_event_config_file_name = args.dest + "/dm_event_config.c"
         output_file = open(output_event_config_file_name, "w")
         output_file.write("{}".format(snippet.gen_event_config()))
         output_file.close()
 
-        output_command_config_file_name = args.dest + "/command_config.c"
+        output_event_inc_file_name = args.dest + "/dm_event.h"
+        output_file = open(output_event_inc_file_name, "w")
+        output_file.write("{}".format(snippet.gen_event_inc()))
+        output_file.close()
+
+        output_command_config_file_name = args.dest + "/dm_command_config.c"
         output_file = open(output_command_config_file_name, "w")
         output_file.write("{}".format(snippet.gen_command_config()))
         output_file.close()
 
-        print(u"file {} release successful".format(output_data_config_file_name))
-        print(u"file {} release successful".format(output_event_config_file_name))
-        print(u"file {} release successful".format(output_command_config_file_name))
+        output_command_inc_file_name = args.dest + "/dm_command.h"
+        output_file = open(output_command_inc_file_name, "w")
+        output_file.write("{}".format(snippet.gen_command_inc()))
+        output_file.close()
 
+        print(u"file {} release successful".format(output_data_config_file_name))
+        print(u"file {} release successful".format(output_data_inc_file_name))
+        print(u"file {} release successful".format(output_event_config_file_name))
+        print(u"file {} release successful".format(output_event_inc_file_name))
+        print(u"file {} release successful".format(output_command_config_file_name))
+        print(u"file {} release successful".format(output_command_inc_file_name))
         return 0
     except ValueError as e:
         print(e)
