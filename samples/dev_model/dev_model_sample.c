@@ -177,6 +177,8 @@ int main(int argc, char **argv)
         HAL_SleepMs(2000);
     }
 
+    HAL_Free(property_payload);
+    HAL_Free(event_payload);
     //等待属性设置及命令下发
     IOT_DM_Yield(h_dm, 60000);
 
