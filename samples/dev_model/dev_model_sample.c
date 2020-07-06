@@ -86,9 +86,28 @@ int property_post_cb(const char *request_id, const int ret_code){
     return SUCCESS_RET;
 }
 
+int g_set_temp_correct = 0;
 int command_cb(const char *request_id, const char *identifier, const char *input, char *output){
     LOG_INFO("command_cb; request_id: %s; identifier: %s; input: %s", request_id, identifier, input);
-    HAL_Snprintf(output, 1000, "{\"result\":%d}", 1);
+    int temp = 0;
+    if((strlen(identifier) == strlen("set_temp_correction")) && (0 == strncmp(identifier, "set_temp_correction", strlen("set_temp_correction"))))
+    {
+        char *set_temp_correction_temp_correction = NULL;
+        set_temp_correction_temp_correction = LITE_json_value_of((char *)"temp_correction", (char *)input);
+        temp = atoi(set_temp_correction_temp_correction);
+        HAL_Free(set_temp_correction_temp_correction);
+    }
+    
+    if((temp <= 5)
+        && (temp >= -5))
+    {
+        g_set_temp_correct = temp;
+        HAL_Snprintf(output, 100, "\"effect_temp_correction\":%d, \"correction_result\":%d", g_set_temp_correct, 0);
+    }
+    else
+    {
+        HAL_Snprintf(output, 100, "\"effect_temp_correction\":%d, \"correction_result\":%d", g_set_temp_correct, 1);
+    }
     return SUCCESS_RET;
 }
 
@@ -144,10 +163,16 @@ int main(int argc, char **argv)
     IOT_DM_RegisterCallback(PROPERTY_SET , h_dm, property_set_cb);
     IOT_DM_Yield(h_dm, 200);
 
+    char *property_payload = (char *)HAL_Malloc(100);
+    char *event_payload = (char *)HAL_Malloc(100);
     for (i = 0; i < 20; i++) {
-        IOT_DM_Property_Report(h_dm, PROPERTY_POST, i * 2, "\"volume\": {\"Value\":50}");
-        IOT_DM_TriggerEvent(h_dm, i * 2 + 1, "low_power_alert", "\"power\": 5");
-
+        HAL_Snprintf(property_payload, 100, "\"humidity\": {\"Value\": %d}, \"temperature\": {\"Value\": %d}", i*5 + g_set_temp_correct, i*3);
+        IOT_DM_Property_Report(h_dm, PROPERTY_POST, i * 2, property_payload);
+        if(i * 5 + g_set_temp_correct >= 80)
+        {
+            HAL_Snprintf(event_payload, 100, "\"temperature\": %d", i*5 + g_set_temp_correct);
+            IOT_DM_TriggerEvent(h_dm, i * 2 + 1, "high_temp", event_payload);
+        }
         IOT_DM_Yield(h_dm, 200);
         HAL_SleepMs(2000);
     }
