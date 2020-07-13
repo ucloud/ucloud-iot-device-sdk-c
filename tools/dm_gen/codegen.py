@@ -100,12 +100,38 @@ class iot_filed:
     def get_property_extern_declar_name(self):
         extern_declar_info = ""
         if self.type_name == "struct":
+            struct_index = ""
+            loop = 0
+            for struct_member in self.struct_member:
+                if self.prefix == "property":
+                    struct_index = "{}".format((self.id + "_" + struct_member["Identifier"] + "_index").upper())
+                    extern_declar_info += "#define {} {}\n".format(struct_index, loop)
+                else:
+                    struct_index = "{}".format((self.prefix + "_" + struct_member["Identifier"] + "_index").upper())
+                    extern_declar_info += "#define {} {}\n".format(struct_index, loop)
+                loop += 1
             extern_declar_info += "extern DM_Property_t {};\n".format("{}_".format(self.prefix) + self.id)
             extern_declar_info += "extern DM_Type_Struct_t st_{};\n".format("{}_".format(self.prefix) + self.id)
             extern_declar_info += "extern DM_Node_t node_{}[{}];\n".format("{}_".format(self.prefix) + self.id, self.struct_member_num)
             return extern_declar_info
         elif self.type_name == "array":
             if self.item_type == "struct":
+                array_struct_index = ""
+                loop_array = 0
+                while loop_array < int(self.array_num):
+                    loop = 0
+                    for item_member in self.array_item:
+                        if loop_array == 0:
+                            if self.prefix == "property":
+                                array_struct_index = "{}".format(
+                                    (self.id + "_" + item_member["Identifier"] + "_index").upper())
+                                extern_declar_info += "#define {} {}\n".format(array_struct_index, loop)
+                            else:
+                                array_struct_index = "{}".format(
+                                    (self.prefix + "_" + item_member["Identifier"] + "_index").upper())
+                                extern_declar_info += "#define {} {}\n".format(array_struct_index, loop)
+                        loop += 1
+                    loop_array += 1
                 extern_declar_info += "extern DM_Property_t {};\n".format("{}_".format(self.prefix) + self.id)
                 extern_declar_info += "extern DM_Array_Struct_t arr_st_{};\n".format("{}_".format(self.prefix) + self.id)
                 extern_declar_info += "extern DM_Type_Struct_t st_{}[{}];\n".format("{}_".format(self.prefix) + self.id, self.array_num)
@@ -149,14 +175,11 @@ class iot_filed:
             for struct_member in self.struct_member:
                 if self.prefix == "property":
                     struct_index = "{}".format((self.id + "_" + struct_member["Identifier"] + "_index").upper())
-                    config_info += "    #define {} {}\n".format(struct_index, loop)
                 else:
                     struct_index = "{}".format((self.prefix + "_" + struct_member["Identifier"] + "_index").upper())
-                    config_info += "    #define {} {}\n".format(struct_index, loop)
                 config_info += "    node_{}[{}].base_type = {};\n".format("{}_".format(self.prefix) + self.id, struct_index, type_enum[struct_member["DataType"]["Type"]])
                 config_info += "    node_{}[{}].key = \"{}\";\n".format("{}_".format(self.prefix) + self.id, struct_index, struct_member["Identifier"])
                 config_info += "    node_{}[{}].value.{} = {};\n".format("{}_".format(self.prefix) + self.id, struct_index, "{}_value".format(struct_member["DataType"]["Type"]), default_value_enum[struct_member["DataType"]["Type"]])
-                loop += 1
 
             config_info += "    st_{}.key = \"{}\";\n".format("{}_".format(self.prefix) + self.id, self.id)
             config_info += "    st_{}.value = node_{};\n".format("{}_".format(self.prefix) + self.id, "{}_".format(self.prefix) + self.id)
@@ -175,14 +198,11 @@ class iot_filed:
                         if loop_array == 0:
                             if self.prefix == "property":
                                 array_struct_index = "{}".format((self.id + "_" + item_member["Identifier"] + "_index").upper())
-                                config_info += "    #define {} {}\n".format(array_struct_index, loop)
                             else:
                                 array_struct_index = "{}".format((self.prefix + "_" + item_member["Identifier"] + "_index").upper())
-                                config_info += "    #define {} {}\n".format(array_struct_index, loop)
                         config_info += "    node_{}[{}][{}].base_type = {};\n".format("{}_".format(self.prefix) + self.id, loop_array, array_struct_index, type_enum[item_member["DataType"]["Type"]])
                         config_info += "    node_{}[{}][{}].key = \"{}\";\n".format("{}_".format(self.prefix) + self.id, loop_array, array_struct_index, item_member["Identifier"])
                         config_info += "    node_{}[{}][{}].value.{} = {};\n".format("{}_".format(self.prefix) + self.id, loop_array, array_struct_index, "{}_value".format(item_member["DataType"]["Type"]), default_value_enum[item_member["DataType"]["Type"]])
-                        loop += 1
 
                     config_info += "    st_{}[{}].value = node_{}[{}];\n".format("{}_".format(self.prefix) + self.id, loop_array, "{}_".format(self.prefix) + self.id, loop_array)
                     config_info += "    st_{}[{}].num = {};\n".format("{}_".format(self.prefix) + self.id, loop_array, self.item_member_num)
