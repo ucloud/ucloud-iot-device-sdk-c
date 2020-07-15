@@ -116,7 +116,7 @@ int32_t HAL_TCP_Write(_IN_ uintptr_t fd, _IN_ unsigned char *buf, _IN_ size_t le
         FD_SET(tcp_fd, &sets);
     
         tv.tv_sec = 0;
-        tv.tv_usec = timeout_ms;
+        tv.tv_usec = timeout_ms * 1000;
         ret = select(tcp_fd + 1, NULL, &sets, NULL, &tv);
         if (ret > 0) {
             if (0 == FD_ISSET(tcp_fd, &sets)) {
@@ -183,7 +183,7 @@ int32_t HAL_TCP_Read(_IN_ uintptr_t fd, _OU_ unsigned char *buf, _IN_ size_t len
         FD_SET(tcp_fd, &sets);
 
         tv.tv_sec = 0;
-        tv.tv_usec = timeout_ms;
+        tv.tv_usec = timeout_ms * 1000;
         int ret = lwip_select(tcp_fd + 1, &sets, NULL, NULL, &tv);
         if (ret > 0) {
             ret = lwip_recv(tcp_fd, buf + len_recv, len - len_recv, 0);
