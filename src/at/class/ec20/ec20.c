@@ -353,12 +353,10 @@ static int urc_qird_recv_func(const char *data, uint32_t size)
     //读取收到的数据
     if(2 == sscanf(cmd,"AT+QIRD=%d,%d\r\n",&link_num,&recv_data_num))
     {
-        printf("read link:%d num:%d \r\n",link_num,recv_data_num);
         if(recv_data_num > 0)
         {
             if(1 == sscanf(temp_string," %d\r\n",&actual_len))
             {   
-                printf("actual num:%d \r\n",actual_len);
                 if(0 == actual_len)
                     return SUCCESS_RET;
             }
@@ -376,7 +374,6 @@ static int urc_qird_recv_func(const char *data, uint32_t size)
         {
             if(3 == sscanf(temp_string," %d,%d,%d\r\n", &total_len, &read_len, &unread_len))
             {   
-                printf("total_len:%d read_len:%d unread_len:%d\r\n",total_len, read_len, unread_len);
                 ec20_recv_len[link_num] = unread_len;
             }
         }
