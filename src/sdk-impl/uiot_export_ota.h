@@ -89,6 +89,7 @@ typedef struct  {
 
     char                    *url;                    /* point to URL */
     char                    *download_file_name;     /* download file name */
+    char                    *module;                 /* download module name */
     char                    *version;                /* point to version */
     char                    *md5sum;                 /* MD5 string */
 
@@ -133,12 +134,13 @@ int IOT_OTA_Destroy(void *handle);
  *        NOTE: 进行OTA前请保证先上报一次本地固件的版本信息，以便服务器获取到设备目前的固件信息
  *
  * @param handle:   指定OTA模块
+ * @param module:   版本所属类型 
  * @param version:  以字符串格式指定固件版本
  *
  * @retval > 0 : 对应publish的packet id
  * @retval < 0 : 失败，返回具体错误码
  */
-int IOT_OTA_ReportVersion(void *handle, const char *version);
+int IOT_OTA_ReportVersion(void *handle, const char *module, const char *version);
 
 
 /**
@@ -239,12 +241,13 @@ int IOT_OTA_GetLastError(void *handle);
  * @brief 请求固件更新消息。设备离线时，不能接收服务端推送的升级消息。通过MQTT协议接入物联网平台的设备再次上线后，主动请求固件更新消息
  *
  * @param handle:   指定OTA模块
+ * @param module:   版本所属类型 
  * @param version:  当前固件版本号
  *
  * @retval > 0 : 对应publish的packet id
  * @retval < 0 : 失败，返回具体错误码
  */
-int IOT_OTA_RequestFirmware(void *handle, const char *version);
+int IOT_OTA_RequestFirmware(void *handle, const char *module, const char *version);
 
 /**
  * @brief 下载固件，下载结束后重启设备
