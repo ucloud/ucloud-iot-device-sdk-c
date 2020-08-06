@@ -59,22 +59,69 @@ static void print_progress(uint32_t percent)
 
     progress_sign[sizeof(progress_sign) - 1] = '\0';
 
-    HAL_Printf("Download: [%s] %d%%\r\n", progress_sign, percent);
+    LOG_INFO("Download: [%s] %d%%\r\n", progress_sign, percent);
 }
 
-static void _ota_callback(void *pContext, const char *msg, uint32_t msg_len) {
+static void _ota_push_upload_msg(void *handle, const char *msg, uint32_t msg_len)
+{
+    OTA_Struct_t *h_ota = (OTA_Struct_t *) handle;
+    OTA_MQTT_Struct_t *h_osc = h_ota->ch_signal;
+
+    OTA_UPLOAD_Msg *push_msg = (OTA_UPLOAD_Msg *)HAL_Malloc(sizeof(OTA_UPLOAD_Msg));
+    if (NULL == (push_msg->payload = HAL_Malloc(msg_len + 1))) {
+        LOG_ERROR("HAL_Malloc failed!");
+        return;
+    }
+    
+    HAL_Snprintf(push_msg->payload, msg_len + 1, "%s", msg);
+    push_msg->payload_len = msg_len;
+    
+    ListNode *node = list_node_new((void *)push_msg);
+    if (NULL == node) 
+    {
+        LOG_ERROR("run list_node_new is error!\n");
+        HAL_Free(push_msg->payload);
+        HAL_Free(push_msg);
+        return;
+    }
+    
+    HAL_MutexLock(h_osc->msg_mutex);
+    list_rpush(h_osc->msg_list, node);
+    HAL_MutexUnlock(h_osc->msg_mutex);
+    return;
+}
+
+static void _ota_pop_upload_msg(void *handle)
+{
+    OTA_Struct_t *h_ota = (OTA_Struct_t *) handle;
+    OTA_MQTT_Struct_t *h_osc = h_ota->ch_signal;
+
+    if(h_osc->msg_list->len > 0)
+    {
+        HAL_MutexLock(h_osc->msg_mutex);
+        ListNode *node = list_lpop(h_osc->msg_list);
+        HAL_MutexUnlock(h_osc->msg_mutex);            
+        OTA_UPLOAD_Msg *pop_msg = node->val;
+        h_osc->msg_callback(h_ota, pop_msg->payload, pop_msg->payload_len);
+        HAL_Free(pop_msg->payload);
+        HAL_Free(pop_msg);
+        HAL_Free(node);
+        return;
+    }
+    return;
+}
+
+static void _ota_callback(void *pContext, const char *msg, uint32_t msg_len) 
+{
     char *msg_method = NULL;
     char *msg_str = NULL;
-
+    char *msg_module = NULL;        
+    char *msg_ver = NULL;
+    
     OTA_Struct_t *h_ota = (OTA_Struct_t *) pContext;
 
     if (h_ota == NULL || msg == NULL) {
         LOG_ERROR("pointer is NULL");
-        return;
-    }
-
-    if (h_ota->state == OTA_STATE_FETCHING) {
-        LOG_INFO("In OTA_STATE_FETCHING state");
         return;
     }
 
@@ -90,35 +137,66 @@ static void _ota_callback(void *pContext, const char *msg, uint32_t msg_len) {
         goto do_exit;
     }
 
-    if (strcmp(msg_method, UPDATE_FIRMWARE_METHOD) != 0) {
-        LOG_ERROR("Message type error! type: %s", msg_method);
+    if((NULL == h_ota->ch_fetch) && (0 == strcmp(msg_method, CANCEL_UPDATE_METHOD)))
+    {    
+        LOG_ERROR("download is canceled!");
         goto do_exit;
     }
 
-    if (SUCCESS_RET != ota_lib_get_params(msg_str, &h_ota->url, &h_ota->download_file_name, &h_ota->version,
-                                &h_ota->md5sum, &h_ota->size_file)) {
-        LOG_ERROR("Get firmware parameter failed");
-        goto do_exit;
-    }
+    if (0 == strcmp(msg_method, UPDATE_FIRMWARE_METHOD)) 
+    {    
+        /* downloading, push update msg to list */
+        if (h_ota->state == OTA_STATE_FETCHING) {                 
+            LOG_INFO("In OTA_STATE_FETCHING state");
+            _ota_push_upload_msg(h_ota, msg_str, msg_len);
+            goto do_exit;
+        }
+                
+        if (SUCCESS_RET != ota_lib_get_params(msg_str, &h_ota->url, &h_ota->module, &h_ota->download_file_name, &h_ota->version, &h_ota->md5sum, &h_ota->size_file)) {
+            LOG_ERROR("Get firmware parameter failed");
+            goto do_exit;
+        }
 
-    if (NULL == (h_ota->ch_fetch = ofc_init(h_ota->url))) {
-        LOG_ERROR("Initialize fetch module failed");
-        goto do_exit;
-    }
+        if (NULL == (h_ota->ch_fetch = ofc_init(h_ota->url))) {
+            LOG_ERROR("Initialize fetch module failed");
+            goto do_exit;
+        }
 
-    if (SUCCESS_RET != ofc_connect(h_ota->ch_fetch)) {
-        LOG_ERROR("Connect fetch module failed");
-        h_ota->state = OTA_STATE_DISCONNECTED;
-        goto do_exit;
-    }
+        if (SUCCESS_RET != ofc_connect(h_ota->ch_fetch)) {
+            LOG_ERROR("Connect fetch module failed");
+            h_ota->state = OTA_STATE_DISCONNECTED;
+            goto do_exit;
+        }
 
-    h_ota->state = OTA_STATE_FETCHING;
-    
-    if(SUCCESS_RET != IOT_OTA_fw_download(h_ota)) {
-        LOG_ERROR("download file failed");
-        h_ota->state = OTA_STATE_DISCONNECTED;
-    }
+        h_ota->state = OTA_STATE_FETCHING;
+        
+        if(SUCCESS_RET != IOT_OTA_fw_download(h_ota)) {
+            LOG_ERROR("download file failed");
+            h_ota->state = OTA_STATE_DISCONNECTED;
+        }
 
+        /* download over, pop first pushed msg to download */
+        _ota_pop_upload_msg(h_ota);
+        
+    }
+    else if(0 == strcmp(msg_method, CANCEL_UPDATE_METHOD))
+    {            
+        if (SUCCESS_RET != ota_lib_get_msg_module_ver(msg_str, &msg_module, &msg_ver)) {
+            LOG_ERROR("Get message module failed!");               
+            HAL_Free(msg_module);        
+            HAL_Free(msg_ver);
+            goto do_exit;
+        }
+
+        if((0 == strcmp(msg_module, h_ota->module)) && (0 == strcmp(msg_ver, h_ota->version)))
+        {                   
+            OTA_Http_Client *h_ofc = (OTA_Http_Client *)h_ota->ch_fetch;
+            http_client_close(&h_ofc->http);
+            h_ota->state = OTA_STATE_DISCONNECTED;
+        }
+        HAL_Free(msg_module);        
+        HAL_Free(msg_ver);
+    }
 do_exit:
     HAL_Free(msg_str);
     HAL_Free(msg_method);
@@ -152,7 +230,7 @@ int IOT_OTA_ReportProgress(void *handle, int progress, IOT_OTA_ProgressState sta
         return ERR_OTA_NO_MEMORY;
     }
 
-    ret = ota_lib_gen_upstream_msg(msg_report, OTA_UPSTREAM_MSG_BUF_LEN, h_ota->version, progress, (IOT_OTA_UpstreamMsgType)state);
+    ret = ota_lib_gen_upstream_msg(msg_report, OTA_UPSTREAM_MSG_BUF_LEN, h_ota->module, h_ota->version, progress, (IOT_OTA_UpstreamMsgType)state);
     if (SUCCESS_RET != ret) {
         LOG_ERROR("generate reported message failed");
         h_ota->err = ret;
@@ -174,7 +252,7 @@ do_exit:
 }
 
 
-static int send_upstream_msg_with_version(void *handle, const char *version, IOT_OTA_UpstreamMsgType reportType)
+static int send_upstream_msg_with_version(void *handle, const char *module, const char *version, IOT_OTA_UpstreamMsgType reportType)
 {
     POINTER_VALID_CHECK(handle, ERR_OTA_INVALID_PARAM);
     POINTER_VALID_CHECK(version, ERR_OTA_INVALID_PARAM);
@@ -202,7 +280,7 @@ static int send_upstream_msg_with_version(void *handle, const char *version, IOT
         return ERR_OTA_NO_MEMORY;
     }
 
-    ret = ota_lib_gen_upstream_msg(msg_upstream, OTA_UPSTREAM_MSG_BUF_LEN, version, 0, reportType);
+    ret = ota_lib_gen_upstream_msg(msg_upstream, OTA_UPSTREAM_MSG_BUF_LEN, module, version, 0, reportType);
     if (SUCCESS_RET != ret) {
         LOG_ERROR("generate upstream message failed");
         h_ota->err = ret;
@@ -291,6 +369,10 @@ int IOT_OTA_Destroy(void *handle)
         HAL_Free(h_ota->url);
     }
 
+    if (NULL != h_ota->module) {
+        HAL_Free(h_ota->module);
+    }
+
     if (NULL != h_ota->version) {
         HAL_Free(h_ota->version);
     }
@@ -312,28 +394,31 @@ void IOT_OTA_Clear(void *handle)
     OTA_Struct_t *h_ota = (OTA_Struct_t *)handle;
     
     ofc_deinit(h_ota->ch_fetch);
+    
     memset(h_ota->url, 0, strlen(h_ota->url));
+    memset(h_ota->module, 0, strlen(h_ota->module));
     memset(h_ota->download_file_name, 0, strlen(h_ota->download_file_name));
     memset(h_ota->version, 0, strlen(h_ota->version));    
     memset(h_ota->md5sum, 0, strlen(h_ota->md5sum));
+        
     h_ota->size_last_fetched = 0;
     h_ota->size_fetched = 0;
     h_ota->size_file = 0;    
-    ota_lib_md5_deinit(h_ota->md5);    
+    ota_lib_md5_deinit(h_ota->md5);   
     h_ota->md5 = ota_lib_md5_init();    
     h_ota->state = OTA_STATE_INITED;
     return;
 }
 
-int IOT_OTA_ReportVersion(void *handle, const char *version)
+int IOT_OTA_ReportVersion(void *handle, const char *module, const char *version)
 {
-    return send_upstream_msg_with_version(handle, version, OTA_REPORT_VERSION);
+    return send_upstream_msg_with_version(handle, module, version, OTA_REPORT_VERSION);
 }
 
 
-int IOT_OTA_RequestFirmware(void *handle, const char *version)
+int IOT_OTA_RequestFirmware(void *handle, const char *module, const char *version)
 {
-    return send_upstream_msg_with_version(handle, version, OTA_REQUEST_FIRMWARE);
+    return send_upstream_msg_with_version(handle, module, version, OTA_REQUEST_FIRMWARE);
 }
 
 int IOT_OTA_ReportSuccess(void *handle, const char *version)
@@ -344,7 +429,7 @@ int IOT_OTA_ReportSuccess(void *handle, const char *version)
     {
         h_ota->fetch_callback_func(handle, OTA_REPORT_SUCCESS);
     }
-    return send_upstream_msg_with_version(handle, version, OTA_REPORT_SUCCESS);
+    return send_upstream_msg_with_version(handle, h_ota->module, version, OTA_REPORT_SUCCESS);
 }
 
 int IOT_OTA_ReportFail(void *handle, IOT_OTA_ReportErrCode err_code)
@@ -367,7 +452,7 @@ int IOT_OTA_ReportFail(void *handle, IOT_OTA_ReportErrCode err_code)
         return ERR_OTA_NO_MEMORY;
     }
 
-    ret = ota_lib_gen_upstream_msg(msg_upstream, OTA_UPSTREAM_MSG_BUF_LEN, "", 0, (IOT_OTA_UpstreamMsgType)err_code);
+    ret = ota_lib_gen_upstream_msg(msg_upstream, OTA_UPSTREAM_MSG_BUF_LEN, h_ota->module, "", 0, (IOT_OTA_UpstreamMsgType)err_code);
     if (SUCCESS_RET != ret) {
         LOG_ERROR("generate upstream message failed");
         h_ota->err = ret;
@@ -429,6 +514,14 @@ int IOT_OTA_IsFetchFinish(void *handle)
     return (OTA_STATE_FETCHED == h_ota->state);
 }
 
+int IOT_OTA_Yield(void *handle, uint32_t timeout_ms)
+{
+    POINTER_VALID_CHECK(handle, FAILURE_RET);
+
+    OTA_Struct_t *h_ota = (OTA_Struct_t*) handle;
+
+    return IOT_MQTT_Yield(((OTA_MQTT_Struct_t *)h_ota->ch_signal)->mqtt, timeout_ms);
+}
 
 int IOT_OTA_FetchYield(void *handle, char *buf, size_t buf_len, size_t range_len, uint32_t timeout_s)
 {
@@ -450,7 +543,7 @@ int IOT_OTA_FetchYield(void *handle, char *buf, size_t buf_len, size_t range_len
         /* fetch fail,try again utill 5 time */
         ret = ofc_fetch(h_ota->ch_fetch, h_ota->size_fetched ,buf, buf_len, range_len, timeout_s);
         /* range download send request too often maybe cutdown by server, need reconnect and continue to download. */
-        if(ret == ERR_HTTP_CONN_ERROR) {
+        if((ret == ERR_HTTP_CONN_ERROR) && (h_ota->state != OTA_STATE_DISCONNECTED)) {
             ofc_deinit(h_ota->ch_fetch);
             h_ota->ch_fetch = ofc_init(h_ota->url);
             ofc_connect(h_ota->ch_fetch);            
@@ -640,7 +733,9 @@ int IOT_OTA_fw_download(void *handle)
                 LOG_ERROR("write data to file failed");
                 goto __exit;
             }
-            total_length += length;
+            total_length += length;    
+            //wait cancel cmd
+            IOT_OTA_Yield(handle, 100);
         }
         else
         {

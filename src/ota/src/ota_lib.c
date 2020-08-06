@@ -64,6 +64,22 @@ int ota_lib_get_msg_type(char *json, char **type) {
     FUNC_EXIT_RC(SUCCESS_RET);
 }
 
+int ota_lib_get_msg_module_ver(char *json, char **module, char **ver) {
+    FUNC_ENTRY;
+
+    if (NULL == (*module = LITE_json_value_of(MODULE_FIELD, json))) {
+        LOG_ERROR("get value of module key failed");
+        FUNC_EXIT_RC(ERR_OTA_GENERAL_FAILURE);
+    }
+
+    if (NULL == (*ver = LITE_json_value_of(VERSION_FIELD, json))) {        
+        LOG_ERROR("get value of ver key failed");
+        FUNC_EXIT_RC(ERR_OTA_GENERAL_FAILURE);
+    }
+    
+    FUNC_EXIT_RC(SUCCESS_RET);
+}
+
 static int _utils_parse_name(const char *url, char *name) {
     char *host_ptr = (char *) strstr(url, "://");
     uint32_t name_len = 0;
@@ -93,15 +109,26 @@ static int _utils_parse_name(const char *url, char *name) {
     return SUCCESS_RET;
 }
 
-int ota_lib_get_params(char *json, char **url, char **file_name, char **version, char **md5,
+int ota_lib_get_params(char *json, char **url, char **module, char **file_name, char **version, char **md5,
                        uint32_t *fileSize) {
     FUNC_ENTRY;
 
+    char *module_str;
     char *file_size_str;
     char *version_str;
     char *url_str;
     char *md5_str;
     char *name_str;
+
+    /* get module */
+    if (NULL == (module_str = LITE_json_value_of(MODULE_FIELD, json))) {
+        LOG_ERROR("get value of module key failed");
+        FUNC_EXIT_RC(ERR_OTA_GENERAL_FAILURE);
+    }
+    if (NULL != *module) {
+        HAL_Free(*module);
+    }
+    *module = module_str;
 
     /* get version */
     if (NULL == (version_str = LITE_json_value_of(VERSION_FIELD, json))) {
@@ -156,7 +183,7 @@ int ota_lib_get_params(char *json, char **url, char **file_name, char **version,
     FUNC_EXIT_RC(SUCCESS_RET);
 }
 
-int ota_lib_gen_upstream_msg(char *buf, size_t bufLen, const char *version, int progress,
+int ota_lib_gen_upstream_msg(char *buf, size_t bufLen, const char *module, const char *version, int progress,
                              IOT_OTA_UpstreamMsgType reportType) {
     FUNC_ENTRY;
 
@@ -173,23 +200,23 @@ int ota_lib_gen_upstream_msg(char *buf, size_t bufLen, const char *version, int 
             break;
 
         case OTA_REPORT_DOWNLOADING:
-            ret = HAL_Snprintf(buf, bufLen, REPORT_PROGRESS_MSG_TEMPLATE, "downloading", progress);
+            ret = HAL_Snprintf(buf, bufLen, REPORT_PROGRESS_MSG_TEMPLATE, "downloading", progress, module, version);
             break;
 
         case OTA_REPORT_BURNING:
-            ret = HAL_Snprintf(buf, bufLen, REPORT_PROGRESS_MSG_TEMPLATE, "burning", progress);
+            ret = HAL_Snprintf(buf, bufLen, REPORT_PROGRESS_MSG_TEMPLATE, "burning", progress, module, version);
             break;
 
         case OTA_REPORT_SUCCESS:
-            ret = HAL_Snprintf(buf, bufLen, REPORT_SUCCESS_MSG_TEMPLATE, version);
+            ret = HAL_Snprintf(buf, bufLen, REPORT_SUCCESS_MSG_TEMPLATE, module, version);
             break;
 
         case OTA_REQUEST_FIRMWARE:
-            ret = HAL_Snprintf(buf, bufLen, REQUEST_FIRMWARE_MSG_TEMPLATE, version);
+            ret = HAL_Snprintf(buf, bufLen, REQUEST_FIRMWARE_MSG_TEMPLATE, module, version);
             break;
 
         case OTA_REPORT_VERSION:
-            ret = HAL_Snprintf(buf, bufLen, REPORT_VERSION_MSG_TEMPLATE, version);
+            ret = HAL_Snprintf(buf, bufLen, REPORT_VERSION_MSG_TEMPLATE, module, version);
             break;
 
         default: FUNC_EXIT_RC(ERR_OTA_GENERAL_FAILURE);
