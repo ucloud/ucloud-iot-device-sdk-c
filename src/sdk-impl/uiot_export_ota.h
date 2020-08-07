@@ -107,14 +107,13 @@ typedef struct  {
  * @brief 初始化OTA模块和返回句柄
  *        MQTT客户端必须在调用此接口之前进行初始化
  *
- * @param product_sn:               指定产品序列号
- * @param device_sn:                指定设备序列号
- * @param ch_signal:                指定的信号通道.
- * @param fetch_callback_func:      ota下载完成后的回调函数指针. 
+ * @param product_sn:   指定产品序列号
+ * @param device_sn:    指定设备序列号
+ * @param ch_signal:    指定的信号通道.
  *
  * @retval : 成功则返回句柄，失败返回NULL
  */
-void *IOT_OTA_Init(const char *product_sn, const char *device_sn, void *ch_signal, IOT_OTA_FetchCallback fetch_callback_func);
+void *IOT_OTA_Init(const char *product_sn, const char *device_sn, void *ch_signal);
 
 
 /**

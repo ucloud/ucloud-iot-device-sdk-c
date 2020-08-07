@@ -301,7 +301,7 @@ do_exit:
     return ret;
 }
 
-void *IOT_OTA_Init(const char *product_sn, const char *device_sn, void *ch_signal, IOT_OTA_FetchCallback fetch_callback_func)
+void *IOT_OTA_Init(const char *product_sn, const char *device_sn, void *ch_signal)
 {
     POINTER_VALID_CHECK(product_sn, NULL);
     POINTER_VALID_CHECK(device_sn, NULL);
@@ -321,8 +321,6 @@ void *IOT_OTA_Init(const char *product_sn, const char *device_sn, void *ch_signa
         LOG_ERROR("initialize signal channel failed");
         goto do_exit;
     }
-
-    h_ota->fetch_callback_func = fetch_callback_func;
     
     h_ota->md5 = ota_lib_md5_init();
     if (NULL == h_ota->md5) {
@@ -702,15 +700,17 @@ int IOT_OTA_fw_download(void *handle)
     int file_size = 0, length, firmware_valid, total_length = 0;
     char *buffer_read = NULL;
     OTA_Struct_t * h_ota = (OTA_Struct_t *) handle;
+    void * download_handle = NULL;
     // 用于存放云端下发的固件版本
     char msg_version[33];
-    void *fp;
 
     IOT_OTA_Ioctl(h_ota, OTA_IOCTL_FILE_SIZE, &file_size, 4);
-    
-    if (NULL == (fp = HAL_FileOpen(h_ota->download_file_name))) {
-        LOG_ERROR("open file failed");        
-        return ERR_OTA_INVALID_PARAM;
+
+    download_handle = HAL_Download_Init(h_ota->download_file_name);
+    if(download_handle == NULL)
+    {
+        ret = FAILURE_RET;
+        goto __exit;
     }
 
     buffer_read = (char *)HAL_Malloc(HTTP_OTA_BUFF_LEN);
@@ -729,11 +729,12 @@ int IOT_OTA_fw_download(void *handle)
         if (length > 0)
         {
             /* Write the data to the corresponding partition address */
-            if (SUCCESS_RET != HAL_FileWrite(fp, total_length, buffer_read, length)) {
-                LOG_ERROR("write data to file failed");
+            if(HAL_Download_Write(download_handle, total_length, buffer_read, length) == FAILURE_RET){
+                ret = FAILURE_RET;
                 goto __exit;
             }
-            total_length += length;    
+
+            total_length += length;
             //wait cancel cmd
             IOT_OTA_Yield(handle, 100);
         }
@@ -758,6 +759,9 @@ int IOT_OTA_fw_download(void *handle)
             IOT_OTA_Ioctl(h_ota, OTA_IOCTL_VERSION, msg_version, 33);
             IOT_OTA_ReportSuccess(h_ota, msg_version);
         }
+        
+        if(HAL_Download_End(download_handle))
+            ret = FAILURE_RET;
 
         LOG_INFO("Download firmware to flash success.");
     }
@@ -766,7 +770,6 @@ __exit:
     if (buffer_read != NULL)
         HAL_Free(buffer_read);    
     IOT_OTA_Clear(h_ota);
-    HAL_FileClose(fp);
     
     return ret;
 }

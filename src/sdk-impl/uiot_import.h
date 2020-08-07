@@ -129,30 +129,6 @@ uint64_t HAL_UptimeMs(void);
 void HAL_SleepMs(_IN_ uint32_t ms);
 
 /**
- * @brief 打开要写的文件.
- *
- * @param file_path 文件路径.
- */
-void *HAL_FileOpen(char *file_path);
-
-/**
- * @brief 写文件.
- *
- * @param dest      目标文件指针.
- * @param offset    目标文件指针已经写入的文件大小.
- * @param src       存放文件内容的指针.
- * @param size      要写入内容的字节数.
- */
-int HAL_FileWrite(void *dest, uint32_t offset, void *src, uint32_t size);
-
-/**
- * @brief 关闭要写的文件.
- *
- * @param fp 文件指针.
- */
-void HAL_FileClose(void *fp);
-
-/**
  * @brief 获取产品序列号。从设备持久化存储（例如FLASH）中读取产品序列号。
  *
  * @param productSN  存放ProductSN的字符串缓冲区
@@ -341,19 +317,99 @@ int32_t HAL_TCP_Write(_IN_ uintptr_t fd, _IN_ unsigned char *buf, _IN_ size_t le
  * @return                  <0: TCP读取错误; =0: TCP读超时, 且没有读取任何数据; >0: TCP成功读取的字节数
  */
 int32_t HAL_TCP_Read(_IN_ uintptr_t fd, _OU_ unsigned char *buf, _IN_ size_t len, _IN_ uint32_t timeout_ms);
+
+/**
+ * @brief 下载的准备工作
+ *
+ * @param name             文件名
+ * @return                 文件描述符
+ */
+void * HAL_Download_Init(_IN_ void * name);
+
+/**
+* @brief 将长度为length的buffer_read的数据写入到FLASH中
+ *
+ * @param    handle          文件描述符
+ * @param    total_length    未用到
+ * @param    buffer_read     数据的指针
+ * @param    length          数据的长度，单位为字节
+ * @return                  
+ */
+int HAL_Download_Write(_IN_ void * handle,_IN_ uint32_t total_length,_IN_ char *buffer_read,_IN_ uint32_t length);
+
+/**
+ * @brief STM32F767 FLASH的information分区的下载标志置位成功
+ *
+ * @param    handle          文件描述符
+ * @return                   -1失败 0成功
+ */
+int HAL_Download_End(_IN_ void * handle);
+
 #ifdef SUPPORT_AT_CMD
+
+/**
+ * @brief 通讯模组初始化。
+ *
+ * @param   无
+ * @return  无
+ */
 void HAL_AT_Init();
 
+/**
+ * @brief 向指定的通讯模组读AT命令执行结果。
+ *
+ * @param pNetwork          网络句柄
+ * @param buf               指向数据接收缓冲区的指针
+ * @param len               数据接收缓冲区的字节大小
+ * @return                  <0: TCP读取错误; =0: TCP读超时, 且没有读取任何数据; >0: TCP成功读取的字节数
+ */
 int HAL_AT_Read(_IN_ utils_network_pt pNetwork, _OU_ unsigned char *buffer, _IN_ size_t len);
 
+/**
+ * @brief 向指定的通讯模组写AT命令。
+ *
+ * @param buf               指向数据发送缓冲区的指针
+ * @param len               数据发送缓冲区的字节大小
+ * @return                  <0: TCP写入错误; =0: TCP写超时, 且没有写入任何数据; >0: TCP成功写入的字节数
+ */
 int HAL_AT_Write(_IN_ unsigned char *buffer, _IN_ size_t len);
 
+/**
+ * @brief 断开TCP连接, 并释放相关对象资源。
+ *
+ * @param pNetwork  网络句柄
+ * @return          成功返回SUCCESS，失败返回FAILURE
+ */
 int HAL_AT_TCP_Disconnect(utils_network_pt pNetwork);
 
+/**
+ * @brief   建立TCP连接。根据指定的HOST地址, 服务器端口号建立TCP连接, 返回对应的连接句柄。
+ *
+ * @param pNetwork  网络句柄
+ * @param host      指定的TCP服务器网络地址
+ * @param port      指定的TCP服务器端口
+ * @return          连接成功, 返回TCP连接句柄，连接失败，返回NULL
+ */
 int HAL_AT_TCP_Connect(_IN_ utils_network_pt pNetwork, _IN_ const char *host, _IN_ uint16_t port); 
 
+/**
+ * @brief 向指定的TCP连接写入数据。
+ *
+ * @param pNetwork          网络句柄
+ * @param buf               指向数据发送缓冲区的指针
+ * @param len               数据发送缓冲区的字节大小
+ * @return                  <0: TCP写入错误; =0: TCP写超时, 且没有写入任何数据; >0: TCP成功写入的字节数
+ */
 int HAL_AT_Write_Tcp(_IN_ utils_network_pt pNetwork, _IN_ unsigned char *buffer, _IN_ size_t len);
 
+/**
+ * @brief 从指定的TCP连接读取数据。
+ *
+ * @param pNetwork          网络句柄
+ * @param buf               指向数据接收缓冲区的指针
+ * @param len               数据接收缓冲区的字节大小
+ * @return                  <0: TCP读取错误; =0: TCP读超时, 且没有读取任何数据; >0: TCP成功读取的字节数
+ */
 int HAL_AT_Read_Tcp(_IN_ utils_network_pt pNetwork, _IN_ unsigned char *buffer, _IN_ size_t len);
 #endif
 
