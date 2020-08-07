@@ -97,13 +97,6 @@ static int _setup_connect_init_params(MQTTInitParams* initParams)
     return SUCCESS_RET;
 }
 
-int IOT_OTA_FetchCallback_func(void *handle, IOT_OTA_UpstreamMsgType state)
-{
-    OTA_Struct_t * h_ota = (OTA_Struct_t *) handle;
-    printf("file:%s, state:%d\r\n",h_ota->download_file_name, state);
-    return SUCCESS_RET;
-}
-
 int main(int argc, char **argv)
 {
     int rc;
@@ -122,7 +115,7 @@ int main(int argc, char **argv)
         return FAILURE_RET;
     }
 
-    void *h_ota = IOT_OTA_Init(UIOT_MY_PRODUCT_SN, UIOT_MY_DEVICE_SN, client, IOT_OTA_FetchCallback_func);
+    void *h_ota = IOT_OTA_Init(UIOT_MY_PRODUCT_SN, UIOT_MY_DEVICE_SN, client);
     if (NULL == h_ota) {
         IOT_MQTT_Destroy(&client);
         LOG_ERROR("init OTA failed");
