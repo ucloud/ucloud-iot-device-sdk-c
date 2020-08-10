@@ -85,7 +85,7 @@ int ota_lib_get_msg_type(char *json, char **type);
 
 int ota_lib_get_msg_module_ver(char *json, char **module, char **ver);
 
-int ota_lib_get_params(char *json, char **url, char **module, char **file_name, char **version, char **md5,
+int ota_lib_get_params(char *json, char **url, char **module, char **download_name, char **version, char **md5,
                        uint32_t *fileSize);
 
 int ota_lib_gen_upstream_msg(char *buf, size_t bufLen, const char *module, const char *version, int progress,

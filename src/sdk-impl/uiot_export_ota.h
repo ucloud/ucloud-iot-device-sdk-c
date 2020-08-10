@@ -88,7 +88,7 @@ typedef struct  {
     uint32_t                size_file;               /* size of file */
 
     char                    *url;                    /* point to URL */
-    char                    *download_file_name;     /* download file name */
+    char                    *download_name;          /* download partition name */
     char                    *module;                 /* download module name */
     char                    *version;                /* point to version */
     char                    *md5sum;                 /* MD5 string */
