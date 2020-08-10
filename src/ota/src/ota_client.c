@@ -152,7 +152,7 @@ static void _ota_callback(void *pContext, const char *msg, uint32_t msg_len)
             goto do_exit;
         }
                 
-        if (SUCCESS_RET != ota_lib_get_params(msg_str, &h_ota->url, &h_ota->module, &h_ota->download_file_name, &h_ota->version, &h_ota->md5sum, &h_ota->size_file)) {
+        if (SUCCESS_RET != ota_lib_get_params(msg_str, &h_ota->url, &h_ota->module, &h_ota->download_name, &h_ota->version, &h_ota->md5sum, &h_ota->size_file)) {
             LOG_ERROR("Get firmware parameter failed");
             goto do_exit;
         }
@@ -379,8 +379,8 @@ int IOT_OTA_Destroy(void *handle)
         HAL_Free(h_ota->md5sum);
     }
 
-    if (NULL != h_ota->download_file_name) {
-        HAL_Free(h_ota->download_file_name);
+    if (NULL != h_ota->download_name) {
+        HAL_Free(h_ota->download_name);
     }
 
     HAL_Free(h_ota);
@@ -393,12 +393,26 @@ void IOT_OTA_Clear(void *handle)
     
     ofc_deinit(h_ota->ch_fetch);
     
-    memset(h_ota->url, 0, strlen(h_ota->url));
-    memset(h_ota->module, 0, strlen(h_ota->module));
-    memset(h_ota->download_file_name, 0, strlen(h_ota->download_file_name));
-    memset(h_ota->version, 0, strlen(h_ota->version));    
-    memset(h_ota->md5sum, 0, strlen(h_ota->md5sum));
-        
+    if (NULL != h_ota->url) {
+        memset(h_ota->url, 0, strlen(h_ota->url));
+    }
+
+    if (NULL != h_ota->module) {
+        memset(h_ota->module, 0, strlen(h_ota->module));
+    }
+    
+    if(NULL != h_ota->download_name){
+        memset(h_ota->download_name, 0, strlen(h_ota->download_name));
+    }
+    
+    if (NULL != h_ota->version) {
+        memset(h_ota->version, 0, strlen(h_ota->version));    
+    }
+
+    if (NULL != h_ota->md5sum) {
+        memset(h_ota->md5sum, 0, strlen(h_ota->md5sum));
+    }
+    
     h_ota->size_last_fetched = 0;
     h_ota->size_fetched = 0;
     h_ota->size_file = 0;    
@@ -706,7 +720,7 @@ int IOT_OTA_fw_download(void *handle)
 
     IOT_OTA_Ioctl(h_ota, OTA_IOCTL_FILE_SIZE, &file_size, 4);
 
-    download_handle = HAL_Download_Init(h_ota->download_file_name);
+    download_handle = HAL_Download_Init(h_ota->download_name);
     if(download_handle == NULL)
     {
         ret = FAILURE_RET;

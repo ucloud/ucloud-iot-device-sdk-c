@@ -14,6 +14,50 @@
 */
 #include "uiot_import.h"
 
+static int _utils_parse_name(const char *url, char *name) {
+    char *host_ptr = (char *) strstr(url, "://");
+    uint32_t name_len = 0;
+    char *path_ptr;
+    char *name_ptr;
+
+    if (host_ptr == NULL) {
+        return -1; /* URL is invalid */
+    }
+    host_ptr += 3;
+
+    path_ptr = strchr(host_ptr, '/');
+    if (NULL == path_ptr) {
+        return -2;
+    }
+
+    name_ptr = strchr(path_ptr, '?');
+    if (NULL == name_ptr) {
+        return -2;
+    }
+
+    name_len = name_ptr - path_ptr;
+
+    memcpy(name, path_ptr + 1, name_len - 1);
+    name[name_len] = '\0';
+
+    return SUCCESS_RET;
+}
+
+void * HAL_Download_Name_Set(void * handle)
+{
+    char *url_str = (char *)handle;
+    char *name_str;
+    if(NULL == (name_str = HAL_Malloc(strlen(url_str))))
+    {
+        printf("malloc url_str failed");
+        return NULL;
+    }
+    if(SUCCESS_RET == _utils_parse_name(url_str, name_str))
+        return name_str;
+    else
+        return NULL;
+}
+
 void * HAL_Download_Init(_IN_ void * name)
 {
     char * file_name =(char *)name;
