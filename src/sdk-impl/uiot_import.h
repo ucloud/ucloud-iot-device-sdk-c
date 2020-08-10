@@ -320,6 +320,14 @@ int32_t HAL_TCP_Write(_IN_ uintptr_t fd, _IN_ unsigned char *buf, _IN_ size_t le
 int32_t HAL_TCP_Read(_IN_ uintptr_t fd, _OU_ unsigned char *buf, _IN_ size_t len, _IN_ uint32_t timeout_ms);
 
 /**
+ * @brief 设置相应name
+ *
+ * @param   handle          指向download_name的指针          
+ * @return                  指向download_name的指针
+ */
+void * HAL_Download_Name_Set(void * handle);
+
+/**
  * @brief 下载的准备工作
  *
  * @param name             文件名

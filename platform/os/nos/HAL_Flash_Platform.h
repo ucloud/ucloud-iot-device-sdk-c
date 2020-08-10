@@ -16,46 +16,6 @@ extern "C" {
 #define DOWNLOAD_FAILED      0X01
 #define VERSION_BYTE_NUM       24
 
-
-/**
- * @brief 设置相应name
- *
- * @param   handle          指向download_name的指针          
- * @return                  指向download_name的指针
- */
-void * HAL_Download_Name_Set(void * handle);
-
-/**
-* @brief    STM32F767 FLASH的information分区的信息变更以及擦除download分区
-            本函数将信息区sector的内容先取出来然后擦除信息区sector
-            擦除完毕之后将除了下载状态标志位以外的信息进行写入
-            再写入下载状态位为下载失败
-            然后擦除整个下载区
- *
- * @param   name              此接口中不使用
- * @return  成功返回指向下载分区地址的指针，失败返回NULL
- */
-void * HAL_Download_Init(_IN_ void * name);
-
-/**
- * @brief    将长度为length的buf写入到FLASH中
- *
- * @param    handle          下载分区首地址指针
- * @param    total_length    未用到
- * @param    buffer_read     数据的指针
- * @param    length          数据的长度，单位为字节
- * @return  0-success 其他-fail                  
- */
-int HAL_Download_Write(_IN_ void * handle,_IN_ uint32_t total_length,_IN_ uint8_t *buffer_read,_IN_ uint32_t length);
-
-/**
- * @brief STM32F767 FLASH的information分区的下载标志置位成功
- *
- * @param	handle            未用到             
- * @return                    0-success 其他-fail
- */
-int HAL_Download_End(_IN_ void * handle);
-
 /**
  * @brief 向FLASH地址中写入一个字节的数据
  *
