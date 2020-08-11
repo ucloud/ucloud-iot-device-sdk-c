@@ -91,7 +91,8 @@ int HAL_FLASH_Write_Byte(_IN_ uint32_t sddr,_IN_ uint32_t data)
     else
         return SUCCESS_RET;
 }
-int HAL_FLASH_Erase_Sector(_IN_ uint8_t sector, _IN_ int sector_num)
+
+int HAL_FLASH_Erase_Sector(_IN_ uint8_t sector, _IN_ uint32_t sector_num)
 {
     uint32_t flash_error;
     HAL_StatusTypeDef ret;
@@ -106,7 +107,7 @@ int HAL_FLASH_Erase_Sector(_IN_ uint8_t sector, _IN_ int sector_num)
     ret = HAL_FLASHEx_Erase(&flash_erase, &flash_error);
     FLASH_WaitForLastOperation(50000);    
     HAL_FLASH_Lock();
-    if(ret == HAL_ERROR){
+    if(HAL_ERROR == ret){
         printf("erase sector in flash failed!\r\n");
         return FAILURE_RET;
     }

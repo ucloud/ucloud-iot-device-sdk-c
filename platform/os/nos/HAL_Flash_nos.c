@@ -106,7 +106,7 @@ int HAL_FLASH_Erase_Sector(_IN_ uint8_t sector, _IN_ uint32_t sector_num)
     ret = HAL_FLASHEx_Erase(&flash_erase, &flash_error);
     FLASH_WaitForLastOperation(50000);    
     HAL_FLASH_Lock();
-    if(ret == HAL_ERROR){
+    if(HAL_ERROR == ret){
         printf("erase sector in flash failed!\r\n");
         return FAILURE_RET;
     }
