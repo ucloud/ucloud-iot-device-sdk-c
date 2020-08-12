@@ -74,15 +74,23 @@ static const char *iot_https_ca_crt = \
     "CAUw7C29C79Fv1C5qfPrmAESrciIxpg0X40KPMbp1ZWVbd4=\r\n"
     "-----END CERTIFICATE-----\r\n"
 };
+#endif
 
 const char *iot_ca_get() {
+#ifdef SUPPORT_TLS
     return iot_ca_crt;
+#else
+    return NULL;
+#endif
 }
 
 const char *iot_https_ca_get() {
+#ifdef SUPPORT_TLS
     return iot_https_ca_crt;
-}
+#else
+    return NULL;
 #endif
+}
 
 #ifdef __cplusplus
 }
