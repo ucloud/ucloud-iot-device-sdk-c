@@ -21,6 +21,7 @@
 #include "lite-utils.h"
 #include "ca.h"
 #include "utils_sha2.h"
+#include "uiot_export.h"
 
 int IOT_HTTP_Get_Token(const char *product_sn, const char *device_sn, const char *device_sercret, char *token)
 {
@@ -87,9 +88,8 @@ int IOT_HTTP_Get_Token(const char *product_sn, const char *device_sn, const char
     HAL_Snprintf(http_client_post->header, 1024, "Content-Type: application/json\r\nAuthorization: %s\r\nbody: %s\r\n",mac_output_char,http_data_post->post_buf);
 
     const char *ca_crt = iot_https_ca_get();
-    char *url = (char *)"https://http-cn-sh2.iot.ucloud.cn/auth";
 
-    ret = http_client_common(http_client_post, url, 443, ca_crt, HTTP_POST, http_data_post,5000);
+    ret = http_client_common(http_client_post, UIOT_AUTH_URL, 443, ca_crt, HTTP_POST, http_data_post,5000);
     if(SUCCESS_RET != ret)
     {
         LOG_ERROR("HTTP_POST error\n");
