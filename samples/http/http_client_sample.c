@@ -26,11 +26,11 @@
 #include "utils_httpc.h"
 #include "uiot_export_http.h"
 
-#define UIOT_MY_PRODUCT_SN            "nvtmx50n2j9nilik"
+#define UIOT_MY_PRODUCT_SN            "PRODUCT_SN"
 
-#define UIOT_MY_DEVICE_SN             "tlilyffhh3aqi6zx"
+#define UIOT_MY_DEVICE_SN             "DEVICE_SN"
 
-#define UIOT_MY_DEVICE_SECRET         "l0310dqp3rjciupw"
+#define UIOT_MY_DEVICE_SECRET         "DEVICE_SECRET"
 
 #define UIOT_PUBLISH_TOPIC            "%s/%s/upload/event"
 
