@@ -57,14 +57,15 @@ extern "C" {
 /* MQTT连接域名 */
 //上海区域域名
 #define UIOT_MQTT_DIRECT_DOMAIN                                      "mqtt-cn-sh2.iot.ucloud.cn"
+#define UIOT_AUTH_URL                                                "https://http-cn-sh2.iot.ucloud.cn/auth"
 #define UIOT_UPLOAD_FILE_URL                                         "https://file-cn-sh2.iot.ucloud.cn/api/v1/url"
 
 /*
 //使用广州区域时替换为
 #define UIOT_MQTT_DIRECT_DOMAIN                                      "mqtt-cn-gd.iot.ucloud.cn"
+#define UIOT_AUTH_URL                                                "https://http-cn-gd.iot.ucloud.cn/auth"
 #define UIOT_UPLOAD_FILE_URL                                         "https://file-cn-gd.iot.ucloud.cn/api/v1/url"
 */
-
 #include "uiot_export_mqtt.h"
 #include "uiot_defs.h"
 
