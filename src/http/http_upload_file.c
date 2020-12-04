@@ -21,6 +21,7 @@
 #include "lite-utils.h"
 #include "ca.h"
 #include "utils_sha2.h"
+#include "uiot_export.h"
 
 static int calc_file_len(char *file_path)
 {
@@ -115,9 +116,8 @@ int IOT_GET_URL_AND_AUTH(const char *product_sn, const char *device_sn, const ch
     HAL_Snprintf(http_client_post->header, 1024, "Content-Type: application/json\r\nAuthorization:%s\r\n",mac_output_char);
 
     const char *ca_crt = iot_https_ca_get();
-    char *url = (char *)"https://file-cn-sh2.iot.ucloud.cn/api/v1/url";
 
-    ret = http_client_common(http_client_post, url, 443, ca_crt, HTTP_POST, http_data_post,5000);
+    ret = http_client_common(http_client_post, UIOT_UPLOAD_FILE_URL, 443, ca_crt, HTTP_POST, http_data_post,5000);
     if(SUCCESS_RET != ret)
     {
         LOG_ERROR("HTTP_POST error\n");
