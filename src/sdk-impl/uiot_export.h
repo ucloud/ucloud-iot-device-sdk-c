@@ -61,7 +61,7 @@ extern "C" {
 
 /*
 //使用广州区域时替换为
-#define UIOT_MQTT_DIRECT_DOMAIN                                      "mqtt-cn-sh2.iot.ucloud.cn"
+#define UIOT_MQTT_DIRECT_DOMAIN                                      "mqtt-cn-gd.iot.ucloud.cn"
 #define UIOT_UPLOAD_FILE_URL                                         "https://file-cn-gd.iot.ucloud.cn/api/v1/url"
 */
 
